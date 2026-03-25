@@ -1,4 +1,4 @@
-import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +7,9 @@ const navItems = [
   { to: '/mesas', icon: Grid3X3, label: 'Mesas' },
   { to: '/checklist', icon: ClipboardCheck, label: 'Checklist' },
   { to: '/inventario', icon: Package, label: 'Inventário' },
+  { to: '/producao', icon: UtensilsCrossed, label: 'Produção Buffet' },
   { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas' },
+  { to: '/desperdicio', icon: Trash2, label: 'Desperdício' },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão' },
   { to: '/ordens', icon: MessageSquare, label: 'Ordens' },
 ];

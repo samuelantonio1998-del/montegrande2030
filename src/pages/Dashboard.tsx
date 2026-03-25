@@ -59,6 +59,15 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+            {mockProductionAlerts.filter(a => a.priority === 'alta').map(alert => (
+              <div key={alert.id} className="flex items-start gap-3 rounded-lg bg-primary/10 p-3">
+                <UtensilsCrossed className="mt-0.5 h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Alerta Produção</p>
+                  <p className="text-xs text-muted-foreground">{alert.message}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </motion.div>
 

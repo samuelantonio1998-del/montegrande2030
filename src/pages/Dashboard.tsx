@@ -130,6 +130,39 @@ export default function Dashboard() {
                 {pendingOrders.length}
               </span>
             </div>
+
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+              <div className="flex items-center gap-3">
+                <UtensilsCrossed className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Buffet Ativo</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activeTrays.length} tabuleiro(s) na sala
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                {activeTrays.length}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+              <div className="flex items-center gap-3">
+                <Recycle className="h-5 w-5 text-success" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Desperdício Semanal</p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalWeeklyWaste.toFixed(1)}kg perdido · €{totalWeeklySavings.toFixed(0)} poupado
+                  </p>
+                </div>
+              </div>
+              <span className={cn(
+                'rounded-full px-2.5 py-0.5 text-xs font-medium',
+                totalWeeklySavings > 50 ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+              )}>
+                {totalWeeklySavings > 50 ? 'Bom' : 'Melhorar'}
+              </span>
+            </div>
           </div>
         </motion.div>
       </div>

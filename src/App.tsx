@@ -7,6 +7,9 @@ import Dashboard from "./pages/Dashboard";
 import Checklist from "./pages/Checklist";
 import Inventario from "./pages/Inventario";
 import Ordens from "./pages/Ordens";
+import FichasTecnicas from "./pages/FichasTecnicas";
+import Mesas from "./pages/Mesas";
+import Previsao from "./pages/Previsao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +25,9 @@ const App = () => (
             <Route path="/checklist" element={<Checklist />} />
             <Route path="/inventario" element={<Inventario />} />
             <Route path="/ordens" element={<Ordens />} />
+            <Route path="/fichas-tecnicas" element={<FichasTecnicas />} />
+            <Route path="/mesas" element={<Mesas />} />
+            <Route path="/previsao" element={<Previsao />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

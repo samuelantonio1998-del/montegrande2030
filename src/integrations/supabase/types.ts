@@ -14,7 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ficha_ingredientes: {
+        Row: {
+          ficha_id: string
+          id: string
+          produto_id: string
+          quantidade: number
+          unidade: string
+        }
+        Insert: {
+          ficha_id: string
+          id?: string
+          produto_id: string
+          quantidade: number
+          unidade?: string
+        }
+        Update: {
+          ficha_id?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_ingredientes_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_ingredientes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          id: string
+          nome: string
+          porcoes: number
+          preco_venda: number
+          tempo_preparacao: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome: string
+          porcoes?: number
+          preco_venda?: number
+          tempo_preparacao?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          porcoes?: number
+          preco_venda?: number
+          tempo_preparacao?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fornecedores: {
+        Row: {
+          created_at: string
+          dia_encomenda: string | null
+          email: string | null
+          id: string
+          nome: string
+          notas: string | null
+          prazo_entrega_dias: number | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dia_encomenda?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          notas?: string | null
+          prazo_entrega_dias?: number | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dia_encomenda?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          notas?: string | null
+          prazo_entrega_dias?: number | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      movimentacoes: {
+        Row: {
+          created_at: string
+          custo_unitario: number | null
+          documento_url: string | null
+          fornecedor_id: string | null
+          funcionario: string | null
+          id: string
+          motivo: string | null
+          produto_id: string
+          quantidade: number
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          custo_unitario?: number | null
+          documento_url?: string | null
+          fornecedor_id?: string | null
+          funcionario?: string | null
+          id?: string
+          motivo?: string | null
+          produto_id: string
+          quantidade: number
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          custo_unitario?: number | null
+          documento_url?: string | null
+          fornecedor_id?: string | null
+          funcionario?: string | null
+          id?: string
+          motivo?: string | null
+          produto_id?: string
+          quantidade?: number
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          custo_medio: number
+          fornecedor_id: string | null
+          id: string
+          nome: string
+          sku: string | null
+          stock_atual: number
+          stock_maximo: number
+          stock_minimo: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          custo_medio?: number
+          fornecedor_id?: string | null
+          id?: string
+          nome: string
+          sku?: string | null
+          stock_atual?: number
+          stock_maximo?: number
+          stock_minimo?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          custo_medio?: number
+          fornecedor_id?: string | null
+          id?: string
+          nome?: string
+          sku?: string | null
+          stock_atual?: number
+          stock_maximo?: number
+          stock_minimo?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

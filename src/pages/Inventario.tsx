@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 
 type Produto = {
   id: string;
@@ -54,6 +55,8 @@ type ScannedItem = {
   produto_id?: string;
 };
 
+type ScannerStep = 'idle' | 'preview' | 'processing' | 'review';
+
 export default function Inventario() {
   const { toast } = useToast();
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -62,10 +65,14 @@ export default function Inventario() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // OCR state
-  const [scanning, setScanning] = useState(false);
+  // Scanner state
+  const [scannerStep, setScannerStep] = useState<ScannerStep>('idle');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
-  const [showScanned, setShowScanned] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [confirmingEntry, setConfirmingEntry] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Manual entry state
   const [showManualEntry, setShowManualEntry] = useState(false);
@@ -93,7 +100,6 @@ export default function Inventario() {
   const lowStock = produtos.filter(p => p.stock_atual <= p.stock_minimo);
   const filteredProdutos = produtos.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
 
-  // Group low stock by supplier
   const faltasByFornecedor = lowStock.reduce((acc, p) => {
     const fId = p.fornecedor_id || 'sem-fornecedor';
     if (!acc[fId]) acc[fId] = [];
@@ -108,9 +114,28 @@ export default function Inventario() {
     return { color: 'bg-success', label: 'OK' };
   };
 
-  // OCR Scanner
-  const handleScanInvoice = async (file: File) => {
-    setScanning(true);
+  // Step 1: File selected → show preview
+  const handleFileSelected = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setPreviewFile(file);
+    setScannerStep('preview');
+  };
+
+  // Step 2: Confirm photo → process OCR
+  const handleConfirmPhoto = async () => {
+    if (!previewFile) return;
+    setScannerStep('processing');
+    setProcessingProgress(0);
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setProcessingProgress(prev => {
+        if (prev >= 90) { clearInterval(progressInterval); return 90; }
+        return prev + Math.random() * 15;
+      });
+    }, 400);
+
     try {
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve) => {
@@ -118,12 +143,15 @@ export default function Inventario() {
           const result = reader.result as string;
           resolve(result.split(',')[1]);
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(previewFile);
       });
 
       const { data, error } = await supabase.functions.invoke('scan-invoice', {
         body: { imageBase64: base64 },
       });
+
+      clearInterval(progressInterval);
+      setProcessingProgress(100);
 
       if (error) throw error;
 
@@ -132,61 +160,67 @@ export default function Inventario() {
         return { ...item, selected: true, produto_id: match?.id };
       });
 
-      setScannedItems(items);
-      setShowScanned(true);
-      toast({ title: `${items.length} itens detetados na fatura` });
+      setTimeout(() => {
+        setScannedItems(items);
+        setScannerStep('review');
+        toast({ title: `${items.length} itens detetados na fatura` });
+      }, 500);
     } catch (err: any) {
+      clearInterval(progressInterval);
       toast({ title: 'Erro no scanner', description: err.message, variant: 'destructive' });
-    } finally {
-      setScanning(false);
+      resetScanner();
     }
   };
 
+  // Step 3: Confirm scanned items
   const confirmScannedItems = async () => {
+    setConfirmingEntry(true);
     const selected = scannedItems.filter(i => i.selected);
     for (const item of selected) {
       if (item.produto_id) {
-        // Update existing product stock
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
           const newStock = produto.stock_atual + item.quantidade;
           const totalCost = produto.custo_medio * produto.stock_atual + item.custo_unitario * item.quantidade;
           const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
-          
           await supabase.from('produtos').update({ stock_atual: newStock, custo_medio: newCustoMedio }).eq('id', item.produto_id);
           await supabase.from('movimentacoes').insert({
-            produto_id: item.produto_id,
-            tipo: 'entrada',
-            quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario,
-            motivo: 'Fatura OCR',
+            produto_id: item.produto_id, tipo: 'entrada', quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
           });
         }
       } else {
-        // Create new product
         const { data: newProd } = await supabase.from('produtos').insert({
-          nome: item.nome,
-          unidade: item.unidade,
-          stock_atual: item.quantidade,
-          custo_medio: item.custo_unitario,
-          sku: item.sku,
+          nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
+          custo_medio: item.custo_unitario, sku: item.sku,
         }).select().single();
-
         if (newProd) {
           await supabase.from('movimentacoes').insert({
-            produto_id: newProd.id,
-            tipo: 'entrada',
-            quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario,
-            motivo: 'Fatura OCR - Novo produto',
+            produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
           });
         }
       }
     }
     toast({ title: `${selected.length} itens registados com sucesso` });
-    setShowScanned(false);
-    setScannedItems([]);
+    setConfirmingEntry(false);
+    resetScanner();
     fetchData();
+  };
+
+  const resetScanner = () => {
+    setScannerStep('idle');
+    setPreviewUrl(null);
+    setPreviewFile(null);
+    setScannedItems([]);
+    setProcessingProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const updateScannedItem = (index: number, field: keyof ScannedItem, value: any) => {
+    const copy = [...scannedItems];
+    (copy[index] as any)[field] = value;
+    setScannedItems(copy);
   };
 
   const handleManualEntry = async () => {
@@ -195,20 +229,14 @@ export default function Inventario() {
     const cost = parseFloat(manualForm.custo_unitario) || 0;
     const produto = produtos.find(p => p.id === manualForm.produto_id);
     if (!produto) return;
-
     const newStock = produto.stock_atual + qty;
     const totalCost = produto.custo_medio * produto.stock_atual + cost * qty;
     const newCustoMedio = newStock > 0 ? totalCost / newStock : cost;
-
     await supabase.from('produtos').update({ stock_atual: newStock, custo_medio: newCustoMedio }).eq('id', manualForm.produto_id);
     await supabase.from('movimentacoes').insert({
-      produto_id: manualForm.produto_id,
-      tipo: 'entrada',
-      quantidade: qty,
-      custo_unitario: cost,
-      motivo: 'Entrada manual',
+      produto_id: manualForm.produto_id, tipo: 'entrada', quantidade: qty,
+      custo_unitario: cost, motivo: 'Entrada manual',
     });
-
     toast({ title: 'Entrada registada' });
     setShowManualEntry(false);
     setManualForm({ produto_id: '', quantidade: '', custo_unitario: '', tipo: 'entrada' });
@@ -220,16 +248,12 @@ export default function Inventario() {
     const qty = parseFloat(exitForm.quantidade);
     const produto = produtos.find(p => p.id === exitForm.produto_id);
     if (!produto) return;
-
     const newStock = Math.max(0, produto.stock_atual - qty);
     await supabase.from('produtos').update({ stock_atual: newStock }).eq('id', exitForm.produto_id);
     await supabase.from('movimentacoes').insert({
-      produto_id: exitForm.produto_id,
-      tipo: exitForm.tipo,
-      quantidade: qty,
+      produto_id: exitForm.produto_id, tipo: exitForm.tipo, quantidade: qty,
       motivo: exitForm.motivo || (exitForm.tipo === 'quebra' ? 'Desperdício/Estrago' : 'Saída manual'),
     });
-
     toast({ title: exitForm.tipo === 'quebra' ? 'Quebra registada' : 'Saída registada' });
     setShowExit(false);
     setExitForm({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' });
@@ -239,10 +263,7 @@ export default function Inventario() {
   const handleOrder = (fornecedorId: string, items: Produto[]) => {
     const forn = fornecedores.find(f => f.id === fornecedorId);
     const itemList = items.map(p => `${p.stock_maximo - p.stock_atual}${p.unidade} ${p.nome}`).join(', ');
-    toast({
-      title: 'Encomenda gerada',
-      description: `${forn?.nome || 'Fornecedor'}: ${itemList}`,
-    });
+    toast({ title: 'Encomenda gerada', description: `${forn?.nome || 'Fornecedor'}: ${itemList}` });
   };
 
   if (loading) {
@@ -252,6 +273,9 @@ export default function Inventario() {
       </div>
     );
   }
+
+  const selectedCount = scannedItems.filter(i => i.selected).length;
+  const totalValue = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.quantidade * i.custo_unitario, 0);
 
   return (
     <div className="space-y-6">
@@ -280,90 +304,265 @@ export default function Inventario() {
 
         {/* ===== ENTRADA DE STOCK ===== */}
         <TabsContent value="entrada" className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <label className={cn(
-              "flex items-center gap-2 cursor-pointer rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-6 py-4 transition-colors hover:bg-primary/10",
-              scanning && "opacity-50 pointer-events-none"
-            )}>
-              <Camera className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                {scanning ? 'A processar...' : 'Scan de Fatura (OCR)'}
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleScanInvoice(e.target.files[0])}
-              />
-            </label>
-            <Button variant="outline" onClick={() => setShowManualEntry(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Entrada Manual
-            </Button>
-          </div>
-
-          {/* Scanned items review */}
-          <AnimatePresence>
-            {showScanned && scannedItems.length > 0 && (
+          
+          {/* Scanner Flow */}
+          <AnimatePresence mode="wait">
+            {/* STEP: IDLE - Show action buttons */}
+            {scannerStep === 'idle' && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="rounded-xl border border-primary/20 bg-card p-4 space-y-3"
+                key="idle"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-wrap gap-3"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Itens Detetados ({scannedItems.length})</h3>
-                  <Button variant="ghost" size="sm" onClick={() => { setShowScanned(false); setScannedItems([]); }}>
+                <Button
+                  size="lg"
+                  className="flex items-center gap-3 h-auto py-4 px-6"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="h-6 w-6" />
+                  <div className="text-left">
+                    <p className="font-semibold">Abrir Câmara</p>
+                    <p className="text-xs opacity-80">Scan de fatura via OCR</p>
+                  </div>
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleFileSelected(e.target.files[0])}
+                />
+                <Button variant="outline" size="lg" className="h-auto py-4 px-6" onClick={() => setShowManualEntry(true)}>
+                  <Plus className="h-5 w-5 mr-2" />
+                  Entrada Manual
+                </Button>
+              </motion.div>
+            )}
+
+            {/* STEP: PREVIEW - Show photo preview */}
+            {scannerStep === 'preview' && previewUrl && (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="rounded-xl border-2 border-primary/30 bg-card overflow-hidden"
+              >
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Pré-visualização da Fatura</h3>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={resetScanner}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {scannedItems.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2">
-                      <input
-                        type="checkbox"
-                        checked={item.selected}
-                        onChange={() => {
-                          const copy = [...scannedItems];
-                          copy[i].selected = !copy[i].selected;
-                          setScannedItems(copy);
-                        }}
-                        className="accent-primary"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{item.nome}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.quantidade}{item.unidade} · €{item.custo_unitario.toFixed(2)}/un
-                          {item.produto_id ? ' ✓ Produto existente' : ' ⚡ Novo produto'}
-                        </p>
-                      </div>
-                      {!item.produto_id && (
-                        <Select
-                          value={item.produto_id || ''}
-                          onValueChange={(v) => {
-                            const copy = [...scannedItems];
-                            copy[i].produto_id = v;
-                            setScannedItems(copy);
-                          }}
-                        >
-                          <SelectTrigger className="w-40 h-8 text-xs">
-                            <SelectValue placeholder="Associar produto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {produtos.map(p => (
-                              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  ))}
+                <div className="p-4 space-y-4">
+                  <div className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center max-h-[400px]">
+                    <img
+                      src={previewUrl}
+                      alt="Pré-visualização da fatura"
+                      className="max-h-[400px] w-auto object-contain"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1" onClick={resetScanner}>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Tirar outra foto
+                    </Button>
+                    <Button className="flex-1" onClick={handleConfirmPhoto}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Processar Fatura
+                    </Button>
+                  </div>
                 </div>
-                <Button onClick={confirmScannedItems} className="w-full">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Confirmar {scannedItems.filter(i => i.selected).length} Itens
-                </Button>
+              </motion.div>
+            )}
+
+            {/* STEP: PROCESSING - Loading animation */}
+            {scannerStep === 'processing' && (
+              <motion.div
+                key="processing"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="rounded-xl border-2 border-primary/20 bg-card p-8 text-center space-y-5"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="mx-auto w-fit"
+                >
+                  <Loader2 className="h-12 w-12 text-primary" />
+                </motion.div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">A processar fatura...</h3>
+                  <p className="text-sm text-muted-foreground">
+                    A IA está a extrair artigos, quantidades e preços
+                  </p>
+                </div>
+                <div className="max-w-xs mx-auto space-y-1">
+                  <Progress value={processingProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground">{Math.round(processingProgress)}%</p>
+                </div>
+                {previewUrl && (
+                  <div className="mx-auto w-24 h-24 rounded-lg overflow-hidden opacity-50">
+                    <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* STEP: REVIEW - Editable verification table */}
+            {scannerStep === 'review' && (
+              <motion.div
+                key="review"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="rounded-xl border-2 border-primary/20 bg-card overflow-hidden"
+              >
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
+                  <div className="flex items-center gap-2">
+                    <Edit3 className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Verificação — {scannedItems.length} itens detetados
+                    </h3>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={resetScanner}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {scannedItems.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-foreground font-medium">Nenhum item detetado</p>
+                    <p className="text-sm text-muted-foreground mt-1">Tente outra foto com melhor iluminação</p>
+                    <Button variant="outline" className="mt-4" onClick={resetScanner}>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Tentar novamente
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-border bg-muted/50">
+                            <th className="w-10 px-3 py-2.5"></th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artigo</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-24">Qtd.</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-20">Un.</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-28">Preço/Un</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-28">Total</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-44">Produto</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {scannedItems.map((item, i) => (
+                            <tr key={i} className={cn(
+                              "border-b border-border transition-colors",
+                              !item.selected && "opacity-40 bg-muted/20",
+                              item.selected && "hover:bg-muted/30"
+                            )}>
+                              <td className="px-3 py-2.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={item.selected}
+                                  onChange={() => updateScannedItem(i, 'selected', !item.selected)}
+                                  className="accent-primary h-4 w-4"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Input
+                                  value={item.nome}
+                                  onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Input
+                                  type="number"
+                                  value={item.quantidade}
+                                  onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                  className="h-8 text-sm w-20 border-transparent bg-transparent hover:border-input focus:border-input"
+                                  step="0.01"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Input
+                                  value={item.unidade}
+                                  onChange={(e) => updateScannedItem(i, 'unidade', e.target.value)}
+                                  className="h-8 text-sm w-16 border-transparent bg-transparent hover:border-input focus:border-input"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Input
+                                  type="number"
+                                  value={item.custo_unitario}
+                                  onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                  className="h-8 text-sm w-24 border-transparent bg-transparent hover:border-input focus:border-input"
+                                  step="0.01"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-sm font-medium text-foreground">
+                                  €{(item.quantidade * item.custo_unitario).toFixed(2)}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Select
+                                  value={item.produto_id || 'new'}
+                                  onValueChange={(v) => updateScannedItem(i, 'produto_id', v === 'new' ? undefined : v)}
+                                >
+                                  <SelectTrigger className="h-8 text-xs border-transparent bg-transparent hover:border-input">
+                                    <SelectValue placeholder="Novo produto" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new">⚡ Criar novo produto</SelectItem>
+                                    {produtos.map(p => (
+                                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Summary & Confirm */}
+                    <div className="px-4 py-3 border-t border-border bg-muted/30 flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">{selectedCount}</span> itens selecionados
+                        {' · '}
+                        Total: <span className="font-semibold text-foreground">€{totalValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={resetScanner}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={confirmScannedItems}
+                          disabled={selectedCount === 0 || confirmingEntry}
+                        >
+                          {confirmingEntry ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                          )}
+                          Confirmar Entrada
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

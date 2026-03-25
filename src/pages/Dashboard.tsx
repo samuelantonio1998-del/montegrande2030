@@ -9,6 +9,9 @@ export default function Dashboard() {
   const pendingChecklist = mockChecklist.filter(i => !i.done);
   const lowStock = mockInventory.filter(i => i.currentStock <= i.minStock);
   const pendingOrders = mockOrders.filter(o => o.status !== 'concluida');
+  const activeTrays = mockProductionRecords.filter(r => r.status === 'no_buffet');
+  const totalWeeklyWaste = mockWeeklyWaste.reduce((s, d) => s + d.totalWasteKg, 0);
+  const totalWeeklySavings = mockWeeklyWaste.reduce((s, d) => s + d.estimatedSavings, 0);
 
   return (
     <div className="space-y-8">

@@ -10,6 +10,8 @@ import Ordens from "./pages/Ordens";
 import FichasTecnicas from "./pages/FichasTecnicas";
 import Mesas from "./pages/Mesas";
 import Previsao from "./pages/Previsao";
+import Producao from "./pages/Producao";
+import Desperdicio from "./pages/Desperdicio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

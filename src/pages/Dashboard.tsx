@@ -1,6 +1,7 @@
-import { AlertTriangle, CheckCircle2, Package } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
 import { mockKPIs, mockChecklist, mockInventory, mockOrders } from '@/lib/mock-data';
+import { mockProductionRecords, mockProductionAlerts, mockWeeklyWaste } from '@/lib/buffet-data';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 

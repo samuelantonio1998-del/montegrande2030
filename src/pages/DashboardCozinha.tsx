@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { ChefHat, Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Package, LogOut } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { ChefHat, Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Package, LogOut, BarChart3, Trash2, Recycle, Euro } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockProductionAlerts, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
+import { mockProductionAlerts, mockWeeklyWaste, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { mockMesas, mockHistorical } from '@/lib/mock-data';
 import { defaultBuffetItems, type BuffetItem, type BuffetTrayState, type ReplenishmentLog, type LeftoverRecord, type BuffetZone, buffetZoneLabels } from '@/lib/buffet-zones';
 import { motion } from 'framer-motion';
@@ -86,6 +86,14 @@ export default function DashboardCozinha() {
     return zoneItems(zone).filter(i => trayStates[i.id]?.isOnBuffet).length;
   };
 
+  // Waste summary from mock data
+  const totalProduced = mockWeeklyWaste.reduce((s, w) => s + w.totalProducedKg, 0);
+  const totalWaste = mockWeeklyWaste.reduce((s, w) => s + w.totalWasteKg, 0);
+  const totalReused = mockWeeklyWaste.reduce((s, w) => s + w.totalReusedKg, 0);
+  const totalLoss = mockWeeklyWaste.reduce((s, w) => s + w.estimatedLoss, 0);
+  const totalSavings = mockWeeklyWaste.reduce((s, w) => s + w.estimatedSavings, 0);
+  const netLoss = totalSavings - totalLoss;
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -97,6 +105,34 @@ export default function DashboardCozinha() {
         <Button variant="ghost" size="icon" onClick={logout}>
           <LogOut className="h-5 w-5" />
         </Button>
+      </div>
+
+      {/* Waste summary cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <BarChart3 className="h-3.5 w-3.5 text-primary" /> Produção Total
+          </div>
+          <p className="text-xl font-bold text-foreground">{totalProduced.toFixed(0)}kg</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <Trash2 className="h-3.5 w-3.5 text-destructive" /> Desperdício
+          </div>
+          <p className="text-xl font-bold text-destructive">{totalWaste.toFixed(1)}kg</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-xl border border-border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <Recycle className="h-3.5 w-3.5 text-success" /> Aproveitamento
+          </div>
+          <p className="text-xl font-bold text-success">{totalReused.toFixed(1)}kg</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <Euro className="h-3.5 w-3.5" /> Perdas vs Poupança
+          </div>
+          <p className={cn('text-xl font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
+        </motion.div>
       </div>
 
       {/* Forecast bar */}

@@ -99,8 +99,17 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Nº de Doses</label>
-              <Input type="number" min={1} value={porcoes} onChange={e => setPorcoes(Number(e.target.value))} />
+              <label className="text-xs font-medium text-muted-foreground">Nº de Doses (Recipiente)</label>
+              <Select value={String(porcoes)} onValueChange={v => setPorcoes(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(recipientCapacity).map(([key, val]) => (
+                    <SelectItem key={key} value={String(val.capacityKg)}>
+                      {val.label} ({val.capacityKg}kg)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Preço de Venda (€)</label>

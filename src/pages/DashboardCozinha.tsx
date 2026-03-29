@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { ChefHat, Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Package, LogOut } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { ChefHat, Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Package, LogOut, BarChart3, Trash2, Recycle, Euro } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockProductionAlerts, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
+import { mockProductionAlerts, mockWeeklyWaste, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { mockMesas, mockHistorical } from '@/lib/mock-data';
 import { defaultBuffetItems, type BuffetItem, type BuffetTrayState, type ReplenishmentLog, type LeftoverRecord, type BuffetZone, buffetZoneLabels } from '@/lib/buffet-zones';
 import { motion } from 'framer-motion';

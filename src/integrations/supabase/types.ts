@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      buffet_items: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          ficha_tecnica_id: string | null
+          id: string
+          nome: string
+          updated_at: string
+          zona: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          ficha_tecnica_id?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          zona?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          ficha_tecnica_id?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          zona?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buffet_items_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ficha_ingredientes: {
         Row: {
           ficha_id: string

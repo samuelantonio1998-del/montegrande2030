@@ -35,7 +35,7 @@ function QuickBeveragePanel({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa
     }
   };
 
-  const total = mesa.beverages.reduce((s, b) => s + b.quantity * b.unitPrice, 0);
+  const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   return (
     <div className="space-y-4">

@@ -587,6 +587,16 @@ export default function Inventario() {
                                 </span>
                               </td>
                               <td className="px-3 py-2.5">
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  {item.sku || '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-xs text-foreground">
+                                  {item.fornecedor || '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
                                 <Select
                                   value={item.produto_id || 'new'}
                                   onValueChange={(v) => updateScannedItem(i, 'produto_id', v === 'new' ? undefined : v)}
@@ -595,7 +605,7 @@ export default function Inventario() {
                                     <SelectValue placeholder="Novo produto" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="new">⚡ Criar novo produto</SelectItem>
+                                    <SelectItem value="new">⚡ Criar novo...</SelectItem>
                                     {produtos.map(p => (
                                       <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                                     ))}

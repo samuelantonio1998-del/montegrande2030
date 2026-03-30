@@ -52,6 +52,56 @@ export type Database = {
           },
         ]
       }
+      ementa_diaria: {
+        Row: {
+          buffet_item_id: string
+          created_at: string
+          criado_por: string | null
+          data: string
+          historico_consumo_kg: number[] | null
+          historico_sobra_kg: number[] | null
+          id: string
+          notas: string | null
+          quantidade_prevista: number
+          recipiente_sugerido: string
+          updated_at: string
+        }
+        Insert: {
+          buffet_item_id: string
+          created_at?: string
+          criado_por?: string | null
+          data: string
+          historico_consumo_kg?: number[] | null
+          historico_sobra_kg?: number[] | null
+          id?: string
+          notas?: string | null
+          quantidade_prevista?: number
+          recipiente_sugerido?: string
+          updated_at?: string
+        }
+        Update: {
+          buffet_item_id?: string
+          created_at?: string
+          criado_por?: string | null
+          data?: string
+          historico_consumo_kg?: number[] | null
+          historico_sobra_kg?: number[] | null
+          id?: string
+          notas?: string | null
+          quantidade_prevista?: number
+          recipiente_sugerido?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ementa_diaria_buffet_item_id_fkey"
+            columns: ["buffet_item_id"]
+            isOneToOne: false
+            referencedRelation: "buffet_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ficha_ingredientes: {
         Row: {
           ficha_id: string

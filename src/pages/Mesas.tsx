@@ -182,20 +182,12 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
       {/* Total */}
       {(coverTotal > 0 || beverageTotal > 0) && (
         <div className="rounded-lg bg-muted/30 p-3 space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Refeições</span>
-            <span className="font-medium text-foreground">€{coverTotal.toFixed(2)}</span>
-          </div>
           {beverageTotal > 0 && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Bebidas</span>
               <span className="font-medium text-foreground">€{beverageTotal.toFixed(2)}</span>
             </div>
           )}
-          <div className="flex items-center justify-between border-t border-border pt-2">
-            <span className="text-sm font-semibold text-foreground">Total</span>
-            <span className="text-lg font-bold text-primary">€{total.toFixed(2)}</span>
-          </div>
         </div>
       )}
 

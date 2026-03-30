@@ -118,15 +118,17 @@ export default function DashboardCozinha() {
     }));
   }, [activeItems, user?.name]);
 
-  const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], date?: Date) => {
-    const targetDate = date || today;
-    bulkAdd.mutate(items.map(i => ({
-      ...i,
-      data: format(targetDate, 'yyyy-MM-dd'),
-      criado_por: user?.name || '',
-      historico_consumo_kg: [2.5, 3.1, 2.8, 3.5, 2.9, 3.2],
-      historico_sobra_kg: [0.5, 0.3, 0.8, 0.2, 0.6, 0.4],
-    })));
+  const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {
+    const rows = dates.flatMap(d =>
+      items.map(i => ({
+        ...i,
+        data: format(d, 'yyyy-MM-dd'),
+        criado_por: user?.name || '',
+        historico_consumo_kg: [2.5, 3.1, 2.8, 3.5, 2.9, 3.2],
+        historico_sobra_kg: [0.5, 0.3, 0.8, 0.2, 0.6, 0.4],
+      }))
+    );
+    bulkAdd.mutate(rows);
   };
 
   const dayLabel = format(today, "EEEE, d 'de' MMMM", { locale: pt });

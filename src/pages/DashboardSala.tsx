@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, LogOut, Plus, Minus } from 'lucide-react';
-import { mockMesas, beverageMenu, type Mesa } from '@/lib/mock-data';
+import { mockMesas, beverageMenu, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';

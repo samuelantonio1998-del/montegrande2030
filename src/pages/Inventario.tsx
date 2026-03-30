@@ -181,28 +181,57 @@ export default function Inventario() {
   const confirmScannedItems = async () => {
     setConfirmingEntry(true);
     const selected = scannedItems.filter(i => i.selected);
+
+    // Auto-create/find suppliers from scanned items
+    const supplierCache: Record<string, string> = {};
     for (const item of selected) {
+      if (item.fornecedor && item.fornecedor.trim()) {
+        const fornNome = item.fornecedor.trim();
+        if (!supplierCache[fornNome.toLowerCase()]) {
+          // Check if supplier exists
+          const existing = fornecedores.find(f => f.nome.toLowerCase() === fornNome.toLowerCase());
+          if (existing) {
+            supplierCache[fornNome.toLowerCase()] = existing.id;
+          } else {
+            // Create new supplier
+            const { data: newForn } = await supabase.from('fornecedores').insert({ nome: fornNome }).select().single();
+            if (newForn) {
+              supplierCache[fornNome.toLowerCase()] = newForn.id;
+            }
+          }
+        }
+      }
+    }
+
+    for (const item of selected) {
+      const fornecedorId = item.fornecedor ? supplierCache[item.fornecedor.trim().toLowerCase()] || null : null;
+
       if (item.produto_id) {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
           const newStock = produto.stock_atual + item.quantidade;
           const totalCost = produto.custo_medio * produto.stock_atual + item.custo_unitario * item.quantidade;
           const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
-          await supabase.from('produtos').update({ stock_atual: newStock, custo_medio: newCustoMedio }).eq('id', item.produto_id);
+          const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
+          if (fornecedorId && !produto.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
+          await supabase.from('produtos').update(updatePayload).eq('id', item.produto_id);
           await supabase.from('movimentacoes').insert({
             produto_id: item.produto_id, tipo: 'entrada', quantidade: item.quantidade,
             custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            fornecedor_id: fornecedorId,
           });
         }
       } else {
         const { data: newProd } = await supabase.from('produtos').insert({
           nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
           custo_medio: item.custo_unitario, sku: item.sku,
+          fornecedor_id: fornecedorId,
         }).select().single();
         if (newProd) {
           await supabase.from('movimentacoes').insert({
             produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
             custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
+            fornecedor_id: fornecedorId,
           });
         }
       }

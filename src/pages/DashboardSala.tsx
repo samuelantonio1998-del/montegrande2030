@@ -40,16 +40,24 @@ function QuickBeveragePanel({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa
   return (
     <div className="space-y-4">
       {/* Guest info */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <Users className="mx-auto h-5 w-5 text-muted-foreground" />
           <p className="text-2xl font-bold text-foreground">{mesa.adults}</p>
           <p className="text-xs text-muted-foreground">Adultos</p>
+          <p className="text-[10px] text-primary font-medium">€{getAdultPrice().toFixed(2)}</p>
         </div>
         <div className="rounded-lg bg-muted/50 p-3 text-center">
-          <Baby className="mx-auto h-5 w-5 text-muted-foreground" />
-          <p className="text-2xl font-bold text-foreground">{mesa.children}</p>
-          <p className="text-xs text-muted-foreground">Crianças</p>
+          <Baby className="mx-auto h-5 w-5 text-warning" />
+          <p className="text-2xl font-bold text-foreground">{mesa.children2to6}</p>
+          <p className="text-xs text-muted-foreground">2–6 anos</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child2to6.toFixed(2)}</p>
+        </div>
+        <div className="rounded-lg bg-muted/50 p-3 text-center">
+          <Baby className="mx-auto h-5 w-5 text-warning" />
+          <p className="text-2xl font-bold text-foreground">{mesa.children7to12}</p>
+          <p className="text-xs text-muted-foreground">7–12 anos</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child7to12.toFixed(2)}</p>
         </div>
       </div>
 

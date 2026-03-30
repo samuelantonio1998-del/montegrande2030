@@ -65,6 +65,7 @@ export default function Inventario() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('entrada');
 
   // Scanner state
   const [scannerStep, setScannerStep] = useState<ScannerStep>('idle');

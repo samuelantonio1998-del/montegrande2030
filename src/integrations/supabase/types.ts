@@ -146,6 +146,7 @@ export type Database = {
           ativo: boolean
           categoria: string
           created_at: string
+          foto_url: string | null
           id: string
           nome: string
           porcoes: number
@@ -157,6 +158,7 @@ export type Database = {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          foto_url?: string | null
           id?: string
           nome: string
           porcoes?: number
@@ -168,6 +170,7 @@ export type Database = {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          foto_url?: string | null
           id?: string
           nome?: string
           porcoes?: number

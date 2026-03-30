@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard } from 'lucide-react';
-import { mockMesas, beverageMenu, type Mesa } from '@/lib/mock-data';
+import { mockMesas, beverageMenu, type Mesa, PRICING, getAdultPrice, calcMesaTotal } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 
 function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
   const [beverages, setBeverages] = useState(mesa.beverages);
-  const totalBeverages = beverages.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
+  const { coverTotal, beverageTotal, total } = calcMesaTotal({ ...mesa, beverages });
 
   const addBeverage = (name: string) => {
     const item = beverageMenu.find(b => b.name === name);
@@ -33,20 +33,30 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
   return (
     <div className="space-y-5">
       {/* Header info */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
             <Users className="h-4 w-4" />
             <span className="text-xs">Adultos</span>
           </div>
           <p className="text-2xl font-bold text-foreground">{mesa.adults}</p>
+          <p className="text-[10px] text-primary font-medium">€{getAdultPrice().toFixed(2)}</p>
         </div>
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
             <Baby className="h-4 w-4" />
-            <span className="text-xs">Crianças</span>
+            <span className="text-xs">2–6 anos</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{mesa.children}</p>
+          <p className="text-2xl font-bold text-foreground">{mesa.children2to6}</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child2to6.toFixed(2)}</p>
+        </div>
+        <div className="rounded-lg bg-muted/50 p-3 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
+            <Baby className="h-4 w-4" />
+            <span className="text-xs">7–12 anos</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{mesa.children7to12}</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child7to12.toFixed(2)}</p>
         </div>
       </div>
 
@@ -94,8 +104,8 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
               </div>
             ))}
             <div className="flex items-center justify-between border-t border-border pt-2">
-              <span className="text-sm font-semibold text-foreground">Total Bebidas</span>
-              <span className="text-base font-bold text-primary">€{totalBeverages.toFixed(2)}</span>
+              <span className="text-sm font-semibold text-foreground">Total</span>
+              <span className="text-base font-bold text-primary">€{total.toFixed(2)}</span>
             </div>
           </div>
         ) : (
@@ -106,7 +116,7 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
       {mesa.status === 'conta' && (
         <Button className="w-full gap-2" size="lg">
           <CreditCard className="h-4 w-4" />
-          Fechar Conta — €{totalBeverages.toFixed(2)}
+          Fechar Conta — €{total.toFixed(2)}
         </Button>
       )}
     </div>
@@ -117,7 +127,7 @@ export default function Mesas() {
   const [mesas] = useState(mockMesas);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
 
-  const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children, 0);
+  const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
   return (
@@ -162,10 +172,10 @@ export default function Mesas() {
               <Badge variant="outline" className={cn('mt-2 text-[10px] border-0', cfg.color, cfg.bg)}>
                 {cfg.label}
               </Badge>
-              {(mesa.adults > 0 || mesa.children > 0) && (
+              {(mesa.adults > 0 || mesa.children2to6 > 0 || mesa.children7to12 > 0) && (
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" />{mesa.adults}</span>
-                  {mesa.children > 0 && <span className="flex items-center gap-1"><Baby className="h-3 w-3" />{mesa.children}</span>}
+                  {(mesa.children2to6 + mesa.children7to12) > 0 && <span className="flex items-center gap-1"><Baby className="h-3 w-3" />{mesa.children2to6 + mesa.children7to12}</span>}
                 </div>
               )}
               {mesa.waiter && <p className="mt-1 text-xs text-muted-foreground">{mesa.waiter}</p>}

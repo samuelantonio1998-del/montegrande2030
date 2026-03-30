@@ -1,4 +1,4 @@
-import { ChefHat, Clock } from 'lucide-react';
+import { ChefHat, Clock, UtensilsCrossed } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import type { FichaComIngredientes } from '@/hooks/useFichasTecnicas';
@@ -28,13 +28,22 @@ export function FichaDetailDialog({
 
   return (
     <Dialog open={!!ficha} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-primary" />
-            {ficha.nome}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Photo header */}
+        {ficha.foto_url ? (
+          <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/9] overflow-hidden rounded-t-lg">
+            <img src={ficha.foto_url} alt={ficha.nome} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <h2 className="absolute bottom-3 left-4 text-lg font-display text-white">{ficha.nome}</h2>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ChefHat className="h-5 w-5 text-primary" />
+              {ficha.nome}
+            </DialogTitle>
+          </DialogHeader>
+        )}
 
         {/* Summary stats — matches Excel layout */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -81,6 +81,10 @@ export default function Inventario() {
 
   // Exit state
   const [showExit, setShowExit] = useState(false);
+
+  // History dialog
+  const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
 
   const fetchData = useCallback(async () => {

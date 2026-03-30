@@ -712,6 +712,7 @@ export default function Inventario() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nível</th>
                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Custo Médio</th>
                    <th className="px-4 py-3 w-10"></th>
+                 </tr>
               </thead>
               <tbody>
                 {filteredProdutos.map(p => {

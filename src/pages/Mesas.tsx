@@ -127,7 +127,7 @@ export default function Mesas() {
   const [mesas] = useState(mockMesas);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
 
-  const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children, 0);
+  const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
   return (

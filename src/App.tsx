@@ -16,6 +16,7 @@ import Mesas from "./pages/Mesas";
 import Previsao from "./pages/Previsao";
 import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
+import Fornecedores from "./pages/Fornecedores";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ function ProtectedRoutes() {
         <Route path="/mesas" element={<Mesas />} />
         <Route path="/producao" element={<Producao />} />
         <Route path="/desperdicio" element={<Desperdicio />} />
+        <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

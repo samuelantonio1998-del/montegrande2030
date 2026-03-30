@@ -104,8 +104,8 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
               </div>
             ))}
             <div className="flex items-center justify-between border-t border-border pt-2">
-              <span className="text-sm font-semibold text-foreground">Total Bebidas</span>
-              <span className="text-base font-bold text-primary">€{totalBeverages.toFixed(2)}</span>
+              <span className="text-sm font-semibold text-foreground">Total</span>
+              <span className="text-base font-bold text-primary">€{total.toFixed(2)}</span>
             </div>
           </div>
         ) : (

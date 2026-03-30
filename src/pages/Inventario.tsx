@@ -398,7 +398,7 @@ export default function Inventario() {
         </p>
       </div>
 
-      <Tabs defaultValue="entrada" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="entrada" className="flex items-center gap-2">
             <ArrowDownCircle className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
 
 type Produto = {
   id: string;
@@ -80,6 +81,10 @@ export default function Inventario() {
 
   // Exit state
   const [showExit, setShowExit] = useState(false);
+
+  // History dialog
+  const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
 
   const fetchData = useCallback(async () => {
@@ -705,17 +710,22 @@ export default function Inventario() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Produto</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Stock</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nível</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Custo Médio</th>
-                </tr>
+                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Custo Médio</th>
+                   <th className="px-4 py-3 w-10"></th>
+                 </tr>
               </thead>
               <tbody>
                 {filteredProdutos.map(p => {
                   const level = getStockLevel(p);
                   return (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                     <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => { setSelectedProduto(p); setHistoryOpen(true); }}>
                       <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-foreground">{p.nome}</p>
-                        <p className="text-xs text-muted-foreground">{p.categoria} · {p.sku || 'Sem SKU'}</p>
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                            <p className="text-xs text-muted-foreground">{p.categoria} · {p.sku || 'Sem SKU'}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -739,12 +749,15 @@ export default function Inventario() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</td>
+                      <td className="px-4 py-3">
+                        <History className="h-4 w-4 text-muted-foreground" />
+                      </td>
                     </tr>
                   );
                 })}
                 {filteredProdutos.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
                       {produtos.length === 0 ? 'Sem produtos. Use o scanner ou adicione manualmente.' : 'Nenhum resultado.'}
                     </td>
                   </tr>
@@ -813,6 +826,12 @@ export default function Inventario() {
           )}
         </TabsContent>
       </Tabs>
+
+      <ProductHistoryDialog
+        produto={selectedProduto}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
     </div>
   );
 }

@@ -152,30 +152,30 @@ export default function DashboardCozinha() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <BarChart3 className="h-3.5 w-3.5 text-primary" /> Produção Total
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
+            <BarChart3 className="h-3 w-3 text-primary" /> Produção Total
           </div>
-          <p className="text-xl font-bold text-foreground">{totalProduced.toFixed(0)}kg</p>
+          <p className="text-base font-bold text-foreground">{totalProduced.toFixed(0)}kg</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Trash2 className="h-3.5 w-3.5 text-destructive" /> Desperdício
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
+            <Trash2 className="h-3 w-3 text-destructive" /> Desperdício
           </div>
-          <p className="text-xl font-bold text-destructive">{totalWaste.toFixed(1)}kg</p>
+          <p className="text-base font-bold text-destructive">{totalWaste.toFixed(1)}kg</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-xl border border-border bg-card p-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Recycle className="h-3.5 w-3.5 text-success" /> Aproveitamento
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
+            <Recycle className="h-3 w-3 text-success" /> Aproveitamento
           </div>
-          <p className="text-xl font-bold text-success">{totalReused.toFixed(1)}kg</p>
+          <p className="text-base font-bold text-success">{totalReused.toFixed(1)}kg</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-card p-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Euro className="h-3.5 w-3.5" /> Perdas vs Poupança
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
+            <Euro className="h-3 w-3" /> Perdas vs Poupança
           </div>
-          <p className={cn('text-xl font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
+          <p className={cn('text-base font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
         </motion.div>
       </div>
 

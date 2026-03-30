@@ -234,6 +234,29 @@ export default function Inventario() {
           });
         }
       } else {
+        // Double-check: try to find existing product by SKU or name+supplier before creating
+        let existingProd = item.sku
+          ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase())
+          : null;
+        if (!existingProd && fornecedorId) {
+          existingProd = produtos.find(p => p.nome.toLowerCase() === item.nome.toLowerCase() && p.fornecedor_id === fornecedorId);
+        }
+
+        if (existingProd) {
+          // Found a match - update instead of creating duplicate
+          const newStock = existingProd.stock_atual + item.quantidade;
+          const totalCost = existingProd.custo_medio * existingProd.stock_atual + item.custo_unitario * item.quantidade;
+          const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
+          const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
+          if (item.sku && !existingProd.sku) updatePayload.sku = item.sku;
+          if (fornecedorId && !existingProd.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
+          await supabase.from('produtos').update(updatePayload).eq('id', existingProd.id);
+          await supabase.from('movimentacoes').insert({
+            produto_id: existingProd.id, tipo: 'entrada', quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            fornecedor_id: fornecedorId,
+          });
+        } else {
         const { data: newProd } = await supabase.from('produtos').insert({
           nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
           custo_medio: item.custo_unitario, sku: item.sku,

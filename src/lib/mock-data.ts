@@ -226,16 +226,16 @@ export const mockFichasTecnicas: FichaTecnica[] = [
 ];
 
 export const mockMesas: Mesa[] = [
-  { id: '1', number: 1, status: 'ocupada', adults: 2, children: 0, waiter: 'João', openedAt: '2026-03-25T12:30:00', beverages: [{ name: 'Cerveja', quantity: 2, unitPrice: 2.50 }, { name: 'Água', quantity: 1, unitPrice: 1.50 }] },
-  { id: '2', number: 2, status: 'ocupada', adults: 3, children: 1, waiter: 'Maria', openedAt: '2026-03-25T12:45:00', beverages: [{ name: 'Vinho Tinto', quantity: 1, unitPrice: 12.00 }, { name: 'Sumo Laranja', quantity: 1, unitPrice: 2.80 }] },
-  { id: '3', number: 3, status: 'livre', adults: 0, children: 0, waiter: '', openedAt: null, beverages: [] },
-  { id: '4', number: 4, status: 'reservada', adults: 0, children: 0, waiter: '', openedAt: null, beverages: [] },
-  { id: '5', number: 5, status: 'conta', adults: 4, children: 2, waiter: 'Pedro', openedAt: '2026-03-25T12:15:00', beverages: [{ name: 'Cerveja', quantity: 4, unitPrice: 2.50 }, { name: 'Coca-Cola', quantity: 2, unitPrice: 2.00 }] },
-  { id: '6', number: 6, status: 'livre', adults: 0, children: 0, waiter: '', openedAt: null, beverages: [] },
-  { id: '7', number: 7, status: 'ocupada', adults: 2, children: 1, waiter: 'Ana', openedAt: '2026-03-25T13:00:00', beverages: [{ name: 'Água', quantity: 2, unitPrice: 1.50 }] },
-  { id: '8', number: 8, status: 'livre', adults: 0, children: 0, waiter: '', openedAt: null, beverages: [] },
-  { id: '9', number: 9, status: 'ocupada', adults: 6, children: 0, waiter: 'Carlos', openedAt: '2026-03-25T12:50:00', beverages: [{ name: 'Vinho Tinto', quantity: 2, unitPrice: 12.00 }, { name: 'Cerveja', quantity: 3, unitPrice: 2.50 }] },
-  { id: '10', number: 10, status: 'livre', adults: 0, children: 0, waiter: '', openedAt: null, beverages: [] },
+  { id: '1', number: 1, status: 'ocupada', adults: 2, children: 0, children2to6: 0, children7to12: 0, waiter: 'João', openedAt: '2026-03-25T12:30:00', beverages: [{ name: 'Cerveja', quantity: 2, unitPrice: 2.50 }, { name: 'Água', quantity: 1, unitPrice: 1.50 }] },
+  { id: '2', number: 2, status: 'ocupada', adults: 3, children: 1, children2to6: 1, children7to12: 0, waiter: 'Maria', openedAt: '2026-03-25T12:45:00', beverages: [{ name: 'Vinho Tinto', quantity: 1, unitPrice: 12.00 }, { name: 'Sumo Laranja', quantity: 1, unitPrice: 2.80 }] },
+  { id: '3', number: 3, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, waiter: '', openedAt: null, beverages: [] },
+  { id: '4', number: 4, status: 'reservada', adults: 0, children: 0, children2to6: 0, children7to12: 0, waiter: '', openedAt: null, beverages: [] },
+  { id: '5', number: 5, status: 'conta', adults: 4, children: 2, children2to6: 1, children7to12: 1, waiter: 'Pedro', openedAt: '2026-03-25T12:15:00', beverages: [{ name: 'Cerveja', quantity: 4, unitPrice: 2.50 }, { name: 'Coca-Cola', quantity: 2, unitPrice: 2.00 }] },
+  { id: '6', number: 6, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, waiter: '', openedAt: null, beverages: [] },
+  { id: '7', number: 7, status: 'ocupada', adults: 2, children: 1, children2to6: 0, children7to12: 1, waiter: 'Ana', openedAt: '2026-03-25T13:00:00', beverages: [{ name: 'Água', quantity: 2, unitPrice: 1.50 }] },
+  { id: '8', number: 8, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, waiter: '', openedAt: null, beverages: [] },
+  { id: '9', number: 9, status: 'ocupada', adults: 6, children: 0, children2to6: 0, children7to12: 0, waiter: 'Carlos', openedAt: '2026-03-25T12:50:00', beverages: [{ name: 'Vinho Tinto', quantity: 2, unitPrice: 12.00 }, { name: 'Cerveja', quantity: 3, unitPrice: 2.50 }] },
+  { id: '10', number: 10, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, waiter: '', openedAt: null, beverages: [] },
 ];
 
 export const mockHistorical: HistoricalDay[] = [

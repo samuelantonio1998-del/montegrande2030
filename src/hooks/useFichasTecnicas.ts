@@ -116,6 +116,59 @@ export function useCreateFicha() {
   });
 }
 
+export function useUpdateFicha() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      id: string;
+      nome: string;
+      categoria: string;
+      porcoes: number;
+      preco_venda: number;
+      tempo_preparacao: number;
+      foto_url?: string | null;
+      ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
+    }) => {
+      const { error } = await supabase
+        .from('fichas_tecnicas')
+        .update({
+          nome: data.nome,
+          categoria: data.categoria,
+          porcoes: data.porcoes,
+          preco_venda: data.preco_venda,
+          tempo_preparacao: data.tempo_preparacao,
+          foto_url: data.foto_url || null,
+        })
+        .eq('id', data.id);
+      if (error) throw error;
+
+      // Delete existing ingredients and re-insert
+      await supabase.from('ficha_ingredientes').delete().eq('ficha_id', data.id);
+
+      if (data.ingredientes.length > 0) {
+        const { error: ingError } = await supabase
+          .from('ficha_ingredientes')
+          .insert(
+            data.ingredientes.map(ing => ({
+              ficha_id: data.id,
+              produto_id: ing.produto_id,
+              quantidade: ing.quantidade,
+              unidade: ing.unidade,
+            }))
+          );
+        if (ingError) throw ingError;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
+      toast({ title: 'Ficha atualizada com sucesso' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao atualizar ficha', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 export function useDeleteFicha() {
   const qc = useQueryClient();
   return useMutation({

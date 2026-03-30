@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Trash2, Save, Upload, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateFicha, useProdutos } from '@/hooks/useFichasTecnicas';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 const categorias = [
   { value: 'entrada', label: 'Entrada' },
@@ -24,12 +26,16 @@ type IngredienteLine = {
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
   const createFicha = useCreateFicha();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState('');
   const [categoria, setCategoria] = useState('prato_principal');
   const [porcoes, setPorcoes] = useState(1);
   const [precoVenda, setPrecoVenda] = useState(0);
   const [tempoPreparacao, setTempoPreparacao] = useState(0);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [ingredientes, setIngredientes] = useState<IngredienteLine[]>([
     { produto_id: '', quantidade: 0, unidade: 'kg' },
   ]);
@@ -42,6 +48,27 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
     setIngredientes(updated);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setFotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!fotoFile) return null;
+    setUploading(true);
+    const ext = fotoFile.name.split('.').pop();
+    const path = `fichas/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('pratos').upload(path, fotoFile);
+    setUploading(false);
+    if (error) return null;
+    const { data: urlData } = supabase.storage.from('pratos').getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const totalCost = ingredientes.reduce((sum, ing) => {
     const prod = produtos.find(p => p.id === ing.produto_id);
     return sum + (prod ? ing.quantidade * prod.custo_medio : 0);
@@ -50,7 +77,8 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
   const margem = precoVenda > 0 ? ((precoVenda - costPerDose) / precoVenda) * 100 : 0;
   const racio = precoVenda > 0 ? (costPerDose / precoVenda) * 100 : 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const fotoUrl = await uploadPhoto();
     const validIngredients = ingredientes.filter(i => i.produto_id && i.quantidade > 0);
     createFicha.mutate(
       {
@@ -59,6 +87,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
         porcoes,
         preco_venda: precoVenda,
         tempo_preparacao: tempoPreparacao,
+        foto_url: fotoUrl,
         ingredientes: validIngredients,
       },
       {
@@ -69,6 +98,8 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
           setPorcoes(1);
           setPrecoVenda(0);
           setTempoPreparacao(0);
+          setFotoPreview(null);
+          setFotoFile(null);
           setIngredientes([{ produto_id: '', quantidade: 0, unidade: 'kg' }]);
         },
       }
@@ -83,34 +114,59 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Header fields — matches Excel */}
+          {/* Photo + name row */}
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                'relative shrink-0 w-24 h-24 rounded-xl border-2 border-dashed border-border overflow-hidden',
+                'flex items-center justify-center bg-muted/30 hover:bg-muted/50 transition-colors group'
+              )}
+            >
+              {fotoPreview ? (
+                <img src={fotoPreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-center">
+                  <ImageIcon className="h-6 w-6 mx-auto text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <span className="text-[10px] text-muted-foreground mt-1 block">Foto</span>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            </button>
+            <div className="flex-1 space-y-2">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Designação do Produto</label>
+                <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Bacalhau à Brás" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+                  <Select value={categoria} onValueChange={setCategoria}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {categorias.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Nº de Doses (Recipiente)</label>
+                  <Select value={String(porcoes)} onValueChange={v => setPorcoes(Number(v))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(recipientCapacity).map(([key, val]) => (
+                        <SelectItem key={key} value={String(val.capacityKg)}>
+                          {val.label} ({val.capacityKg}kg)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">Designação do Produto</label>
-              <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Bacalhau à Brás" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Categoria</label>
-              <Select value={categoria} onValueChange={setCategoria}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {categorias.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Nº de Doses (Recipiente)</label>
-              <Select value={String(porcoes)} onValueChange={v => setPorcoes(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(recipientCapacity).map(([key, val]) => (
-                    <SelectItem key={key} value={String(val.capacityKg)}>
-                      {val.label} ({val.capacityKg}kg)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Preço de Venda (€)</label>
               <Input type="number" step="0.01" min={0} value={precoVenda} onChange={e => setPrecoVenda(Number(e.target.value))} />
@@ -121,7 +177,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
 
-          {/* Ingredients — matches Excel table */}
+          {/* Ingredients */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-foreground">Ingredientes</h4>
@@ -180,7 +236,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
 
-          {/* Summary row — matches Excel footer */}
+          {/* Summary */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-lg bg-muted/50 p-3 text-center">
               <p className="text-xs text-muted-foreground">Custo Total</p>
@@ -204,9 +260,9 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
 
-          <Button className="w-full gap-2" onClick={handleSubmit} disabled={!nome || createFicha.isPending}>
+          <Button className="w-full gap-2" onClick={handleSubmit} disabled={!nome || createFicha.isPending || uploading}>
             <Save className="h-4 w-4" />
-            {createFicha.isPending ? 'A guardar...' : 'Guardar Ficha Técnica'}
+            {uploading ? 'A enviar foto...' : createFicha.isPending ? 'A guardar...' : 'Guardar Ficha Técnica'}
           </Button>
         </div>
       </DialogContent>

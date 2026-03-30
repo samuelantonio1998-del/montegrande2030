@@ -9,6 +9,7 @@ export type FichaTecnicaDB = {
   porcoes: number;
   preco_venda: number;
   tempo_preparacao: number | null;
+  foto_url: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;

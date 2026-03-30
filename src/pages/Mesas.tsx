@@ -75,7 +75,7 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const addBeverage = (name: string) => {
-    const item = beverageMenu.find(b => b.name === name);
+    const item = beverageMenuFlat.find(b => b.name === name);
     if (!item) return;
     const existing = mesa.beverages.find(b => b.name === name);
     if (existing) {

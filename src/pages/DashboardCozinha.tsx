@@ -138,22 +138,22 @@ export default function DashboardCozinha() {
       {/* Header with inline forecast */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <h1 className="text-2xl font-display text-foreground">Cozinha</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
-              <span className="font-medium text-foreground">{currentPax}</span>
+            <div className="flex items-center gap-3 text-base text-muted-foreground">
+              <Users className="h-5 w-5" />
+              <span className="text-2xl font-bold text-foreground">{currentPax}</span>
               <span>em sala</span>
               <span className="text-muted-foreground/50">·</span>
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              <TrendingUp className="h-4 w-4 text-primary" />
               <span>prev. {avgClients} pax</span>
             </div>
           </div>
           <p className="text-sm text-muted-foreground capitalize">{dayLabel}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowSetup(true)}>
-            <CalendarPlus className="h-3.5 w-3.5" /> Definir Ementa
+          <Button variant="outline" size="lg" className="gap-2 text-sm font-semibold" onClick={() => setShowSetup(true)}>
+            <CalendarPlus className="h-5 w-5" /> Definir Ementa
           </Button>
           <Button variant="ghost" size="icon" onClick={logout}>
             <LogOut className="h-5 w-5" />

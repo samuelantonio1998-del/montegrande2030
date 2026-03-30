@@ -143,34 +143,59 @@ function QuickBeveragePanel({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa
   );
 }
 
-function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number, children: number) => void }) {
+function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number, c2to6: number, c7to12: number) => void }) {
   const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
+  const [c2to6, setC2to6] = useState(0);
+  const [c7to12, setC7to12] = useState(0);
+
+  const adultPrice = getAdultPrice();
+  const previewTotal = adults * adultPrice + c2to6 * PRICING.child2to6 + c7to12 * PRICING.child7to12;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="text-center space-y-3">
-          <Users className="mx-auto h-8 w-8 text-primary" />
+      {/* Pricing info */}
+      <div className="text-center text-xs text-muted-foreground">
+        {isWeekdayLunch() ? 'Almoço dias úteis' : 'Fim-de-semana / jantar / feriado'} — Adulto €{adultPrice.toFixed(2)}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {/* Adults */}
+        <div className="text-center space-y-2">
+          <Users className="mx-auto h-7 w-7 text-primary" />
           <p className="text-sm font-medium text-foreground">Adultos</p>
-          <div className="flex items-center justify-center gap-4">
-            <button onClick={() => setAdults(Math.max(1, adults - 1))} className="rounded-full h-10 w-10 bg-muted flex items-center justify-center active:scale-95"><Minus className="h-5 w-5" /></button>
-            <span className="text-3xl font-bold text-foreground w-8 text-center">{adults}</span>
-            <button onClick={() => setAdults(adults + 1)} className="rounded-full h-10 w-10 bg-primary text-primary-foreground flex items-center justify-center active:scale-95"><Plus className="h-5 w-5" /></button>
+          <p className="text-[10px] text-muted-foreground">€{adultPrice.toFixed(2)}</p>
+          <div className="flex items-center justify-center gap-2">
+            <button onClick={() => setAdults(Math.max(0, adults - 1))} className="rounded-full h-9 w-9 bg-muted flex items-center justify-center active:scale-95"><Minus className="h-4 w-4" /></button>
+            <span className="text-2xl font-bold text-foreground w-7 text-center">{adults}</span>
+            <button onClick={() => setAdults(adults + 1)} className="rounded-full h-9 w-9 bg-primary text-primary-foreground flex items-center justify-center active:scale-95"><Plus className="h-4 w-4" /></button>
           </div>
         </div>
-        <div className="text-center space-y-3">
-          <Baby className="mx-auto h-8 w-8 text-warning" />
-          <p className="text-sm font-medium text-foreground">Crianças</p>
-          <div className="flex items-center justify-center gap-4">
-            <button onClick={() => setChildren(Math.max(0, children - 1))} className="rounded-full h-10 w-10 bg-muted flex items-center justify-center active:scale-95"><Minus className="h-5 w-5" /></button>
-            <span className="text-3xl font-bold text-foreground w-8 text-center">{children}</span>
-            <button onClick={() => setChildren(children + 1)} className="rounded-full h-10 w-10 bg-primary text-primary-foreground flex items-center justify-center active:scale-95"><Plus className="h-5 w-5" /></button>
+        {/* Children 2-6 */}
+        <div className="text-center space-y-2">
+          <Baby className="mx-auto h-7 w-7 text-warning" />
+          <p className="text-sm font-medium text-foreground">2–6 anos</p>
+          <p className="text-[10px] text-muted-foreground">€{PRICING.child2to6.toFixed(2)}</p>
+          <div className="flex items-center justify-center gap-2">
+            <button onClick={() => setC2to6(Math.max(0, c2to6 - 1))} className="rounded-full h-9 w-9 bg-muted flex items-center justify-center active:scale-95"><Minus className="h-4 w-4" /></button>
+            <span className="text-2xl font-bold text-foreground w-7 text-center">{c2to6}</span>
+            <button onClick={() => setC2to6(c2to6 + 1)} className="rounded-full h-9 w-9 bg-primary text-primary-foreground flex items-center justify-center active:scale-95"><Plus className="h-4 w-4" /></button>
+          </div>
+        </div>
+        {/* Children 7-12 */}
+        <div className="text-center space-y-2">
+          <Baby className="mx-auto h-7 w-7 text-warning" />
+          <p className="text-sm font-medium text-foreground">7–12 anos</p>
+          <p className="text-[10px] text-muted-foreground">€{PRICING.child7to12.toFixed(2)}</p>
+          <div className="flex items-center justify-center gap-2">
+            <button onClick={() => setC7to12(Math.max(0, c7to12 - 1))} className="rounded-full h-9 w-9 bg-muted flex items-center justify-center active:scale-95"><Minus className="h-4 w-4" /></button>
+            <span className="text-2xl font-bold text-foreground w-7 text-center">{c7to12}</span>
+            <button onClick={() => setC7to12(c7to12 + 1)} className="rounded-full h-9 w-9 bg-primary text-primary-foreground flex items-center justify-center active:scale-95"><Plus className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
-      <Button className="w-full" size="lg" onClick={() => onOpen(adults, children)}>
-        Abrir Mesa — {adults} adulto(s), {children} criança(s)
+
+      <Button className="w-full" size="lg" onClick={() => onOpen(adults, c2to6, c7to12)}>
+        Abrir Mesa — €{previewTotal.toFixed(2)}
       </Button>
     </div>
   );

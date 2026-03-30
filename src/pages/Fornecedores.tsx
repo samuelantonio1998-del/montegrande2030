@@ -280,7 +280,7 @@ export default function Fornecedores() {
                 {selected.dia_encomenda && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" />Dia Encomenda</p>
-                    <p className="text-sm font-medium text-foreground mt-1">{selected.dia_encomenda}</p>
+                    <p className="text-sm font-medium text-foreground mt-1 capitalize">{selected.dia_encomenda}</p>
                   </div>
                 )}
                 {selected.prazo_entrega_dias && (

@@ -116,7 +116,7 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
       {mesa.status === 'conta' && (
         <Button className="w-full gap-2" size="lg">
           <CreditCard className="h-4 w-4" />
-          Fechar Conta — €{totalBeverages.toFixed(2)}
+          Fechar Conta — €{total.toFixed(2)}
         </Button>
       )}
     </div>

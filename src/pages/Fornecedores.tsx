@@ -228,7 +228,16 @@ export default function Fornecedores() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Dia de Encomenda</label>
-                  <Input value={form.dia_encomenda} onChange={e => setForm(f => ({ ...f, dia_encomenda: e.target.value }))} placeholder="ex: Segunda" />
+                  <Select value={form.dia_encomenda} onValueChange={v => setForm(f => ({ ...f, dia_encomenda: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar dia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIAS_SEMANA.map(d => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Prazo Entrega (dias)</label>

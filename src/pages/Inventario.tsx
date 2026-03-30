@@ -826,6 +826,12 @@ export default function Inventario() {
           )}
         </TabsContent>
       </Tabs>
+
+      <ProductHistoryDialog
+        produto={selectedProduto}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
     </div>
   );
 }

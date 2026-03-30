@@ -5,9 +5,20 @@ import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+const DIAS_SEMANA = [
+  { value: 'domingo', label: 'Domingo' },
+  { value: 'segunda', label: 'Segunda' },
+  { value: 'terca', label: 'Terça' },
+  { value: 'quarta', label: 'Quarta' },
+  { value: 'quinta', label: 'Quinta' },
+  { value: 'sexta', label: 'Sexta' },
+  { value: 'sabado', label: 'Sábado' },
+];
 
 type Fornecedor = {
   id: string;

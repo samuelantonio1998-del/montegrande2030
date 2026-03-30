@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus } from 'lucide-react';
-import { mockMesas, beverageMenu, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
+import { mockMesas, beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },
@@ -75,7 +75,7 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const addBeverage = (name: string) => {
-    const item = beverageMenu.find(b => b.name === name);
+    const item = beverageMenuFlat.find(b => b.name === name);
     if (!item) return;
     const existing = mesa.beverages.find(b => b.name === name);
     if (existing) {
@@ -150,11 +150,16 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
             <SelectTrigger className="w-[160px] h-8 text-xs">
               <SelectValue placeholder="+ Adicionar" />
             </SelectTrigger>
-            <SelectContent>
-              {beverageMenu.map(b => (
-                <SelectItem key={b.name} value={b.name}>
-                  {b.name} — €{b.price.toFixed(2)}
-                </SelectItem>
+            <SelectContent className="max-h-60">
+              {beverageMenu.map(cat => (
+                <SelectGroup key={cat.category}>
+                  <SelectLabel className="text-xs font-semibold text-primary">{cat.category}</SelectLabel>
+                  {cat.items.map(b => (
+                    <SelectItem key={b.name} value={b.name} className="text-xs">
+                      {b.name} — €{b.price.toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

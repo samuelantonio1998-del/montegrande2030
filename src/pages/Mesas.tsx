@@ -33,20 +33,30 @@ function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
   return (
     <div className="space-y-5">
       {/* Header info */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
             <Users className="h-4 w-4" />
             <span className="text-xs">Adultos</span>
           </div>
           <p className="text-2xl font-bold text-foreground">{mesa.adults}</p>
+          <p className="text-[10px] text-primary font-medium">€{getAdultPrice().toFixed(2)}</p>
         </div>
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
             <Baby className="h-4 w-4" />
-            <span className="text-xs">Crianças</span>
+            <span className="text-xs">2–6 anos</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{mesa.children}</p>
+          <p className="text-2xl font-bold text-foreground">{mesa.children2to6}</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child2to6.toFixed(2)}</p>
+        </div>
+        <div className="rounded-lg bg-muted/50 p-3 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
+            <Baby className="h-4 w-4" />
+            <span className="text-xs">7–12 anos</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{mesa.children7to12}</p>
+          <p className="text-[10px] text-primary font-medium">€{PRICING.child7to12.toFixed(2)}</p>
         </div>
       </div>
 

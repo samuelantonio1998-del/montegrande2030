@@ -269,6 +269,7 @@ export default function Inventario() {
             fornecedor_id: fornecedorId,
           });
         }
+        }
       }
     }
     toast({ title: `${selected.length} itens registados com sucesso` });

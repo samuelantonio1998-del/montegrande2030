@@ -38,11 +38,11 @@ serve(async (req) => {
 - quantidade: quantity (number)
 - unidade: unit of measure - kg, L, un, garrafa, caixa, etc. (string)
 - custo_unitario: unit cost in euros (number)
-- fornecedor: supplier name if visible (string or null)
-- sku: product code/SKU if visible (string or null)
+- fornecedor: supplier name if visible on the invoice header/footer (string or null)
+- sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available - look for codes like "REF:", "Art.", "Cod.", numbers at the start of each line, or any alphanumeric identifier associated with each product.
 
 Only return the JSON array, no other text. If you cannot read the invoice, return an empty array [].
-Always use Portuguese product names when possible.`,
+Always use Portuguese product names when possible. Pay special attention to product codes/references as they are crucial for inventory matching.`,
           },
           {
             role: "user",

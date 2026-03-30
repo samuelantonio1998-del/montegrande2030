@@ -75,7 +75,7 @@ Always use Portuguese product names when possible. Pay special attention to prod
                         nome: { type: "string", description: "Product name" },
                         quantidade: { type: "number", description: "Quantity" },
                         unidade: { type: "string", description: "Unit (kg, L, un, garrafa, caixa)" },
-                        custo_unitario: { type: "number", description: "Unit cost in euros" },
+                        custo_unitario: { type: "number", description: "NET unit cost in euros WITHOUT VAT/IVA" },
                         fornecedor: { type: "string", description: "Supplier name if visible" },
                         sku: { type: "string", description: "Product code if visible" },
                       },

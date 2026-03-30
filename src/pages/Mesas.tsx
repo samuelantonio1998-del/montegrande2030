@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { printReceipt } from '@/components/mesas/ReceiptPrint';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },

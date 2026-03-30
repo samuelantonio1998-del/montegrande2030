@@ -723,12 +723,24 @@ export default function Inventario() {
         {/* ===== SAÍDAS DE STOCK ===== */}
         <TabsContent value="saidas" className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => { setShowExit(true); setExitForm(f => ({ ...f, tipo: 'saida' })); }}>
-              <ArrowUpCircle className="h-4 w-4 mr-2" />
-              Saída por Unidade
+            <Button
+              size="lg"
+              className="flex items-center gap-3 h-auto py-4 px-6"
+              onClick={() => { setShowExit(true); setExitForm(f => ({ ...f, tipo: 'saida' })); }}
+            >
+              <ArrowUpCircle className="h-6 w-6" />
+              <div className="text-left">
+                <p className="font-semibold">Saída por Unidade</p>
+                <p className="text-xs opacity-80">Registo de saída de stock</p>
+              </div>
             </Button>
-            <Button variant="outline" onClick={() => { setShowExit(true); setExitForm(f => ({ ...f, tipo: 'quebra' })); }}>
-              <Trash2 className="h-4 w-4 mr-2" />
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-auto py-4 px-6"
+              onClick={() => { setShowExit(true); setExitForm(f => ({ ...f, tipo: 'quebra' })); }}
+            >
+              <Trash2 className="h-5 w-5 mr-2" />
               Desperdício / Estrago
             </Button>
           </div>

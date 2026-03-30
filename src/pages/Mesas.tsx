@@ -150,11 +150,16 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
             <SelectTrigger className="w-[160px] h-8 text-xs">
               <SelectValue placeholder="+ Adicionar" />
             </SelectTrigger>
-            <SelectContent>
-              {beverageMenu.map(b => (
-                <SelectItem key={b.name} value={b.name}>
-                  {b.name} — €{b.price.toFixed(2)}
-                </SelectItem>
+            <SelectContent className="max-h-60">
+              {beverageMenu.map(cat => (
+                <SelectGroup key={cat.category}>
+                  <SelectLabel className="text-xs font-semibold text-primary">{cat.category}</SelectLabel>
+                  {cat.items.map(b => (
+                    <SelectItem key={b.name} value={b.name} className="text-xs">
+                      {b.name} — €{b.price.toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

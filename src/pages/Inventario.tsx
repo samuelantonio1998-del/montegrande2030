@@ -810,7 +810,7 @@ export default function Inventario() {
                       {produtos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome} ({p.stock_atual}{p.unidade})</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Input type="number" placeholder="Quantidade" value={exitForm.quantidade} onChange={e => setExitForm(f => ({ ...f, quantidade: e.target.value }))} />
+                  <Input type="number" placeholder={`Quantidade (${produtos.find(p => p.id === exitForm.produto_id)?.unidade || 'un'})`} value={exitForm.quantidade} onChange={e => setExitForm(f => ({ ...f, quantidade: e.target.value }))} />
                   <Input placeholder="Motivo (opcional)" value={exitForm.motivo} onChange={e => setExitForm(f => ({ ...f, motivo: e.target.value }))} />
                 </div>
                 <Button

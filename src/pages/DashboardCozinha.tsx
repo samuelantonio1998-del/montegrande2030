@@ -301,6 +301,7 @@ export default function DashboardCozinha() {
         existingItemIds={existingItemIds}
         onConfirm={handleBulkAdd}
         date={today}
+        userName={user?.name || ''}
       />
     </div>
   );

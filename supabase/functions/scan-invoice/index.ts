@@ -37,12 +37,12 @@ serve(async (req) => {
 - nome: product name (string)
 - quantidade: quantity (number)
 - unidade: unit of measure - kg, L, un, garrafa, caixa, etc. (string)
-- custo_unitario: unit cost in euros (number)
-- fornecedor: supplier name if visible on the invoice header/footer (string or null)
+- custo_unitario: NET unit cost in euros WITHOUT VAT/IVA (number). CRITICAL: Always use the value BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
+- fornecedor: supplier name if visible on the invoice header/footer (string or null). IMPORTANT: Always extract the supplier/company name from the invoice header, logo, or footer.
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available - look for codes like "REF:", "Art.", "Cod.", numbers at the start of each line, or any alphanumeric identifier associated with each product.
 
 Only return the JSON array, no other text. If you cannot read the invoice, return an empty array [].
-Always use Portuguese product names when possible. Pay special attention to product codes/references as they are crucial for inventory matching.`,
+Always use Portuguese product names when possible. Pay special attention to product codes/references and supplier identification as they are crucial for inventory matching.`,
           },
           {
             role: "user",
@@ -75,7 +75,7 @@ Always use Portuguese product names when possible. Pay special attention to prod
                         nome: { type: "string", description: "Product name" },
                         quantidade: { type: "number", description: "Quantity" },
                         unidade: { type: "string", description: "Unit (kg, L, un, garrafa, caixa)" },
-                        custo_unitario: { type: "number", description: "Unit cost in euros" },
+                        custo_unitario: { type: "number", description: "NET unit cost in euros WITHOUT VAT/IVA" },
                         fornecedor: { type: "string", description: "Supplier name if visible" },
                         sku: { type: "string", description: "Product code if visible" },
                       },

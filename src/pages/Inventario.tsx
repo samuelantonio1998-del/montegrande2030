@@ -330,10 +330,51 @@ export default function Inventario() {
     fetchData();
   };
 
-  const handleOrder = (fornecedorId: string, items: Produto[]) => {
+  const handleOrder = async (fornecedorId: string, items: Produto[]) => {
     const forn = fornecedores.find(f => f.id === fornecedorId);
-    const itemList = items.map(p => `${p.stock_maximo - p.stock_atual}${p.unidade} ${p.nome}`).join(', ');
-    toast({ title: 'Encomenda gerada', description: `${forn?.nome || 'Fornecedor'}: ${itemList}` });
+    const fornFull = forn ? await supabase.from('fornecedores').select('*').eq('id', forn.id).single() : null;
+    const orderItems = items.map(p => {
+      const qty = Math.min(p.stock_maximo, Math.max(p.stock_minimo, p.stock_maximo)) - p.stock_atual;
+      return { nome: p.nome, quantidade: Math.max(0, Math.round(qty * 100) / 100), unidade: p.unidade };
+    }).filter(i => i.quantidade > 0);
+
+    // Build clipboard text
+    const clipboardText = [
+      `ENCOMENDA — ${forn?.nome || 'Fornecedor'}`,
+      `Data: ${new Date().toLocaleDateString('pt-PT')}`,
+      '',
+      ...orderItems.map(i => `• ${i.quantidade}${i.unidade} ${i.nome}`),
+      '',
+      'Quinta Monte Grande',
+    ].join('\n');
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(clipboardText);
+      toast({ title: 'Encomenda copiada', description: 'Texto copiado para a área de transferência' });
+    } catch {
+      toast({ title: 'Encomenda gerada', description: clipboardText });
+    }
+
+    // Send email if supplier has email
+    const fornEmail = fornFull?.data?.email;
+    if (fornEmail) {
+      const orderId = crypto.randomUUID();
+      await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'supplier-order',
+          recipientEmail: fornEmail,
+          idempotencyKey: `order-${orderId}`,
+          templateData: {
+            fornecedorNome: forn?.nome,
+            items: orderItems,
+          },
+        },
+      });
+      toast({ title: 'Email enviado', description: `Encomenda enviada para ${fornEmail}` });
+    } else {
+      toast({ title: 'Sem email', description: 'Fornecedor sem email — use o texto copiado', variant: 'destructive' });
+    }
   };
 
   if (loading) {

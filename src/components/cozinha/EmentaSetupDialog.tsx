@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, Plus, Search, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { useEmentaDiaria, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
 
 type BuffetItemRow = {
   id: string;
@@ -23,7 +22,7 @@ interface EmentaSetupDialogProps {
   onOpenChange: (open: boolean) => void;
   allItems: BuffetItemRow[];
   existingItemIds: Set<string>;
-  onConfirm: (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], date: Date) => void;
+  onConfirm: (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => void;
   date: Date;
   userName?: string;
 }
@@ -34,33 +33,24 @@ const ZONE_LIMITS: Record<string, { label: string; max: number }> = {
   sobremesas: { label: 'Sobremesas', max: 10 },
 };
 
-type ViewMode = 'calendar' | 'items';
+type Step = 'items' | 'dates';
 
-export default function EmentaSetupDialog({ open, onOpenChange, allItems, existingItemIds: _existingItemIds, onConfirm, date: initialDate, userName }: EmentaSetupDialogProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+export default function EmentaSetupDialog({ open, onOpenChange, allItems, existingItemIds, onConfirm, date: initialDate, userName }: EmentaSetupDialogProps) {
+  const [step, setStep] = useState<Step>('items');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('entradas');
   const [calendarMonth, setCalendarMonth] = useState<Date>(initialDate);
 
-  // Fetch ementa for the selected date
-  const { data: selectedDateEmenta = [] } = useEmentaDiaria(selectedDate);
-  const bulkAdd = useBulkAddEmenta();
-
-  const existingItemIdsForDate = useMemo(
-    () => new Set(selectedDateEmenta.map(e => e.buffet_item_id)),
-    [selectedDateEmenta]
-  );
-
   const filteredItems = useMemo(() => {
     return allItems
-      .filter(i => i.zona === tab && i.ativo && !existingItemIdsForDate.has(i.id))
+      .filter(i => i.zona === tab && i.ativo)
       .filter(i => !search || i.nome.toLowerCase().includes(search.toLowerCase()));
-  }, [allItems, tab, search, existingItemIdsForDate]);
+  }, [allItems, tab, search]);
 
   const selectedByZone = (zona: string) => {
-    return allItems.filter(i => i.zona === zona && (selected.has(i.id) || existingItemIdsForDate.has(i.id))).length;
+    return allItems.filter(i => i.zona === zona && selected.has(i.id)).length;
   };
 
   const toggleItem = (id: string) => {
@@ -80,81 +70,74 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
     });
   };
 
+  const toggleDate = (date: Date | undefined) => {
+    if (!date) return;
+    setSelectedDates(prev => {
+      const exists = prev.find(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
+      if (exists) {
+        return prev.filter(d => format(d, 'yyyy-MM-dd') !== format(date, 'yyyy-MM-dd'));
+      }
+      return [...prev, date];
+    });
+  };
+
   const handleConfirm = () => {
+    if (selectedDates.length === 0 || selected.size === 0) return;
     const items = Array.from(selected).map(id => ({
       buffet_item_id: id,
       quantidade_prevista: 3,
       recipiente_sugerido: 'couvete_media',
     }));
-    onConfirm(items, selectedDate);
-    setSelected(new Set());
-    setViewMode('calendar');
+    onConfirm(items, selectedDates);
+    resetState();
+    onOpenChange(false);
   };
 
-  const handleSelectDate = (date: Date | undefined) => {
-    if (!date) return;
-    setSelectedDate(date);
+  const resetState = () => {
     setSelected(new Set());
+    setSelectedDates([]);
+    setStep('items');
     setSearch('');
     setTab('entradas');
-    setViewMode('items');
   };
 
-  const handleBack = () => {
-    setViewMode('calendar');
-    setSelected(new Set());
+  const handleClose = (open: boolean) => {
+    if (!open) resetState();
+    onOpenChange(open);
   };
 
-  // Count items per day for calendar badges
-  const ementaCountForDate = selectedDateEmenta.length;
+  const totalSelected = selected.size;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {viewMode === 'calendar' ? 'Definir Ementa' : `Ementa — ${format(selectedDate, 'dd/MM/yyyy')}`}
+            {step === 'items' ? 'Definir Ementa — Selecionar Pratos' : 'Definir Ementa — Escolher Datas'}
           </DialogTitle>
         </DialogHeader>
 
-        {viewMode === 'calendar' ? (
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-sm text-muted-foreground">
-              Selecione um dia para definir ou editar a ementa
-            </p>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleSelectDate}
-              month={calendarMonth}
-              onMonthChange={setCalendarMonth}
-              locale={pt}
-              className="rounded-md border border-border"
-            />
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-primary" />
-                <span>Hoje</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-success" />
-                <span>Ementa definida</span>
-              </div>
-            </div>
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 text-xs mb-1">
+          <div className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium transition-colors',
+            step === 'items' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+          )}>
+            <span className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">1</span>
+            Pratos
           </div>
-        ) : (
+          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          <div className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium transition-colors',
+            step === 'dates' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+          )}>
+            <span className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">2</span>
+            Datas
+          </div>
+        </div>
+
+        {step === 'items' ? (
           <>
-            <Button variant="ghost" size="sm" className="self-start gap-1 text-xs -mt-1 mb-1" onClick={handleBack}>
-              <ChevronLeft className="h-3.5 w-3.5" /> Voltar ao calendário
-            </Button>
-
-            {/* Existing items count */}
-            {existingItemIdsForDate.size > 0 && (
-              <div className="rounded-lg bg-success/10 border border-success/20 px-3 py-2 text-xs text-foreground">
-                ✓ {existingItemIdsForDate.size} pratos já definidos para este dia
-              </div>
-            )}
-
             <div className="relative mb-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -202,9 +185,57 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
             </Tabs>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
-              <p className="text-xs text-muted-foreground">{selected.size} artigos selecionados</p>
-              <Button onClick={handleConfirm} disabled={selected.size === 0} className="gap-1.5">
-                <Plus className="h-4 w-4" /> Adicionar à Ementa
+              <p className="text-xs text-muted-foreground">{totalSelected} artigos selecionados</p>
+              <Button onClick={() => setStep('dates')} disabled={totalSelected === 0} className="gap-1.5">
+                <CalendarDays className="h-4 w-4" /> Escolher Datas
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" size="sm" className="self-start gap-1 text-xs -mt-1 mb-1" onClick={() => setStep('items')}>
+              <ChevronLeft className="h-3.5 w-3.5" /> Voltar aos pratos
+            </Button>
+
+            {/* Summary of selected items */}
+            <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-xs text-foreground space-y-0.5">
+              <p className="font-medium">{totalSelected} pratos selecionados:</p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {Object.entries(ZONE_LIMITS).map(([key, z]) => {
+                  const count = selectedByZone(key);
+                  if (count === 0) return null;
+                  return (
+                    <Badge key={key} variant="secondary" className="text-[10px]">
+                      {z.label}: {count}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                Selecione os dias para aplicar esta ementa
+              </p>
+              <Calendar
+                mode="multiple"
+                selected={selectedDates}
+                onSelect={(dates) => setSelectedDates(dates || [])}
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                locale={pt}
+                className="rounded-md border border-border"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                {selectedDates.length === 0
+                  ? 'Nenhum dia selecionado'
+                  : `${selectedDates.length} dia${selectedDates.length > 1 ? 's' : ''} selecionado${selectedDates.length > 1 ? 's' : ''}`}
+              </p>
+              <Button onClick={handleConfirm} disabled={selectedDates.length === 0} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Aplicar Ementa
               </Button>
             </div>
           </>

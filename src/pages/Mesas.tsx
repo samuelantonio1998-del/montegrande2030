@@ -17,7 +17,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 
 function MesaDetail({ mesa, onClose }: { mesa: Mesa; onClose: () => void }) {
   const [beverages, setBeverages] = useState(mesa.beverages);
-  const totalBeverages = beverages.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
+  const { coverTotal, beverageTotal, total } = calcMesaTotal({ ...mesa, beverages });
 
   const addBeverage = (name: string) => {
     const item = beverageMenu.find(b => b.name === name);

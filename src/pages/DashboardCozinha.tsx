@@ -134,11 +134,21 @@ export default function DashboardCozinha() {
   const dayLabel = format(today, "EEEE, d 'de' MMMM", { locale: pt });
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <div className="space-y-3">
+      {/* Header with inline forecast */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display text-foreground">Cozinha</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-display text-foreground">Cozinha</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span className="font-medium text-foreground">{currentPax}</span>
+              <span>em sala</span>
+              <span className="text-muted-foreground/50">·</span>
+              <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              <span>prev. {avgClients} pax</span>
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground capitalize">{dayLabel}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -151,64 +161,37 @@ export default function DashboardCozinha() {
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card px-3 py-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
-            <BarChart3 className="h-3 w-3 text-primary" /> Produção Total
+      {/* Summary cards - compact */}
+      <div className="grid grid-cols-4 gap-1.5">
+        <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
+          <BarChart3 className="h-3 w-3 text-primary shrink-0" />
+          <div>
+            <p className="text-[10px] text-muted-foreground leading-none">Produção</p>
+            <p className="text-sm font-bold text-foreground">{totalProduced.toFixed(0)}kg</p>
           </div>
-          <p className="text-base font-bold text-foreground">{totalProduced.toFixed(0)}kg</p>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card px-3 py-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
-            <Trash2 className="h-3 w-3 text-destructive" /> Desperdício
+        </div>
+        <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
+          <Trash2 className="h-3 w-3 text-destructive shrink-0" />
+          <div>
+            <p className="text-[10px] text-muted-foreground leading-none">Desperdício</p>
+            <p className="text-sm font-bold text-destructive">{totalWaste.toFixed(1)}kg</p>
           </div>
-          <p className="text-base font-bold text-destructive">{totalWaste.toFixed(1)}kg</p>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card px-3 py-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
-            <Recycle className="h-3 w-3 text-success" /> Aproveitamento
+        </div>
+        <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
+          <Recycle className="h-3 w-3 text-success shrink-0" />
+          <div>
+            <p className="text-[10px] text-muted-foreground leading-none">Aproveitamento</p>
+            <p className="text-sm font-bold text-success">{totalReused.toFixed(1)}kg</p>
           </div>
-          <p className="text-base font-bold text-success">{totalReused.toFixed(1)}kg</p>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-card px-3 py-2">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
-            <Euro className="h-3 w-3" /> Perdas vs Poupança
+        </div>
+        <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
+          <Euro className="h-3 w-3 shrink-0" />
+          <div>
+            <p className="text-[10px] text-muted-foreground leading-none">Perdas/Poupança</p>
+            <p className={cn('text-sm font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
           </div>
-          <p className={cn('text-base font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
-        </motion.div>
+        </div>
       </div>
-
-      {/* Forecast + Pax */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-display text-card-foreground flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" /> Previsão do Dia
-          </h2>
-          <Badge variant="secondary" className="text-xs">{avgClients} pax</Badge>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Progresso</span>
-              <span className="font-medium text-foreground">{currentPax}/{avgClients} ({forecastPct}%)</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(forecastPct, 100)}%` }}
-                transition={{ duration: 1 }}
-                className={cn('h-full rounded-full', forecastPct > 80 ? 'bg-success' : forecastPct > 50 ? 'bg-warning' : 'bg-primary')}
-              />
-            </div>
-          </div>
-          <div className="text-center rounded-lg bg-muted/50 px-3 py-1.5">
-            <Users className="mx-auto h-3.5 w-3.5 text-muted-foreground" />
-            <p className="text-lg font-bold text-foreground">{currentPax}</p>
-            <p className="text-[10px] text-muted-foreground">em sala</p>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Alerts */}
       {mockProductionAlerts.filter(a => a.priority === 'alta').length > 0 && (

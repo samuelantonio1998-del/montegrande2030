@@ -17,6 +17,7 @@ import Previsao from "./pages/Previsao";
 import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
+import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>

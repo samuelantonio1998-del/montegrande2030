@@ -266,9 +266,9 @@ export default function Fornecedores() {
 
               <div className="grid grid-cols-2 gap-3">
                 {selected.email && (
-                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 overflow-hidden">
                     <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />Email</p>
-                    <p className="text-sm font-medium text-foreground mt-1">{selected.email}</p>
+                    <p className="text-sm font-medium text-foreground mt-1 truncate" title={selected.email}>{selected.email}</p>
                   </div>
                 )}
                 {selected.telefone && (

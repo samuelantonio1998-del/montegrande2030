@@ -860,6 +860,7 @@ export default function Inventario() {
         produto={selectedProduto}
         open={historyOpen}
         onOpenChange={setHistoryOpen}
+        onUpdate={fetchData}
       />
     </div>
   );

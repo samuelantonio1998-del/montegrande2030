@@ -756,7 +756,7 @@ export default function Inventario() {
                 })}
                 {filteredProdutos.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
                       {produtos.length === 0 ? 'Sem produtos. Use o scanner ou adicione manualmente.' : 'Nenhum resultado.'}
                     </td>
                   </tr>

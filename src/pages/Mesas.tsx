@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus } from 'lucide-react';
-import { mockMesas, beverageMenu, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
+import { mockMesas, beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },

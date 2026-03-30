@@ -215,12 +215,14 @@ export default function DashboardSala() {
     setSelectedMesa(updated);
   };
 
-  const handleOpenMesa = (mesa: Mesa, adults: number, children: number) => {
+  const handleOpenMesa = (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
     const opened: Mesa = {
       ...mesa,
       status: 'ocupada',
       adults,
-      children,
+      children: c2to6 + c7to12,
+      children2to6: c2to6,
+      children7to12: c7to12,
       waiter: user?.name || '',
       openedAt: new Date().toISOString(),
       beverages: [],

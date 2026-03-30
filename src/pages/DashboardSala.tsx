@@ -301,7 +301,7 @@ export default function DashboardSala() {
           <DialogHeader>
             <DialogTitle>Abrir Mesa {openingMesa?.number}</DialogTitle>
           </DialogHeader>
-          {openingMesa && <OpenMesaDialog mesa={openingMesa} onOpen={(a, c) => handleOpenMesa(openingMesa, a, c)} />}
+          {openingMesa && <OpenMesaDialog mesa={openingMesa} onOpen={(a, c2, c7) => handleOpenMesa(openingMesa, a, c2, c7)} />}
         </DialogContent>
       </Dialog>
 

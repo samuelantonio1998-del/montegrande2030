@@ -9,6 +9,7 @@ export type FichaTecnicaDB = {
   porcoes: number;
   preco_venda: number;
   tempo_preparacao: number | null;
+  foto_url: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -65,6 +66,7 @@ export function useCreateFicha() {
       porcoes: number;
       preco_venda: number;
       tempo_preparacao: number;
+      foto_url?: string | null;
       ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
     }) => {
       const { data: ficha, error } = await supabase
@@ -75,6 +77,7 @@ export function useCreateFicha() {
           porcoes: data.porcoes,
           preco_venda: data.preco_venda,
           tempo_preparacao: data.tempo_preparacao,
+          foto_url: data.foto_url || null,
         })
         .select()
         .single();

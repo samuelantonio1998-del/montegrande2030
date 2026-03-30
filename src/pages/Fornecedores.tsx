@@ -5,9 +5,20 @@ import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+const DIAS_SEMANA = [
+  { value: 'domingo', label: 'Domingo' },
+  { value: 'segunda', label: 'Segunda' },
+  { value: 'terca', label: 'Terça' },
+  { value: 'quarta', label: 'Quarta' },
+  { value: 'quinta', label: 'Quinta' },
+  { value: 'sexta', label: 'Sexta' },
+  { value: 'sabado', label: 'Sábado' },
+];
 
 type Fornecedor = {
   id: string;
@@ -217,7 +228,16 @@ export default function Fornecedores() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Dia de Encomenda</label>
-                  <Input value={form.dia_encomenda} onChange={e => setForm(f => ({ ...f, dia_encomenda: e.target.value }))} placeholder="ex: Segunda" />
+                  <Select value={form.dia_encomenda} onValueChange={v => setForm(f => ({ ...f, dia_encomenda: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar dia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIAS_SEMANA.map(d => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Prazo Entrega (dias)</label>
@@ -246,9 +266,9 @@ export default function Fornecedores() {
 
               <div className="grid grid-cols-2 gap-3">
                 {selected.email && (
-                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 overflow-hidden">
                     <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />Email</p>
-                    <p className="text-sm font-medium text-foreground mt-1">{selected.email}</p>
+                    <p className="text-sm font-medium text-foreground mt-1 truncate" title={selected.email}>{selected.email}</p>
                   </div>
                 )}
                 {selected.telefone && (
@@ -260,7 +280,7 @@ export default function Fornecedores() {
                 {selected.dia_encomenda && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" />Dia Encomenda</p>
-                    <p className="text-sm font-medium text-foreground mt-1">{selected.dia_encomenda}</p>
+                    <p className="text-sm font-medium text-foreground mt-1 capitalize">{selected.dia_encomenda}</p>
                   </div>
                 )}
                 {selected.prazo_entrega_dias && (

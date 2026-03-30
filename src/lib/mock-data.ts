@@ -59,11 +59,44 @@ export type Mesa = {
   number: number;
   status: 'livre' | 'ocupada' | 'reservada' | 'conta';
   adults: number;
+  children2to6: number;
+  children7to12: number;
+  /** @deprecated use children2to6 + children7to12 */
   children: number;
   waiter: string;
   openedAt: string | null;
   beverages: { name: string; quantity: number; unitPrice: number }[];
 };
+
+export const PRICING = {
+  adultWeekdayLunch: 14.75,
+  adultPremium: 18.95, // fim-de-semana, jantares, feriados
+  child2to6: 6.50,
+  child7to12: 10.00,
+};
+
+export function isWeekdayLunch(): boolean {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 6=Sat
+  const hour = now.getHours();
+  const isWeekday = day >= 1 && day <= 5;
+  const isLunch = hour < 16; // almoço até às 16h
+  return isWeekday && isLunch;
+}
+
+export function getAdultPrice(): number {
+  return isWeekdayLunch() ? PRICING.adultWeekdayLunch : PRICING.adultPremium;
+}
+
+export function calcMesaTotal(mesa: Mesa): { coverTotal: number; beverageTotal: number; total: number } {
+  const adultPrice = getAdultPrice();
+  const coverTotal =
+    mesa.adults * adultPrice +
+    mesa.children2to6 * PRICING.child2to6 +
+    mesa.children7to12 * PRICING.child7to12;
+  const beverageTotal = mesa.beverages.reduce((s, b) => s + b.quantity * b.unitPrice, 0);
+  return { coverTotal, beverageTotal, total: coverTotal + beverageTotal };
+}
 
 export type HistoricalDay = {
   date: string;

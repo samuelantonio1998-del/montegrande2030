@@ -161,7 +161,19 @@ export default function Inventario() {
       if (error) throw error;
 
       const items: ScannedItem[] = (data.items || []).map((item: any) => {
-        const match = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
+        // Match by SKU first (most reliable), then by SKU + supplier, then by name
+        const matchBySku = item.sku ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) : null;
+        const matchByName = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
+        // If we have a supplier, try to match name + supplier for disambiguation
+        const matchByNameAndSupplier = item.fornecedor
+          ? produtos.find(p => {
+              if (p.nome.toLowerCase() !== item.nome?.toLowerCase()) return false;
+              if (!p.fornecedor_id) return false;
+              const forn = fornecedores.find(f => f.id === p.fornecedor_id);
+              return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
+            })
+          : null;
+        const match = matchBySku || matchByNameAndSupplier || matchByName;
         return { ...item, selected: true, produto_id: match?.id };
       });
 

@@ -99,8 +99,14 @@ function QuickBeveragePanel({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa
       </div>
 
       {/* Current order summary */}
-      {mesa.beverages.length > 0 && (
+      {(mesa.beverages.length > 0 || coverTotal > 0) && (
         <div className="space-y-2 rounded-lg bg-muted/30 p-3">
+          {coverTotal > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Refeições ({mesa.adults}A + {mesa.children2to6 + mesa.children7to12}C)</span>
+              <span className="font-medium text-foreground">€{coverTotal.toFixed(2)}</span>
+            </div>
+          )}
           {mesa.beverages.map(b => (
             <div key={b.name} className="flex items-center justify-between">
               <span className="text-sm text-foreground">{b.name}</span>

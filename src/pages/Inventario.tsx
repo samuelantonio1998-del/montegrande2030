@@ -717,10 +717,14 @@ export default function Inventario() {
                 {filteredProdutos.map(p => {
                   const level = getStockLevel(p);
                   return (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                     <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => { setSelectedProduto(p); setHistoryOpen(true); }}>
                       <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-foreground">{p.nome}</p>
-                        <p className="text-xs text-muted-foreground">{p.categoria} · {p.sku || 'Sem SKU'}</p>
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                            <p className="text-xs text-muted-foreground">{p.categoria} · {p.sku || 'Sem SKU'}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

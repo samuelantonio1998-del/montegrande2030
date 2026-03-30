@@ -748,6 +748,9 @@ export default function Inventario() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</td>
+                      <td className="px-4 py-3">
+                        <History className="h-4 w-4 text-muted-foreground" />
+                      </td>
                     </tr>
                   );
                 })}

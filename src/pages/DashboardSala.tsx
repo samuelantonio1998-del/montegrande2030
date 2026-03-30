@@ -207,7 +207,7 @@ export default function DashboardSala() {
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [openingMesa, setOpeningMesa] = useState<Mesa | null>(null);
 
-  const totalInRoom = mesas.reduce((s, m) => s + m.adults + m.children, 0);
+  const totalInRoom = mesas.reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
   const updateMesa = (updated: Mesa) => {

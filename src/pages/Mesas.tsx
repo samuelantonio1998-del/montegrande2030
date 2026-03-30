@@ -205,7 +205,10 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
           </Button>
         )}
         {mesa.status === 'conta' && (
-          <Button className="flex-1 gap-2" onClick={() => onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' })}>
+          <Button className="flex-1 gap-2" onClick={() => {
+            printReceipt(mesa);
+            onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
+          }}>
             <CreditCard className="h-4 w-4" />
             Fechar Conta — €{total.toFixed(2)}
           </Button>

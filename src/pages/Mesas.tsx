@@ -64,7 +64,7 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
       </div>
 
       <Button className="w-full" size="lg" onClick={() => onOpen(adults, c2to6, c7to12)}>
-        Abrir Mesa — €{previewTotal.toFixed(2)}
+        Abrir Mesa
       </Button>
     </div>
   );

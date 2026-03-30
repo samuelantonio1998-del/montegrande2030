@@ -172,10 +172,10 @@ export default function Mesas() {
               <Badge variant="outline" className={cn('mt-2 text-[10px] border-0', cfg.color, cfg.bg)}>
                 {cfg.label}
               </Badge>
-              {(mesa.adults > 0 || mesa.children > 0) && (
+              {(mesa.adults > 0 || mesa.children2to6 > 0 || mesa.children7to12 > 0) && (
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" />{mesa.adults}</span>
-                  {mesa.children > 0 && <span className="flex items-center gap-1"><Baby className="h-3 w-3" />{mesa.children}</span>}
+                  {(mesa.children2to6 + mesa.children7to12) > 0 && <span className="flex items-center gap-1"><Baby className="h-3 w-3" />{mesa.children2to6 + mesa.children7to12}</span>}
                 </div>
               )}
               {mesa.waiter && <p className="mt-1 text-xs text-muted-foreground">{mesa.waiter}</p>}

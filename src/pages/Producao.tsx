@@ -25,6 +25,31 @@ const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typ
 
 export default function Producao() {
   const { records, addRecord, checkoutRecord, leftoverHistory } = useProduction();
+  const today = new Date();
+  const { data: ementaItems = [] } = useEmentaDiaria(today);
+
+  // Group ementa items by zone for the selector
+  const ementaByZone = useMemo(() => {
+    const zones: Record<string, { id: string; nome: string; recipiente: string }[]> = {
+      entradas: [], pratos_principais: [], sobremesas: [],
+    };
+    ementaItems.forEach(e => {
+      if (e.buffet_item?.zona && zones[e.buffet_item.zona]) {
+        zones[e.buffet_item.zona].push({
+          id: e.buffet_item.id,
+          nome: e.buffet_item.nome,
+          recipiente: e.recipiente_sugerido,
+        });
+      }
+    });
+    return zones;
+  }, [ementaItems]);
+
+  const allEmentaDishes = useMemo(() => ementaItems.filter(e => e.buffet_item).map(e => ({
+    id: e.buffet_item!.id,
+    nome: e.buffet_item!.nome,
+    recipiente: e.recipiente_sugerido as RecipientSize,
+  })), [ementaItems]);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<ProductionRecord | null>(null);
 

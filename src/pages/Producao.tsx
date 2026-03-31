@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -13,8 +13,8 @@ import {
   mockProductionAlerts, recipientCapacity,
   type ProductionRecord, type RecipientSize, type TrayStatus
 } from '@/lib/buffet-data';
-import { mockFichasTecnicas } from '@/lib/mock-data';
 import { useProduction } from '@/contexts/ProductionContext';
+import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 
 const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },

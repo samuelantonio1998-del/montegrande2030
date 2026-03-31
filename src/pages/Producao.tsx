@@ -67,12 +67,12 @@ export default function Producao() {
 
   function handleSendTray() {
     if (!newDish) return;
-    const ficha = mockFichasTecnicas.find(f => f.name === newDish);
+    const dish = allEmentaDishes.find(d => d.nome === newDish);
     const cap = recipientCapacity[newRecipient];
     const newRecord: ProductionRecord = {
       id: `p${Date.now()}`,
       dishName: newDish,
-      fichaTecnicaId: ficha?.id || '',
+      fichaTecnicaId: dish?.id || '',
       recipient: newRecipient,
       weightKg: cap.capacityKg,
       sentAt: new Date().toISOString(),

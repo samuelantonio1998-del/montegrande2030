@@ -186,10 +186,11 @@ export default function Inventario() {
       if (error) throw error;
 
       const items: ScannedItem[] = (data.items || []).map((item: any) => {
-        // Match by SKU first (most reliable), then by SKU + supplier, then by name
+        // Match by SKU first (most reliable)
         const matchBySku = item.sku ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) : null;
+        // Exact name match
         const matchByName = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
-        // If we have a supplier, try to match name + supplier for disambiguation
+        // Name + supplier match
         const matchByNameAndSupplier = item.fornecedor
           ? produtos.find(p => {
               if (p.nome.toLowerCase() !== item.nome?.toLowerCase()) return false;
@@ -198,7 +199,19 @@ export default function Inventario() {
               return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
             })
           : null;
-        const match = matchBySku || matchByNameAndSupplier || matchByName;
+        // Fuzzy name match — find most similar product above threshold
+        let matchByFuzzy: Produto | null = null;
+        if (!matchBySku && !matchByNameAndSupplier && !matchByName && item.nome) {
+          let bestScore = 0;
+          for (const p of produtos) {
+            const score = similarity(item.nome, p.nome);
+            if (score > bestScore && score >= FUZZY_THRESHOLD) {
+              bestScore = score;
+              matchByFuzzy = p;
+            }
+          }
+        }
+        const match = matchBySku || matchByNameAndSupplier || matchByName || matchByFuzzy;
         return { ...item, selected: true, produto_id: match?.id };
       });
 

@@ -58,6 +58,30 @@ type ScannedItem = {
 
 type ScannerStep = 'idle' | 'preview' | 'processing' | 'review';
 
+// Fuzzy string similarity (bigram-based Dice coefficient)
+function normalizeStr(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, '').trim();
+}
+
+function bigrams(s: string): Set<string> {
+  const n = normalizeStr(s);
+  const set = new Set<string>();
+  for (let i = 0; i < n.length - 1; i++) set.add(n.slice(i, i + 2));
+  return set;
+}
+
+function similarity(a: string, b: string): number {
+  const bg1 = bigrams(a);
+  const bg2 = bigrams(b);
+  if (bg1.size === 0 && bg2.size === 0) return 1;
+  if (bg1.size === 0 || bg2.size === 0) return 0;
+  let intersection = 0;
+  bg1.forEach(b => { if (bg2.has(b)) intersection++; });
+  return (2 * intersection) / (bg1.size + bg2.size);
+}
+
+const FUZZY_THRESHOLD = 0.55;
+
 export default function Inventario() {
   const { toast } = useToast();
   const [produtos, setProdutos] = useState<Produto[]>([]);

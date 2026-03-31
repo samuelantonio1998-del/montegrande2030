@@ -23,7 +23,7 @@ interface ProductionContextType {
 const ProductionContext = createContext<ProductionContextType | null>(null);
 
 export function ProductionProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<ProductionRecord[]>(mockProductionRecords);
+  const [records, setRecords] = useState<ProductionRecord[]>([]);
   const [trayStates, setTrayStates] = useState<Record<string, BuffetTrayState>>({});
   const [leftoverHistory, setLeftoverHistory] = useState<LeftoverRecord[]>([]);
 

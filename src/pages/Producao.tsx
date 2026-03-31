@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -13,8 +13,8 @@ import {
   mockProductionAlerts, recipientCapacity,
   type ProductionRecord, type RecipientSize, type TrayStatus
 } from '@/lib/buffet-data';
-import { mockFichasTecnicas } from '@/lib/mock-data';
 import { useProduction } from '@/contexts/ProductionContext';
+import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 
 const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
@@ -25,6 +25,31 @@ const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typ
 
 export default function Producao() {
   const { records, addRecord, checkoutRecord, leftoverHistory } = useProduction();
+  const today = new Date();
+  const { data: ementaItems = [] } = useEmentaDiaria(today);
+
+  // Group ementa items by zone for the selector
+  const ementaByZone = useMemo(() => {
+    const zones: Record<string, { id: string; nome: string; recipiente: string }[]> = {
+      entradas: [], pratos_principais: [], sobremesas: [],
+    };
+    ementaItems.forEach(e => {
+      if (e.buffet_item?.zona && zones[e.buffet_item.zona]) {
+        zones[e.buffet_item.zona].push({
+          id: e.buffet_item.id,
+          nome: e.buffet_item.nome,
+          recipiente: e.recipiente_sugerido,
+        });
+      }
+    });
+    return zones;
+  }, [ementaItems]);
+
+  const allEmentaDishes = useMemo(() => ementaItems.filter(e => e.buffet_item).map(e => ({
+    id: e.buffet_item!.id,
+    nome: e.buffet_item!.nome,
+    recipiente: e.recipiente_sugerido as RecipientSize,
+  })), [ementaItems]);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<ProductionRecord | null>(null);
 
@@ -42,12 +67,12 @@ export default function Producao() {
 
   function handleSendTray() {
     if (!newDish) return;
-    const ficha = mockFichasTecnicas.find(f => f.name === newDish);
+    const dish = allEmentaDishes.find(d => d.nome === newDish);
     const cap = recipientCapacity[newRecipient];
     const newRecord: ProductionRecord = {
       id: `p${Date.now()}`,
       dishName: newDish,
-      fichaTecnicaId: ficha?.id || '',
+      fichaTecnicaId: dish?.id || '',
       recipient: newRecipient,
       weightKg: cap.capacityKg,
       sentAt: new Date().toISOString(),
@@ -213,14 +238,42 @@ export default function Producao() {
           <div className="space-y-4">
             <div>
               <Label>Prato</Label>
-              <Select value={newDish} onValueChange={setNewDish}>
-                <SelectTrigger><SelectValue placeholder="Selecionar prato" /></SelectTrigger>
+              <Select value={newDish} onValueChange={(v) => {
+                setNewDish(v);
+                const dish = allEmentaDishes.find(d => d.nome === v);
+                if (dish && recipientCapacity[dish.recipiente]) {
+                  setNewRecipient(dish.recipiente);
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecionar prato da ementa" /></SelectTrigger>
                 <SelectContent>
-                  {mockFichasTecnicas.map(f => (
-                    <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
-                  ))}
-                  <SelectItem value="Arroz Branco">Arroz Branco</SelectItem>
-                  <SelectItem value="Arroz de Pato">Arroz de Pato</SelectItem>
+                  {ementaByZone.entradas.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Entradas</SelectLabel>
+                      {ementaByZone.entradas.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {ementaByZone.pratos_principais.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Pratos Quentes</SelectLabel>
+                      {ementaByZone.pratos_principais.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {ementaByZone.sobremesas.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Sobremesas</SelectLabel>
+                      {ementaByZone.sobremesas.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {allEmentaDishes.length === 0 && (
+                    <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

@@ -290,7 +290,6 @@ export default function Inventario() {
             }
           }
         }
-        }
 
         if (existingProd) {
           // Found a match - update instead of creating duplicate

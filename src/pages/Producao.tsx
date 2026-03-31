@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-  mockProductionRecords, mockProductionAlerts, recipientCapacity,
+  mockProductionAlerts, recipientCapacity,
   type ProductionRecord, type RecipientSize, type TrayStatus
 } from '@/lib/buffet-data';
 import { mockFichasTecnicas } from '@/lib/mock-data';
+import { useProduction } from '@/contexts/ProductionContext';
 
 const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
@@ -23,9 +24,9 @@ const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typ
 };
 
 export default function Producao() {
-  const [records, setRecords] = useState<ProductionRecord[]>(mockProductionRecords);
+  const { records, addRecord, checkoutRecord, leftoverHistory } = useProduction();
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [checkoutRecord, setCheckoutRecord] = useState<ProductionRecord | null>(null);
+  const [checkoutTarget, setCheckoutTarget] = useState<ProductionRecord | null>(null);
 
   // New tray form
   const [newDish, setNewDish] = useState('');
@@ -57,30 +58,17 @@ export default function Producao() {
       aproveitamentoNote: null,
       registeredBy: 'Gerente',
     };
-    setRecords(prev => [newRecord, ...prev]);
+    addRecord(newRecord);
     setShowNewDialog(false);
     setNewDish('');
     setNewRecipient('tabuleiro_grande');
   }
 
   function handleCheckout() {
-    if (!checkoutRecord) return;
+    if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
-    setRecords(prev =>
-      prev.map(r =>
-        r.id === checkoutRecord.id
-          ? {
-              ...r,
-              returnedAt: new Date().toISOString(),
-              status: leftoverAction === 'aproveitamento' ? 'aproveitado' as TrayStatus : 'desperdicio' as TrayStatus,
-              leftoverKg: kg,
-              leftoverAction,
-              aproveitamentoNote: leftoverAction === 'aproveitamento' ? aprovNote : null,
-            }
-          : r
-      )
-    );
-    setCheckoutRecord(null);
+    checkoutRecord(checkoutTarget.id, kg, leftoverAction, leftoverAction === 'aproveitamento' ? aprovNote : null);
+    setCheckoutTarget(null);
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
     setAprovNote('');
@@ -162,7 +150,7 @@ export default function Producao() {
                     <p className="text-xs text-muted-foreground">
                       Saída: {formatTime(record.sentAt)} · {record.registeredBy}
                     </p>
-                    <Button size="sm" variant="outline" onClick={() => setCheckoutRecord(record)}>
+                    <Button size="sm" variant="outline" onClick={() => setCheckoutTarget(record)}>
                       Recolher
                     </Button>
                   </div>
@@ -256,12 +244,12 @@ export default function Producao() {
       </Dialog>
 
       {/* Checkout Dialog */}
-      <Dialog open={!!checkoutRecord} onOpenChange={() => setCheckoutRecord(null)}>
+      <Dialog open={!!checkoutTarget} onOpenChange={() => setCheckoutTarget(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Recolher Tabuleiro</DialogTitle>
             <DialogDescription>
-              {checkoutRecord?.dishName} — {checkoutRecord && recipientCapacity[checkoutRecord.recipient].label}
+              {checkoutTarget?.dishName} — {checkoutTarget && recipientCapacity[checkoutTarget.recipient].label}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -313,7 +301,7 @@ export default function Producao() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckoutRecord(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setCheckoutTarget(null)}>Cancelar</Button>
             <Button onClick={handleCheckout}>Confirmar Recolha</Button>
           </DialogFooter>
         </DialogContent>

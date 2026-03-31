@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Package, LogOut, BarChart3, Trash2, Recycle, Euro, CalendarPlus, Flame } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProduction } from '@/contexts/ProductionContext';
 import { mockProductionAlerts, mockWeeklyWaste, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { mockMesas, mockHistorical } from '@/lib/mock-data';
-import type { BuffetTrayState, ReplenishmentLog, LeftoverRecord } from '@/lib/buffet-zones';
 import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -23,13 +23,12 @@ const ZONES = [
 
 export default function DashboardCozinha() {
   const { user, logout } = useAuth();
+  const { trayStates, handleReplenish: ctxReplenish, handleCollect: ctxCollect, leftoverHistory } = useProduction();
   const today = new Date();
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();
   const bulkAdd = useBulkAddEmenta();
 
-  const [trayStates, setTrayStates] = useState<Record<string, BuffetTrayState>>({});
-  const [leftoverHistory, setLeftoverHistory] = useState<LeftoverRecord[]>([]);
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');
   const [showRecolha, setShowRecolha] = useState(false);
@@ -74,49 +73,14 @@ export default function DashboardCozinha() {
   const netLoss = totalSavings - totalLoss;
 
   const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
-    const log: ReplenishmentLog = {
-      id: `r${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      itemId,
-      recipient,
-      weightKg,
-      timestamp: new Date().toISOString(),
-      registeredBy: user?.name || '',
-    };
-    setTrayStates(prev => {
-      const existing = prev[itemId] || { itemId, replenishments: [], totalSentKg: 0, currentRecipient: null, isOnBuffet: false };
-      return {
-        ...prev,
-        [itemId]: {
-          ...existing,
-          replenishments: [...existing.replenishments, log],
-          totalSentKg: existing.totalSentKg + weightKg,
-          currentRecipient: recipient,
-          isOnBuffet: true,
-        },
-      };
-    });
-  }, [user?.name]);
+    ctxReplenish(itemId, recipient, weightKg, user?.name || '');
+  }, [ctxReplenish, user?.name]);
 
   const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
-    const record: LeftoverRecord = {
-      id: `l${Date.now()}`,
-      itemId,
-      itemName: item.name,
-      zone: item.zone,
-      leftoverKg,
-      action,
-      note,
-      date: new Date().toISOString(),
-      registeredBy: user?.name || '',
-    };
-    setLeftoverHistory(prev => [record, ...prev]);
-    setTrayStates(prev => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], isOnBuffet: false },
-    }));
-  }, [activeItems, user?.name]);
+    ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
+  }, [activeItems, ctxCollect, user?.name]);
 
   const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {
     const rows = dates.flatMap(d =>
@@ -185,10 +149,10 @@ export default function DashboardCozinha() {
           </div>
         </div>
         <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
-          <Euro className="h-3 w-3 shrink-0" />
+          <Recycle className="h-3 w-3 text-primary shrink-0" />
           <div>
-            <p className="text-[10px] text-muted-foreground leading-none">Perdas/Poupança</p>
-            <p className={cn('text-sm font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>€{netLoss >= 0 ? '+' : ''}{netLoss.toFixed(0)}</p>
+            <p className="text-[10px] text-muted-foreground leading-none">Poupança</p>
+            <p className={cn('text-sm font-bold', netLoss >= 0 ? 'text-success' : 'text-destructive')}>{totalSavings.toFixed(0)}kg</p>
           </div>
         </div>
       </div>

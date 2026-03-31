@@ -272,12 +272,24 @@ export default function Inventario() {
           });
         }
       } else {
-        // Double-check: try to find existing product by SKU or name+supplier before creating
+        // Double-check: try to find existing product by SKU, name+supplier, or fuzzy name before creating
         let existingProd = item.sku
           ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase())
           : null;
         if (!existingProd && fornecedorId) {
           existingProd = produtos.find(p => p.nome.toLowerCase() === item.nome.toLowerCase() && p.fornecedor_id === fornecedorId);
+        }
+        if (!existingProd) {
+          // Fuzzy match as last resort before creating
+          let bestScore = 0;
+          for (const p of produtos) {
+            const score = similarity(item.nome, p.nome);
+            if (score > bestScore && score >= FUZZY_THRESHOLD) {
+              bestScore = score;
+              existingProd = p;
+            }
+          }
+        }
         }
 
         if (existingProd) {

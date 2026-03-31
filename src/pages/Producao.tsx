@@ -238,14 +238,42 @@ export default function Producao() {
           <div className="space-y-4">
             <div>
               <Label>Prato</Label>
-              <Select value={newDish} onValueChange={setNewDish}>
-                <SelectTrigger><SelectValue placeholder="Selecionar prato" /></SelectTrigger>
+              <Select value={newDish} onValueChange={(v) => {
+                setNewDish(v);
+                const dish = allEmentaDishes.find(d => d.nome === v);
+                if (dish && recipientCapacity[dish.recipiente]) {
+                  setNewRecipient(dish.recipiente);
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecionar prato da ementa" /></SelectTrigger>
                 <SelectContent>
-                  {mockFichasTecnicas.map(f => (
-                    <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
-                  ))}
-                  <SelectItem value="Arroz Branco">Arroz Branco</SelectItem>
-                  <SelectItem value="Arroz de Pato">Arroz de Pato</SelectItem>
+                  {ementaByZone.entradas.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Entradas</SelectLabel>
+                      {ementaByZone.entradas.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {ementaByZone.pratos_principais.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Pratos Quentes</SelectLabel>
+                      {ementaByZone.pratos_principais.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {ementaByZone.sobremesas.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Sobremesas</SelectLabel>
+                      {ementaByZone.sobremesas.map(d => (
+                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {allEmentaDishes.length === 0 && (
+                    <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

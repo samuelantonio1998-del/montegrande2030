@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 
 type EditIngredient = {
   produto_id: string;
@@ -151,8 +152,17 @@ export function FichaDetailDialog({
               <Input value={editNome} onChange={e => setEditNome(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Porções</label>
-              <Input type="number" value={editPorcoes} onChange={e => setEditPorcoes(parseInt(e.target.value) || 1)} className="mt-1" min={1} />
+              <label className="text-xs text-muted-foreground">Recipiente (Dose)</label>
+              <Select value={String(editPorcoes)} onValueChange={v => setEditPorcoes(Number(v))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(recipientCapacity).map(([key, val]) => (
+                    <SelectItem key={key} value={String(val.capacityKg)}>
+                      {val.label} ({val.capacityKg}kg)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Preço Venda (€)</label>
@@ -274,7 +284,7 @@ export function FichaDetailDialog({
                 })}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({porcoes} dose{porcoes > 1 ? 's' : ''})
+                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? `${porcoes}kg`})
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}

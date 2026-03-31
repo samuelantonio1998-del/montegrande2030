@@ -284,7 +284,7 @@ export function FichaDetailDialog({
                 })}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({porcoes} dose{porcoes > 1 ? 's' : ''})
+                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? `${porcoes}kg`})
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}

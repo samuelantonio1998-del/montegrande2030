@@ -152,8 +152,17 @@ export function FichaDetailDialog({
               <Input value={editNome} onChange={e => setEditNome(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Porções</label>
-              <Input type="number" value={editPorcoes} onChange={e => setEditPorcoes(parseInt(e.target.value) || 1)} className="mt-1" min={1} />
+              <label className="text-xs text-muted-foreground">Recipiente (Dose)</label>
+              <Select value={String(editPorcoes)} onValueChange={v => setEditPorcoes(Number(v))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(recipientCapacity).map(([key, val]) => (
+                    <SelectItem key={key} value={String(val.capacityKg)}>
+                      {val.label} ({val.capacityKg}kg)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Preço Venda (€)</label>

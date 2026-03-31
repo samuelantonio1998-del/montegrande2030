@@ -61,6 +61,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <AuthProvider>
+        <ProductionProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />

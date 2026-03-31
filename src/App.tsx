@@ -69,6 +69,7 @@ const App = () => (
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
+        </ProductionProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

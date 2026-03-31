@@ -116,6 +116,7 @@ export function useBuffetItems() {
         .from('buffet_items')
         .select('*')
         .eq('ativo', true)
+        .not('ficha_tecnica_id', 'is', null)
         .order('nome');
       if (error) throw error;
       return data || [];

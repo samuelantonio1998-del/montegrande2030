@@ -112,6 +112,7 @@ export default function Inventario() {
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
+  const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);

@@ -939,7 +939,16 @@ export default function Inventario() {
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</td>
                       <td className="px-4 py-3">
-                        <History className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-1">
+                          <History className="h-4 w-4 text-muted-foreground" />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeletingProduct(p); }}
+                            className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                            title="Apagar produto"
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -111,6 +112,7 @@ export default function Inventario() {
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
+  const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -376,6 +378,14 @@ export default function Inventario() {
     toast({ title: exitForm.tipo === 'quebra' ? 'Quebra registada' : 'Saída registada' });
     setShowExit(false);
     setExitForm({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' });
+    fetchData();
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    await supabase.from('produtos').update({ ativo: false }).eq('id', deletingProduct.id);
+    toast({ title: 'Produto removido', description: `${deletingProduct.nome} foi removido do inventário.` });
+    setDeletingProduct(null);
     fetchData();
   };
 
@@ -929,7 +939,16 @@ export default function Inventario() {
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</td>
                       <td className="px-4 py-3">
-                        <History className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-1">
+                          <History className="h-4 w-4 text-muted-foreground" />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeletingProduct(p); }}
+                            className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                            title="Apagar produto"
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1012,6 +1031,23 @@ export default function Inventario() {
         onOpenChange={setHistoryOpen}
         onUpdate={fetchData}
       />
+
+      <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem a certeza que deseja remover <strong>{deletingProduct?.nome}</strong> do inventário? O produto ficará inativo mas o histórico de movimentações será mantido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

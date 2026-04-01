@@ -1031,6 +1031,23 @@ export default function Inventario() {
         onOpenChange={setHistoryOpen}
         onUpdate={fetchData}
       />
+
+      <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem a certeza que deseja remover <strong>{deletingProduct?.nome}</strong> do inventário? O produto ficará inativo mas o histórico de movimentações será mantido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

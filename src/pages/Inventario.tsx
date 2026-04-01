@@ -381,6 +381,14 @@ export default function Inventario() {
     fetchData();
   };
 
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    await supabase.from('produtos').update({ ativo: false }).eq('id', deletingProduct.id);
+    toast({ title: 'Produto removido', description: `${deletingProduct.nome} foi removido do inventário.` });
+    setDeletingProduct(null);
+    fetchData();
+  };
+
   const handleOrder = async (fornecedorId: string, items: Produto[]) => {
     const forn = fornecedores.find(f => f.id === fornecedorId);
     const fornFull = forn ? await supabase.from('fornecedores').select('*').eq('id', forn.id).single() : null;

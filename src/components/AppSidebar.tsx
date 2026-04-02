@@ -33,8 +33,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebarCollapse();
 
   if (!user) return null;
 

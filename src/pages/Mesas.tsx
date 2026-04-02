@@ -78,7 +78,15 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
 function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => void }) {
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
-  const addBeverage = (name: string) => {
+  const dessertCategory = 'Sobremesas';
+  const beverageMenuNoDesserts = beverageMenu.filter(c => c.category !== dessertCategory);
+  const dessertMenu = beverageMenu.find(c => c.category === dessertCategory);
+  const dessertMenuFlat = dessertMenu ? dessertMenu.items : [];
+
+  const mesaBeverages = mesa.beverages.filter(b => !dessertMenuFlat.some(d => d.name === b.name));
+  const mesaDesserts = mesa.beverages.filter(b => dessertMenuFlat.some(d => d.name === b.name));
+
+  const addItem = (name: string) => {
     const item = beverageMenuFlat.find(b => b.name === name);
     if (!item) return;
     const existing = mesa.beverages.find(b => b.name === name);
@@ -89,7 +97,7 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
     }
   };
 
-  const removeBeverage = (name: string) => {
+  const removeItem = (name: string) => {
     const existing = mesa.beverages.find(b => b.name === name);
     if (!existing) return;
     if (existing.quantity <= 1) {
@@ -98,6 +106,24 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
       onUpdate({ ...mesa, beverages: mesa.beverages.map(b => b.name === name ? { ...b, quantity: b.quantity - 1 } : b) });
     }
   };
+
+  const renderItemList = (items: typeof mesa.beverages) => (
+    items.length > 0 ? (
+      <div className="space-y-2">
+        {items.map((b) => (
+          <div key={b.name} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+            <span className="text-sm text-foreground">{b.name}</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => removeItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Minus className="h-3.5 w-3.5 text-muted-foreground" /></button>
+              <span className="w-6 text-center text-sm font-medium text-foreground">{b.quantity}</span>
+              <button onClick={() => addItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Plus className="h-3.5 w-3.5 text-primary" /></button>
+              <span className="ml-2 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : null
+  );
 
   return (
     <div className="space-y-5">
@@ -149,12 +175,12 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
             <Wine className="h-4 w-4 text-primary" />
             Bebidas
           </h4>
-          <Select onValueChange={addBeverage}>
+          <Select onValueChange={addItem}>
             <SelectTrigger className="w-[160px] h-8 text-xs">
               <SelectValue placeholder="+ Adicionar" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-              {beverageMenu.map(cat => (
+              {beverageMenuNoDesserts.map(cat => (
                 <SelectGroup key={cat.category}>
                   <SelectLabel className="text-xs font-semibold text-primary">{cat.category}</SelectLabel>
                   {cat.items.map(b => (
@@ -167,25 +193,33 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
             </SelectContent>
           </Select>
         </div>
-
-        {mesa.beverages.length > 0 ? (
-          <div className="space-y-2">
-            {mesa.beverages.map((b) => (
-              <div key={b.name} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-                <span className="text-sm text-foreground">{b.name}</span>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => removeBeverage(b.name)} className="rounded-full p-1 hover:bg-muted"><Minus className="h-3.5 w-3.5 text-muted-foreground" /></button>
-                  <span className="w-6 text-center text-sm font-medium text-foreground">{b.quantity}</span>
-                  <button onClick={() => addBeverage(b.name)} className="rounded-full p-1 hover:bg-muted"><Plus className="h-3.5 w-3.5 text-primary" /></button>
-                  <span className="ml-2 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-3">Nenhuma bebida registada</p>
-        )}
+        {renderItemList(mesaBeverages) || <p className="text-sm text-muted-foreground text-center py-3">Nenhuma bebida registada</p>}
       </div>
+
+      {/* Desserts */}
+      {dessertMenu && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <CakeSlice className="h-4 w-4 text-primary" />
+              Sobremesas
+            </h4>
+            <Select onValueChange={addItem}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue placeholder="+ Adicionar" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {dessertMenu.items.map(b => (
+                  <SelectItem key={b.name} value={b.name} className="text-xs">
+                    {b.name} — €{b.price.toFixed(2)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {renderItemList(mesaDesserts) || <p className="text-sm text-muted-foreground text-center py-3">Nenhuma sobremesa registada</p>}
+        </div>
+      )}
 
       {/* Total */}
       {(coverTotal > 0 || beverageTotal > 0) && (

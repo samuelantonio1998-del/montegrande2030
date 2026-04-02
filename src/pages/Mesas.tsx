@@ -119,8 +119,7 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
               <button onClick={() => removeItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Minus className="h-3.5 w-3.5 text-muted-foreground" /></button>
               <span className="w-6 text-center text-sm font-medium text-foreground">{b.quantity}</span>
               <button onClick={() => addItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Plus className="h-3.5 w-3.5 text-primary" /></button>
-              <button onClick={() => { setPendingDeleteItem(b.name); setPinAction('delete-item'); }} className="rounded-full p-1 hover:bg-destructive/10 ml-1"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
-              <span className="ml-1 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
+              <span className="ml-2 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
             </div>
           </div>
         ))}

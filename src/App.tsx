@@ -41,9 +41,8 @@ function ProtectedRoutes() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<DashboardRouter />} />
-        <Route path="/checklist" element={<Checklist />} />
+        <Route path="/tarefas" element={<Tarefas />} />
         <Route path="/inventario" element={<Inventario />} />
-        <Route path="/ordens" element={<Ordens />} />
         <Route path="/fichas-tecnicas" element={<FichasTecnicas />} />
         <Route path="/mesas" element={<Mesas />} />
         <Route path="/producao" element={<Producao />} />

@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['gerencia'] },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
-  { to: '/ordens', icon: MessageSquare, label: 'Ordens', roles: ['gerencia'] },
+  
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
   { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
 ];

@@ -1,3 +1,19 @@
+export type TaskPeriodicity = 'unica' | 'diaria' | 'semanal' | 'mensal' | 'trimestral';
+
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  category: 'abertura' | 'fecho' | 'limpeza' | 'manutencao' | 'outro';
+  assignee: string;
+  priority: 'alta' | 'media' | 'baixa';
+  critical: boolean;
+  done: boolean;
+  periodicity: TaskPeriodicity;
+  createdAt: string;
+};
+
+/** @deprecated Use Task instead */
 export type ChecklistItem = {
   id: string;
   task: string;
@@ -19,6 +35,7 @@ export type InventoryItem = {
   leadTimeDays: number;
 };
 
+/** @deprecated Use Task instead */
 export type ServiceOrder = {
   id: string;
   title: string;

@@ -40,6 +40,7 @@ export function AppSidebar() {
   if (!user) return null;
 
   const filteredNav = navItems.filter(item => item.roles.includes(user.role));
+  const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.role);
 
   // Mobile: bottom tab bar (first 4 items) + "more" menu
   if (isMobile) {

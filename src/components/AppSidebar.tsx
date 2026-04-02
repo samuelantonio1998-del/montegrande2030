@@ -164,30 +164,44 @@ export function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-        {filteredNav.map((item) => {
+        {desktopNav.map((item, index) => {
           const isActive = location.pathname === item.to;
           return (
-            <NavLink
+            <div
               key={item.to}
-              to={item.to}
-              onClick={(e) => {
-                if (collapsed) {
-                  e.stopPropagation();
-                }
-                setCollapsed(true);
-              }}
+              draggable={!collapsed}
+              onDragStart={() => dragStart(index)}
+              onDragOver={(e) => dragOver(e, index)}
+              onDragEnd={dragEnd}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-primary'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
-                collapsed && 'justify-center px-0'
+                'group relative',
+                dragOverIndex === index && 'border-t-2 border-sidebar-primary'
               )}
-              title={collapsed ? item.label : undefined}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {!collapsed && item.label}
-            </NavLink>
+              <NavLink
+                to={item.to}
+                onClick={(e) => {
+                  if (collapsed) {
+                    e.stopPropagation();
+                  }
+                  setCollapsed(true);
+                }}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-primary'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+                  collapsed && 'justify-center px-0'
+                )}
+                title={collapsed ? item.label : undefined}
+              >
+                {!collapsed && (
+                  <GripVertical className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-40 cursor-grab transition-opacity" />
+                )}
+                <item.icon className="h-5 w-5 shrink-0" />
+                {!collapsed && item.label}
+              </NavLink>
+            </div>
           );
         })}
       </nav>

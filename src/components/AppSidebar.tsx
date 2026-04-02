@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';

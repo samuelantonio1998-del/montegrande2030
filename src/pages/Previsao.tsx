@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TrendingUp, Users, ChefHat, BarChart3, Calendar } from 'lucide-react';
 import { mockHistorical, mockFichasTecnicas } from '@/lib/mock-data';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice } from 'lucide-react';
+import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, Trash2 } from 'lucide-react';
 import { beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { printReceipt } from '@/components/mesas/ReceiptPrint';
+import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {

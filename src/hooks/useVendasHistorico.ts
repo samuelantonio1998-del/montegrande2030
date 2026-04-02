@@ -233,17 +233,39 @@ export function calcularPrevisao(
       candidates = enriched;
     }
 
-    // Weight more recent years more heavily
-    const maxYear = Math.max(...candidates.map(c => c.year));
-    const weighted = candidates.map(c => ({
-      ...c,
-      weight: 1 + (c.year - (maxYear - 10)) * 0.15, // recent years weighted more
-    }));
+    // Weight: last completed year gets 80%, older years share 20%
+    const currentYear = dataAlvo.getFullYear();
+    const lastCompletedYear = currentYear - 1; // e.g. 2025
+    const candidateYears = [...new Set(candidates.map(c => c.year))];
+    const olderYears = candidateYears.filter(y => y < lastCompletedYear);
+    const hasLastCompleted = candidateYears.includes(lastCompletedYear);
+    
+    const weighted = candidates.map(c => {
+      let weight: number;
+      if (hasLastCompleted && olderYears.length > 0) {
+        // 80/20 split: last completed year = 80%, older years share 20%
+        if (c.year === lastCompletedYear) {
+          const countLastYear = candidates.filter(x => x.year === lastCompletedYear).length;
+          weight = 0.8 / countLastYear;
+        } else if (c.year < lastCompletedYear) {
+          const countOlder = candidates.filter(x => x.year < lastCompletedYear).length;
+          weight = 0.2 / countOlder;
+        } else {
+          // current year partial data — treat as last completed weight
+          const countCurrent = candidates.filter(x => x.year >= currentYear).length;
+          weight = 0.8 / (countCurrent + candidates.filter(x => x.year === lastCompletedYear).length);
+        }
+      } else {
+        // Only one year group available — equal weight
+        weight = 1 / candidates.length;
+      }
+      return { ...c, weight };
+    });
 
-    const totalWeight = weighted.reduce((s, c) => s + Math.max(c.weight, 0.1), 0);
-    const avgTotal = Math.round(weighted.reduce((s, c) => s + c.total * Math.max(c.weight, 0.1), 0) / totalWeight);
-    const avgAlmoco = Math.round(weighted.reduce((s, c) => s + c.almoco * Math.max(c.weight, 0.1), 0) / totalWeight);
-    const avgJantar = Math.round(weighted.reduce((s, c) => s + c.jantar * Math.max(c.weight, 0.1), 0) / totalWeight);
+    const totalWeight = weighted.reduce((s, c) => s + c.weight, 0);
+    const avgTotal = Math.round(weighted.reduce((s, c) => s + c.total * c.weight, 0) / totalWeight);
+    const avgAlmoco = Math.round(weighted.reduce((s, c) => s + c.almoco * c.weight, 0) / totalWeight);
+    const avgJantar = Math.round(weighted.reduce((s, c) => s + c.jantar * c.weight, 0) / totalWeight);
 
     const totals = candidates.map(c => c.total);
     const uniqueYears = new Set(candidates.map(c => c.year)).size;

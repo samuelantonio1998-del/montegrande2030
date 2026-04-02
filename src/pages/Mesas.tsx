@@ -77,6 +77,8 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
 
 /* ── Mesa Detail (occupied/conta) ── */
 function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Mesa) => void; onCancel: () => void }) {
+  const [pinAction, setPinAction] = useState<'cancel' | 'delete-item' | null>(null);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<string | null>(null);
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const dessertCategory = 'Sobremesas';

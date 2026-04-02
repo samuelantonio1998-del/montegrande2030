@@ -18,6 +18,8 @@ import Previsao from "./pages/Previsao";
 import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
+import Precario from "./pages/Precario";
+import Funcionarios from "./pages/Funcionarios";
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 

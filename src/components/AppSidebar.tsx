@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
+import { useNavOrder } from '@/hooks/useNavOrder';
 
 type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[] };
 
@@ -39,6 +40,7 @@ export function AppSidebar() {
   if (!user) return null;
 
   const filteredNav = navItems.filter(item => item.roles.includes(user.role));
+  const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.role);
 
   // Mobile: bottom tab bar (first 4 items) + "more" menu
   if (isMobile) {
@@ -162,30 +164,44 @@ export function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-        {filteredNav.map((item) => {
+        {desktopNav.map((item, index) => {
           const isActive = location.pathname === item.to;
           return (
-            <NavLink
+            <div
               key={item.to}
-              to={item.to}
-              onClick={(e) => {
-                if (collapsed) {
-                  e.stopPropagation();
-                }
-                setCollapsed(true);
-              }}
+              draggable={!collapsed}
+              onDragStart={() => dragStart(index)}
+              onDragOver={(e) => dragOver(e, index)}
+              onDragEnd={dragEnd}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-primary'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
-                collapsed && 'justify-center px-0'
+                'group relative',
+                dragOverIndex === index && 'border-t-2 border-sidebar-primary'
               )}
-              title={collapsed ? item.label : undefined}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {!collapsed && item.label}
-            </NavLink>
+              <NavLink
+                to={item.to}
+                onClick={(e) => {
+                  if (collapsed) {
+                    e.stopPropagation();
+                  }
+                  setCollapsed(true);
+                }}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-primary'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+                  collapsed && 'justify-center px-0'
+                )}
+                title={collapsed ? item.label : undefined}
+              >
+                {!collapsed && (
+                  <GripVertical className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-40 cursor-grab transition-opacity" />
+                )}
+                <item.icon className="h-5 w-5 shrink-0" />
+                {!collapsed && item.label}
+              </NavLink>
+            </div>
           );
         })}
       </nav>

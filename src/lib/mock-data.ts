@@ -361,24 +361,33 @@ export const beverageMenu: BeverageCategory[] = (() => {
         { name: 'Cardhu 12 anos', price: 7.70 },
       ],
     },
+    {
+      category: 'Sobremesas',
+      items: [
+        { name: 'Pudim Flan', price: 3.50 },
+        { name: 'Mousse de Chocolate', price: 3.50 },
+        { name: 'Leite-creme', price: 3.00 },
+        { name: 'Bolo do dia', price: 3.50 },
+        { name: 'Fruta da época', price: 2.50 },
+      ],
+    },
   ];
 
   try {
     const stored = localStorage.getItem('mg_beverage_prices');
-    if (stored) {
-      const parsed: BeverageCategory[] = JSON.parse(stored);
-      // Merge stored prices into defaults (in case new items were added)
-      return defaults.map((cat, ci) => ({
-        ...cat,
-        items: cat.items.map((item, ii) => ({
-          ...item,
-          price: parsed[ci]?.items[ii]?.price ?? item.price,
-        })),
-      }));
-    }
+    if (stored) return JSON.parse(stored);
   } catch {}
   return defaults;
 })();
 
+/** Reload beverage menu in-place from new data (used by price panel save) */
+export function reloadBeverageMenu(newData: BeverageCategory[]) {
+  beverageMenu.length = 0;
+  newData.forEach(cat => beverageMenu.push({ ...cat, items: cat.items.map(i => ({ ...i })) }));
+  // Also update flat list
+  beverageMenuFlat.length = 0;
+  beverageMenu.flatMap(cat => cat.items).forEach(i => beverageMenuFlat.push(i));
+}
+
 /** Flat list helper for lookups */
-export const beverageMenuFlat = beverageMenu.flatMap(cat => cat.items);
+export const beverageMenuFlat: { name: string; price: number }[] = beverageMenu.flatMap(cat => cat.items);

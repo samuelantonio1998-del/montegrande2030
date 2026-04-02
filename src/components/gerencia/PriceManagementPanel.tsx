@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Save, Euro, UtensilsCrossed, Wine } from 'lucide-react';
+import { useState } from 'react';
+import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { beverageMenu, PRICING, type BeverageCategory } from '@/lib/mock-data';
+import { beverageMenu, PRICING, type BeverageCategory, reloadBeverageMenu } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const STORAGE_KEY_BEVERAGES = 'mg_beverage_prices';
 const STORAGE_KEY_MEALS = 'mg_meal_prices';
@@ -35,6 +37,18 @@ export default function PriceManagementPanel() {
   const [dirty, setDirty] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
+  // Add item dialog
+  const [addDialogCat, setAddDialogCat] = useState<number | null>(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemPrice, setNewItemPrice] = useState('');
+
+  // Add category dialog
+  const [showCatDialog, setShowCatDialog] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+
+  // Delete confirm
+  const [deleteTarget, setDeleteTarget] = useState<{ catIdx: number; itemIdx?: number } | null>(null);
+
   const updateMeal = (key: keyof MealPrices, val: string) => {
     const num = parseFloat(val);
     if (isNaN(num)) return;
@@ -53,6 +67,44 @@ export default function PriceManagementPanel() {
     setDirty(true);
   };
 
+  const addItem = () => {
+    if (addDialogCat === null || !newItemName.trim()) return;
+    const price = parseFloat(newItemPrice) || 0;
+    setBevPrices(prev => {
+      const next = prev.map(c => ({ ...c, items: [...c.items] }));
+      next[addDialogCat].items.push({ name: newItemName.trim(), price });
+      return next;
+    });
+    setAddDialogCat(null);
+    setNewItemName('');
+    setNewItemPrice('');
+    setDirty(true);
+  };
+
+  const addCategory = () => {
+    if (!newCatName.trim()) return;
+    setBevPrices(prev => [...prev, { category: newCatName.trim(), items: [] }]);
+    setExpandedCat(newCatName.trim());
+    setShowCatDialog(false);
+    setNewCatName('');
+    setDirty(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    setBevPrices(prev => {
+      const next = prev.map(c => ({ ...c, items: [...c.items] }));
+      if (deleteTarget.itemIdx !== undefined) {
+        next[deleteTarget.catIdx].items.splice(deleteTarget.itemIdx, 1);
+      } else {
+        next.splice(deleteTarget.catIdx, 1);
+      }
+      return next;
+    });
+    setDeleteTarget(null);
+    setDirty(true);
+  };
+
   const save = () => {
     localStorage.setItem(STORAGE_KEY_MEALS, JSON.stringify(mealPrices));
     localStorage.setItem(STORAGE_KEY_BEVERAGES, JSON.stringify(bevPrices));
@@ -63,13 +115,7 @@ export default function PriceManagementPanel() {
     (PRICING as any).child2to6 = mealPrices.child2to6;
     (PRICING as any).child7to12 = mealPrices.child7to12;
 
-    bevPrices.forEach((cat, ci) => {
-      cat.items.forEach((item, ii) => {
-        if (beverageMenu[ci]?.items[ii]) {
-          beverageMenu[ci].items[ii].price = item.price;
-        }
-      });
-    });
+    reloadBeverageMenu(bevPrices);
 
     setDirty(false);
     toast.success('Preços atualizados com sucesso');
@@ -113,23 +159,38 @@ export default function PriceManagementPanel() {
 
       {/* Beverage pricing */}
       <div className="rounded-xl border border-border bg-card p-6">
-        <h2 className="font-display text-lg text-card-foreground flex items-center gap-2 mb-4">
-          <Wine className="h-5 w-5 text-primary" /> Preços de Bebidas
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+            <Wine className="h-5 w-5 text-primary" /> Preços de Bebidas
+          </h2>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowCatDialog(true)}>
+            <FolderPlus className="h-4 w-4" /> Nova Categoria
+          </Button>
+        </div>
         <div className="space-y-2">
           {bevPrices.map((cat, ci) => (
-            <div key={cat.category} className="rounded-lg border border-border overflow-hidden">
+            <div key={cat.category + ci} className="rounded-lg border border-border overflow-hidden">
               <button
                 onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)}
                 className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
               >
                 <span className="text-sm font-medium text-foreground">{cat.category}</span>
-                <Badge variant="outline" className="text-xs">{cat.items.length} artigos</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">{cat.items.length} artigos</Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={e => { e.stopPropagation(); setDeleteTarget({ catIdx: ci }); }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </button>
               {expandedCat === cat.category && (
                 <div className="border-t border-border p-3 space-y-2 bg-muted/20">
                   {cat.items.map((item, ii) => (
-                    <div key={item.name} className="flex items-center justify-between gap-3">
+                    <div key={item.name + ii} className="flex items-center justify-between gap-3">
                       <span className="text-sm text-foreground truncate flex-1">{item.name}</span>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">€</span>
@@ -141,9 +202,25 @@ export default function PriceManagementPanel() {
                           onChange={e => updateBev(ci, ii, e.target.value)}
                           className="w-24 h-8 text-right text-sm"
                         />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTarget({ catIdx: ci, itemIdx: ii })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
                   ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5 mt-2"
+                    onClick={() => { setAddDialogCat(ci); setNewItemName(''); setNewItemPrice(''); }}
+                  >
+                    <Plus className="h-4 w-4" /> Adicionar Artigo
+                  </Button>
                 </div>
               )}
             </div>
@@ -159,6 +236,64 @@ export default function PriceManagementPanel() {
           </Button>
         </motion.div>
       )}
+
+      {/* Add item dialog */}
+      <Dialog open={addDialogCat !== null} onOpenChange={open => { if (!open) setAddDialogCat(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Artigo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm text-muted-foreground">Nome</label>
+              <Input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Ex: Água c/ Gás 0,5l" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Preço (€)</label>
+              <Input type="number" step="0.05" min="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} placeholder="0.00" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogCat(null)}>Cancelar</Button>
+            <Button onClick={addItem} disabled={!newItemName.trim()}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add category dialog */}
+      <Dialog open={showCatDialog} onOpenChange={setShowCatDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <label className="text-sm text-muted-foreground">Nome da categoria</label>
+            <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Ex: Sobremesas" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCatDialog(false)}>Cancelar</Button>
+            <Button onClick={addCategory} disabled={!newCatName.trim()}>Criar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar eliminação</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.itemIdx !== undefined
+                ? `Eliminar "${bevPrices[deleteTarget.catIdx]?.items[deleteTarget.itemIdx]?.name}"?`
+                : `Eliminar a categoria "${bevPrices[deleteTarget?.catIdx ?? 0]?.category}" e todos os seus artigos?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

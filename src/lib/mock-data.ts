@@ -68,12 +68,19 @@ export type Mesa = {
   beverages: { name: string; quantity: number; unitPrice: number }[];
 };
 
-export const PRICING = {
-  adultWeekdayLunch: 14.75,
-  adultPremium: 18.95, // fim-de-semana, jantares, feriados
-  child2to6: 6.50,
-  child7to12: 10.00,
-};
+export const PRICING: {
+  adultWeekdayLunch: number;
+  adultPremium: number;
+  child2to6: number;
+  child7to12: number;
+} = (() => {
+  const defaults = { adultWeekdayLunch: 14.75, adultPremium: 18.95, child2to6: 6.50, child7to12: 10.00 };
+  try {
+    const stored = localStorage.getItem('mg_meal_prices');
+    if (stored) return { ...defaults, ...JSON.parse(stored) };
+  } catch {}
+  return defaults;
+})();
 
 export function isWeekdayLunch(): boolean {
   const now = new Date();

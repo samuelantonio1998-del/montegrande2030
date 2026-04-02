@@ -215,6 +215,3 @@ export function AppSidebar() {
   );
 }
 
-export function useSidebarCollapsed() {
-  return false; // placeholder for layout
-}

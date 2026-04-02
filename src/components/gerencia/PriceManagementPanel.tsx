@@ -24,11 +24,43 @@ export function loadMealPrices(): MealPrices {
 }
 
 export function loadBeveragePrices(): BeverageCategory[] {
+  let data: BeverageCategory[];
   try {
     const stored = localStorage.getItem(STORAGE_KEY_BEVERAGES);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return beverageMenu.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
+    data = stored ? JSON.parse(stored) : beverageMenu.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
+  } catch {
+    data = beverageMenu.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
+  }
+
+  // Migration: ensure Sobremesas items are in their own category, not mixed into Digestivos
+  const sobremesaNames = ['Pudim Flan', 'Mousse de Chocolate', 'Leite-creme', 'Bolo do dia', 'Fruta da época', 'Sobremesa'];
+  let sobremesaCat = data.find(c => c.category === 'Sobremesas');
+  const moved: { name: string; price: number }[] = [];
+
+  data.forEach(cat => {
+    if (cat.category === 'Sobremesas') return;
+    const toMove = cat.items.filter(i => sobremesaNames.includes(i.name));
+    if (toMove.length > 0) {
+      cat.items = cat.items.filter(i => !sobremesaNames.includes(i.name));
+      moved.push(...toMove);
+    }
+  });
+
+  if (moved.length > 0) {
+    if (!sobremesaCat) {
+      sobremesaCat = { category: 'Sobremesas', items: [] };
+      data.push(sobremesaCat);
+    }
+    moved.forEach(m => {
+      if (!sobremesaCat!.items.some(i => i.name === m.name)) {
+        sobremesaCat!.items.push(m);
+      }
+    });
+    // Persist the fix
+    localStorage.setItem(STORAGE_KEY_BEVERAGES, JSON.stringify(data));
+  }
+
+  return data;
 }
 
 export default function PriceManagementPanel() {

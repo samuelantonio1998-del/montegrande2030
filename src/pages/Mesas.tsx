@@ -249,59 +249,77 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
       {/* Actions */}
       <div className="flex gap-2">
         {mesa.status === 'ocupada' && (
-          <Button variant="outline" className="flex-1 gap-2" onClick={() => onUpdate({ ...mesa, status: 'conta' })}>
-            Pedir Conta
-          </Button>
+          <>
+            <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setPinAction('cancel')}>
+              <XCircle className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button variant="outline" className="flex-1 gap-2" onClick={() => onUpdate({ ...mesa, status: 'conta' })}>
+              Pedir Conta
+            </Button>
+          </>
         )}
         {mesa.status === 'conta' && (
-          <Button className="flex-1 gap-2" onClick={async () => {
-            printReceipt(mesa);
-            // Deduct beverages from stock
-            try {
-              const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
-              if (produtos && mesa.beverages.length > 0) {
-                for (const bev of mesa.beverages) {
-                  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                  const bevNorm = normalize(bev.name);
-                  let bestMatch: typeof produtos[0] | null = null;
-                  let bestScore = 0;
-                  for (const p of produtos) {
-                    const pNorm = normalize(p.nome);
-                    if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) {
-                      bestMatch = p;
-                      bestScore = 1;
-                      break;
+          <>
+            <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setPinAction('cancel')}>
+              <XCircle className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button className="flex-1 gap-2" onClick={async () => {
+              printReceipt(mesa);
+              try {
+                const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
+                if (produtos && mesa.beverages.length > 0) {
+                  for (const bev of mesa.beverages) {
+                    const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    const bevNorm = normalize(bev.name);
+                    let bestMatch: typeof produtos[0] | null = null;
+                    let bestScore = 0;
+                    for (const p of produtos) {
+                      const pNorm = normalize(p.nome);
+                      if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) { bestMatch = p; bestScore = 1; break; }
+                      const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
+                      const a = bg(bevNorm), b2 = bg(pNorm);
+                      const inter = a.filter(x => b2.includes(x)).length;
+                      const score = a.length + b2.length > 0 ? (2 * inter) / (a.length + b2.length) : 0;
+                      if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
                     }
-                    const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
-                    const a = bg(bevNorm), b2 = bg(pNorm);
-                    const inter = a.filter(x => b2.includes(x)).length;
-                    const score = a.length + b2.length > 0 ? (2 * inter) / (a.length + b2.length) : 0;
-                    if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
+                    if (bestMatch) {
+                      await supabase.from('produtos').update({ stock_atual: Math.max(0, bestMatch.stock_atual - bev.quantity) }).eq('id', bestMatch.id);
+                      await supabase.from('movimentacoes').insert({ produto_id: bestMatch.id, tipo: 'saida', quantidade: bev.quantity, motivo: `Mesa ${mesa.number} — ${bev.name}`, funcionario: mesa.waiter || null });
+                    }
                   }
-                  if (bestMatch) {
-                    await supabase.from('produtos').update({ stock_atual: Math.max(0, bestMatch.stock_atual - bev.quantity) }).eq('id', bestMatch.id);
-                    await supabase.from('movimentacoes').insert({
-                      produto_id: bestMatch.id,
-                      tipo: 'saida',
-                      quantidade: bev.quantity,
-                      motivo: `Mesa ${mesa.number} — ${bev.name}`,
-                      funcionario: mesa.waiter || null,
-                    });
-                  }
+                  toast.success('Stock de bebidas atualizado');
                 }
-                toast.success('Stock de bebidas atualizado');
+              } catch (e) {
+                console.error('Erro ao descontar stock:', e);
+                toast.error('Erro ao descontar stock de bebidas');
               }
-            } catch (e) {
-              console.error('Erro ao descontar stock:', e);
-              toast.error('Erro ao descontar stock de bebidas');
-            }
-            onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
-          }}>
-            <CreditCard className="h-4 w-4" />
-            Fechar Conta — €{total.toFixed(2)}
-          </Button>
+              onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
+            }}>
+              <CreditCard className="h-4 w-4" />
+              Fechar Conta — €{total.toFixed(2)}
+            </Button>
+          </>
         )}
       </div>
+
+      <PinDialog
+        open={pinAction === 'cancel'}
+        onOpenChange={(o) => !o && setPinAction(null)}
+        title="Cancelar Mesa"
+        description={`Cancelar mesa ${mesa.number}? Todos os consumos serão revertidos.`}
+        allowedRoles={['gerencia']}
+        onAuthorized={() => { setPinAction(null); onCancel(); }}
+      />
+
+      <PinDialog
+        open={pinAction === 'delete-item'}
+        onOpenChange={(o) => { if (!o) { setPinAction(null); setPendingDeleteItem(null); } }}
+        title="Remover Artigo"
+        description={pendingDeleteItem ? `Remover "${pendingDeleteItem}" do talão?` : ''}
+        onAuthorized={handleDeleteItemAuthorized}
+      />
     </div>
   );
 }

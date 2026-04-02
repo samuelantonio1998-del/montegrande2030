@@ -24,6 +24,12 @@ export default function Previsao() {
 
   const previsoes = useMemo(() => calcularPrevisao(vendas, hoje, 7), [vendas, hoje]);
   const tendencia = useMemo(() => calcularTendenciaSemanal(vendas), [vendas]);
+  const intervaloHistorico = useMemo(() => {
+    if (!vendas.length) return null;
+
+    const anos = vendas.map((venda) => new Date(venda.data).getFullYear());
+    return `${Math.min(...anos)}–${Math.max(...anos)}`;
+  }, [vendas]);
 
   const amanha = previsoes[1]; // tomorrow's prediction
 
@@ -40,7 +46,7 @@ export default function Previsao() {
       <div>
         <h1 className="text-3xl text-foreground">Previsão de Produção</h1>
         <p className="mt-1 text-muted-foreground">
-          Baseada em {vendas.length.toLocaleString()} registos históricos (2015–2026)
+          Baseada em {vendas.length.toLocaleString()} registos históricos{intervaloHistorico ? ` (${intervaloHistorico})` : ''}
         </p>
       </div>
 

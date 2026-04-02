@@ -479,6 +479,36 @@ export type Database = {
         }
         Relationships: []
       }
+      vendas_historico: {
+        Row: {
+          almoco: number
+          created_at: string
+          data: string
+          dia_festivo: string | null
+          id: string
+          jantar: number
+          total: number
+        }
+        Insert: {
+          almoco?: number
+          created_at?: string
+          data: string
+          dia_festivo?: string | null
+          id?: string
+          jantar?: number
+          total?: number
+        }
+        Update: {
+          almoco?: number
+          created_at?: string
+          data?: string
+          dia_festivo?: string | null
+          id?: string
+          jantar?: number
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

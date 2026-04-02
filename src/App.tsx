@@ -65,6 +65,7 @@ const App = () => (
       <Toaster />
       <AuthProvider>
         <ProductionProvider>
+        <SidebarCollapseProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
+        </SidebarCollapseProvider>
         </ProductionProvider>
       </AuthProvider>
     </TooltipProvider>

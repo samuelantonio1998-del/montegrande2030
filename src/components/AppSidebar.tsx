@@ -33,6 +33,7 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   if (!user) return null;
 

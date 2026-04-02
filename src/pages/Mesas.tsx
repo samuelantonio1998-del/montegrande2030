@@ -301,14 +301,6 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
         allowedRoles={['gerencia']}
         onAuthorized={() => { setPinAction(null); onCancel(); }}
       />
-
-      <PinDialog
-        open={pinAction === 'delete-item'}
-        onOpenChange={(o) => { if (!o) { setPinAction(null); setPendingDeleteItem(null); } }}
-        title="Remover Artigo"
-        description={pendingDeleteItem ? `Remover "${pendingDeleteItem}" do talão?` : ''}
-        onAuthorized={handleDeleteItemAuthorized}
-      />
     </div>
   );
 }

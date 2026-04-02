@@ -51,6 +51,8 @@ function ProtectedRoutes() {
         <Route path="/producao" element={<Producao />} />
         <Route path="/desperdicio" element={<Desperdicio />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
+        <Route path="/precario" element={<Precario />} />
+        <Route path="/funcionarios" element={<Funcionarios />} />
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

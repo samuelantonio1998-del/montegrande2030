@@ -350,7 +350,7 @@ export default function Mesas() {
   };
 
 
-    const opened: Mesa = {
+    const handleOpenMesa = async (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
       ...mesa,
       status: 'ocupada',
       adults,

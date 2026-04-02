@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, Euro } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
 import { mockKPIs, mockChecklist, mockInventory, mockOrders, mockMesas, mockHistorical } from '@/lib/mock-data';
 import { mockProductionRecords, mockProductionAlerts, mockWeeklyWaste } from '@/lib/buffet-data';
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PriceManagementPanel from '@/components/gerencia/PriceManagementPanel';
 
 export default function DashboardGerencia() {
   const { user, logout } = useAuth();

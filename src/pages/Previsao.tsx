@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function Previsao() {
+  const { user } = useAuth();
+  const isGerencia = user?.role === 'gerencia';
   // Simple prediction: average of same day-of-week from history
   const tomorrow = 'Quarta';
   const sameDayData = mockHistorical.filter(d => d.dayOfWeek === tomorrow);

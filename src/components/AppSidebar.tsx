@@ -14,7 +14,7 @@ const navItems: NavItem[] = [
   { to: '/inventario', icon: Package, label: 'Inventário', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/producao', icon: UtensilsCrossed, label: 'Produção Buffet', roles: ['cozinha', 'gerencia'] },
   { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas', roles: ['cozinha', 'gerencia'] },
-  { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['gerencia'] },
+  { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['cozinha', 'gerencia'] },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
   

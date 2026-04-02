@@ -4,6 +4,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebarCollapse } from '@/contexts/SidebarContext';
 
 type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[] };
 

@@ -260,107 +260,125 @@ export type BeverageCategory = {
   items: { name: string; price: number }[];
 };
 
-export const beverageMenu: BeverageCategory[] = [
-  {
-    category: 'Diversos',
-    items: [
-      { name: 'Água', price: 1.70 },
-      { name: 'Água c/ Gás', price: 2.00 },
-      { name: 'Refrigerantes', price: 2.35 },
-      { name: 'Compal', price: 2.15 },
-      { name: 'Cerveja Sagres', price: 2.25 },
-      { name: 'Cerveja Bohemia', price: 2.35 },
-      { name: 'Cerveja Sagres Preta', price: 2.35 },
-      { name: 'Cerveja Sagres S/ Álcool', price: 2.35 },
-      { name: 'Vinho a copo', price: 3.00 },
-      { name: 'Sumo natural', price: 3.15 },
-      { name: 'Café', price: 1.00 },
-      { name: 'Chá / Meia de Leite', price: 1.30 },
-      { name: 'Cidra', price: 3.15 },
-    ],
-  },
-  {
-    category: 'Vinhos Verdes',
-    items: [
-      { name: 'Alvarinho Deu-La-Deu 0,75l', price: 15.80 },
-      { name: 'Muralhas 0,75l', price: 13.00 },
-    ],
-  },
-  {
-    category: 'Vinhos Brancos',
-    items: [
-      { name: 'João Pires 0,75l', price: 12.50 },
-      { name: 'Sobroso Branco 0,75l', price: 15.50 },
-      { name: 'Monte das Servas Branco 0,75l', price: 14.20 },
-      { name: 'Vale de Donas Branco 0,75l', price: 11.00 },
-      { name: 'Vale de Donas Branco 0,37l', price: 5.50 },
-    ],
-  },
-  {
-    category: 'Vinhos Tintos',
-    items: [
-      { name: 'Duas Quintas 0,75l', price: 23.00 },
-      { name: 'Duas Quintas 0,37l', price: 11.70 },
-      { name: 'Quinta Nova 0,75l', price: 17.20 },
-      { name: 'Quinta do Sobreiró de Cima Reserva 0,75l', price: 15.70 },
-      { name: 'Vale de Escadas 0,75l', price: 15.30 },
-      { name: 'Taboadela 0,75l', price: 17.90 },
-      { name: 'Cartuxa 0,75l', price: 28.00 },
-      { name: 'Rocim 0,75l', price: 17.70 },
-      { name: 'Sobroso Tinto 0,75l', price: 15.50 },
-      { name: 'Quinta do Paral 0,75l', price: 15.50 },
-      { name: 'Ald. Juromenha Syrah Reserva 0,75l', price: 15.30 },
-      { name: 'Monte das Servas Tinto 0,75l', price: 14.20 },
-      { name: 'Monte das Servas Tinto 0,37l', price: 7.20 },
-      { name: 'Vale de Donas Tinto 0,75l', price: 11.00 },
-      { name: 'Vale de Donas Tinto 0,37l', price: 5.50 },
-    ],
-  },
-  {
-    category: 'Rosé / Frisante',
-    items: [
-      { name: 'Mateus Rosé 0,75l', price: 12.50 },
-      { name: 'Viadores Frisante 0,75l', price: 11.00 },
-      { name: 'Viadores Frisante 0,37l', price: 5.50 },
-    ],
-  },
-  {
-    category: 'Espumantes',
-    items: [
-      { name: 'Aliança Bruto 0,75l', price: 15.50 },
-      { name: 'Aliança Bruto Baga Reserva 0,75l', price: 17.15 },
-      { name: 'Asti Gancia Doce 0,75l', price: 14.50 },
-      { name: 'Santero Doce 0,75l', price: 12.40 },
-    ],
-  },
-  {
-    category: 'Sangria',
-    items: [
-      { name: 'Sangria Branca', price: 13.90 },
-      { name: 'Sangria Tinta', price: 13.90 },
-      { name: 'Sangria Espumante Santero', price: 16.90 },
-    ],
-  },
-  {
-    category: 'Digestivos',
-    items: [
-      { name: 'Moscatel Setúbal', price: 2.75 },
-      { name: 'São Domingos', price: 2.75 },
-      { name: 'Aguardente 1920', price: 3.30 },
-      { name: 'Macieira', price: 3.30 },
-      { name: 'Croft', price: 3.30 },
-      { name: 'CRF', price: 3.80 },
-      { name: 'Amarguinha', price: 3.80 },
-      { name: 'Aliança Velha', price: 3.80 },
-      { name: 'Antiqua', price: 4.40 },
-      { name: 'Chancella', price: 3.80 },
-      { name: 'Famouse Grouse', price: 3.80 },
-      { name: 'Licor Beirão', price: 3.80 },
-      { name: 'Logan 12 anos', price: 4.90 },
-      { name: 'Cardhu 12 anos', price: 7.70 },
-    ],
-  },
-];
+export const beverageMenu: BeverageCategory[] = (() => {
+  const defaults: BeverageCategory[] = [
+    {
+      category: 'Diversos',
+      items: [
+        { name: 'Água', price: 1.70 },
+        { name: 'Água c/ Gás', price: 2.00 },
+        { name: 'Refrigerantes', price: 2.35 },
+        { name: 'Compal', price: 2.15 },
+        { name: 'Cerveja Sagres', price: 2.25 },
+        { name: 'Cerveja Bohemia', price: 2.35 },
+        { name: 'Cerveja Sagres Preta', price: 2.35 },
+        { name: 'Cerveja Sagres S/ Álcool', price: 2.35 },
+        { name: 'Vinho a copo', price: 3.00 },
+        { name: 'Sumo natural', price: 3.15 },
+        { name: 'Café', price: 1.00 },
+        { name: 'Chá / Meia de Leite', price: 1.30 },
+        { name: 'Cidra', price: 3.15 },
+      ],
+    },
+    {
+      category: 'Vinhos Verdes',
+      items: [
+        { name: 'Alvarinho Deu-La-Deu 0,75l', price: 15.80 },
+        { name: 'Muralhas 0,75l', price: 13.00 },
+      ],
+    },
+    {
+      category: 'Vinhos Brancos',
+      items: [
+        { name: 'João Pires 0,75l', price: 12.50 },
+        { name: 'Sobroso Branco 0,75l', price: 15.50 },
+        { name: 'Monte das Servas Branco 0,75l', price: 14.20 },
+        { name: 'Vale de Donas Branco 0,75l', price: 11.00 },
+        { name: 'Vale de Donas Branco 0,37l', price: 5.50 },
+      ],
+    },
+    {
+      category: 'Vinhos Tintos',
+      items: [
+        { name: 'Duas Quintas 0,75l', price: 23.00 },
+        { name: 'Duas Quintas 0,37l', price: 11.70 },
+        { name: 'Quinta Nova 0,75l', price: 17.20 },
+        { name: 'Quinta do Sobreiró de Cima Reserva 0,75l', price: 15.70 },
+        { name: 'Vale de Escadas 0,75l', price: 15.30 },
+        { name: 'Taboadela 0,75l', price: 17.90 },
+        { name: 'Cartuxa 0,75l', price: 28.00 },
+        { name: 'Rocim 0,75l', price: 17.70 },
+        { name: 'Sobroso Tinto 0,75l', price: 15.50 },
+        { name: 'Quinta do Paral 0,75l', price: 15.50 },
+        { name: 'Ald. Juromenha Syrah Reserva 0,75l', price: 15.30 },
+        { name: 'Monte das Servas Tinto 0,75l', price: 14.20 },
+        { name: 'Monte das Servas Tinto 0,37l', price: 7.20 },
+        { name: 'Vale de Donas Tinto 0,75l', price: 11.00 },
+        { name: 'Vale de Donas Tinto 0,37l', price: 5.50 },
+      ],
+    },
+    {
+      category: 'Rosé / Frisante',
+      items: [
+        { name: 'Mateus Rosé 0,75l', price: 12.50 },
+        { name: 'Viadores Frisante 0,75l', price: 11.00 },
+        { name: 'Viadores Frisante 0,37l', price: 5.50 },
+      ],
+    },
+    {
+      category: 'Espumantes',
+      items: [
+        { name: 'Aliança Bruto 0,75l', price: 15.50 },
+        { name: 'Aliança Bruto Baga Reserva 0,75l', price: 17.15 },
+        { name: 'Asti Gancia Doce 0,75l', price: 14.50 },
+        { name: 'Santero Doce 0,75l', price: 12.40 },
+      ],
+    },
+    {
+      category: 'Sangria',
+      items: [
+        { name: 'Sangria Branca', price: 13.90 },
+        { name: 'Sangria Tinta', price: 13.90 },
+        { name: 'Sangria Espumante Santero', price: 16.90 },
+      ],
+    },
+    {
+      category: 'Digestivos',
+      items: [
+        { name: 'Moscatel Setúbal', price: 2.75 },
+        { name: 'São Domingos', price: 2.75 },
+        { name: 'Aguardente 1920', price: 3.30 },
+        { name: 'Macieira', price: 3.30 },
+        { name: 'Croft', price: 3.30 },
+        { name: 'CRF', price: 3.80 },
+        { name: 'Amarguinha', price: 3.80 },
+        { name: 'Aliança Velha', price: 3.80 },
+        { name: 'Antiqua', price: 4.40 },
+        { name: 'Chancella', price: 3.80 },
+        { name: 'Famouse Grouse', price: 3.80 },
+        { name: 'Licor Beirão', price: 3.80 },
+        { name: 'Logan 12 anos', price: 4.90 },
+        { name: 'Cardhu 12 anos', price: 7.70 },
+      ],
+    },
+  ];
+
+  try {
+    const stored = localStorage.getItem('mg_beverage_prices');
+    if (stored) {
+      const parsed: BeverageCategory[] = JSON.parse(stored);
+      // Merge stored prices into defaults (in case new items were added)
+      return defaults.map((cat, ci) => ({
+        ...cat,
+        items: cat.items.map((item, ii) => ({
+          ...item,
+          price: parsed[ci]?.items[ii]?.price ?? item.price,
+        })),
+      }));
+    }
+  } catch {}
+  return defaults;
+})();
 
 /** Flat list helper for lookups */
 export const beverageMenuFlat = beverageMenu.flatMap(cat => cat.items);

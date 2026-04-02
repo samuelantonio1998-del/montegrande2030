@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, Trash2 } from 'lucide-react';
+import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle } from 'lucide-react';
 import { beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

@@ -81,9 +81,9 @@ export default function Previsao() {
         </div>
       </motion.div>
 
-      <div className={cn("grid grid-cols-1 gap-6", isGerencia ? "lg:grid-cols-2" : "")}>
-        {/* Dish predictions - only for gerencia */}
-        {isGerencia && (
+      <div className={cn("grid grid-cols-1 gap-6", showOrdem ? "lg:grid-cols-2" : "")}>
+        {/* Dish predictions - cozinha + gerencia */}
+        {showOrdem && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

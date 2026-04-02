@@ -303,6 +303,48 @@ export type Database = {
         }
         Relationships: []
       }
+      mesas: {
+        Row: {
+          adults: number
+          beverages: Json
+          children2to6: number
+          children7to12: number
+          created_at: string
+          id: string
+          number: number
+          opened_at: string | null
+          status: string
+          updated_at: string
+          waiter: string
+        }
+        Insert: {
+          adults?: number
+          beverages?: Json
+          children2to6?: number
+          children7to12?: number
+          created_at?: string
+          id?: string
+          number: number
+          opened_at?: string | null
+          status?: string
+          updated_at?: string
+          waiter?: string
+        }
+        Update: {
+          adults?: number
+          beverages?: Json
+          children2to6?: number
+          children7to12?: number
+          created_at?: string
+          id?: string
+          number?: number
+          opened_at?: string | null
+          status?: string
+          updated_at?: string
+          waiter?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string

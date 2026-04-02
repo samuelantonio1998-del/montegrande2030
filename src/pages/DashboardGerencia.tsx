@@ -72,132 +72,145 @@ export default function DashboardGerencia() {
         </Button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {mockKPIs.map((kpi, i) => (
-          <KPICard key={kpi.label} kpi={kpi} index={i} />
-        ))}
-      </div>
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="dashboard" className="gap-1.5"><BarChart3 className="h-4 w-4" /> Dashboard</TabsTrigger>
+          <TabsTrigger value="precos" className="gap-1.5"><Euro className="h-4 w-4" /> Preçário</TabsTrigger>
+        </TabsList>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Waste analysis chart */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Cozinhado vs. Lixo vs. Aproveitamento (kg/semana)</p>
-          <div className="mt-4 h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={wasteChartData}>
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} unit="kg" />
-                <Tooltip />
-                <Bar dataKey="desperdicio" fill="hsl(var(--destructive))" radius={[4,4,0,0]} name="Desperdício" />
-                <Bar dataKey="aproveitamento" fill="hsl(var(--success))" radius={[4,4,0,0]} name="Aproveitamento" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total perdido: <span className="text-destructive font-medium">€{totalWeeklyLoss.toFixed(0)}</span></span>
-            <span className="text-muted-foreground">Total poupado: <span className="text-success font-medium">€{totalWeeklySavings.toFixed(0)}</span></span>
-          </div>
-        </motion.div>
-
-        {/* Menu engineering */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas no histórico 2023–2026</p>
-          <div className="mt-4 space-y-3">
-            {menuInsights.map((insight, i) => (
-              <div key={i} className="rounded-lg border border-warning/20 bg-warning/5 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{insight.dish}</span>
-                  <Badge variant="outline" className="text-destructive border-destructive/30 text-[10px]">{insight.waste.toFixed(0)}% desperdício</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">💡 {insight.suggestion}</p>
-              </div>
-            ))}
-            {mockProductionAlerts.map(alert => (
-              <div key={alert.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <p className="text-sm text-foreground">{alert.message}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Baseado em: {alert.basedOn}</p>
-              </div>
+        <TabsContent value="dashboard" className="space-y-6 mt-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {mockKPIs.map((kpi, i) => (
+              <KPICard key={kpi.label} kpi={kpi} index={i} />
             ))}
           </div>
-        </motion.div>
 
-        {/* Team performance */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Performance da Equipa
-          </h2>
-          <div className="mt-4 h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={teamPerf} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={60} />
-                <Tooltip />
-                <Bar dataKey="mesas" fill="hsl(var(--primary))" radius={[0,4,4,0]} name="Mesas abertas" />
-                <Bar dataKey="tabuleiros" fill="hsl(var(--warning))" radius={[0,4,4,0]} name="Tabuleiros" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+          {/* Main grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Waste analysis chart */}
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">Cozinhado vs. Lixo vs. Aproveitamento (kg/semana)</p>
+              <div className="mt-4 h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={wasteChartData}>
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} unit="kg" />
+                    <Tooltip />
+                    <Bar dataKey="desperdicio" fill="hsl(var(--destructive))" radius={[4,4,0,0]} name="Desperdício" />
+                    <Bar dataKey="aproveitamento" fill="hsl(var(--success))" radius={[4,4,0,0]} name="Aproveitamento" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total perdido: <span className="text-destructive font-medium">€{totalWeeklyLoss.toFixed(0)}</span></span>
+                <span className="text-muted-foreground">Total poupado: <span className="text-success font-medium">€{totalWeeklySavings.toFixed(0)}</span></span>
+              </div>
+            </motion.div>
 
-        {/* Purchase alerts + summary */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Stock vs. previsão próximo fim de semana</p>
-          <div className="mt-4 space-y-3">
-            {purchaseAlerts.map(item => (
-              <div key={item.id} className={cn(
-                'flex items-center justify-between rounded-lg p-3',
-                item.urgency === 'critico' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20'
-              )}>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.currentStock}{item.unit} em stock · mín: {item.minStock}{item.unit}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="outline" className={cn(
-                    'text-[10px]',
-                    item.urgency === 'critico' ? 'text-destructive border-destructive/30' : 'text-warning border-warning/30'
+            {/* Menu engineering */}
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+                <ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas no histórico 2023–2026</p>
+              <div className="mt-4 space-y-3">
+                {menuInsights.map((insight, i) => (
+                  <div key={i} className="rounded-lg border border-warning/20 bg-warning/5 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">{insight.dish}</span>
+                      <Badge variant="outline" className="text-destructive border-destructive/30 text-[10px]">{insight.waste.toFixed(0)}% desperdício</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">💡 {insight.suggestion}</p>
+                  </div>
+                ))}
+                {mockProductionAlerts.map(alert => (
+                  <div key={alert.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-sm text-foreground">{alert.message}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Baseado em: {alert.basedOn}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Team performance */}
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" /> Performance da Equipa
+              </h2>
+              <div className="mt-4 h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={teamPerf} layout="vertical">
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={60} />
+                    <Tooltip />
+                    <Bar dataKey="mesas" fill="hsl(var(--primary))" radius={[0,4,4,0]} name="Mesas abertas" />
+                    <Bar dataKey="tabuleiros" fill="hsl(var(--warning))" radius={[0,4,4,0]} name="Tabuleiros" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+
+            {/* Purchase alerts + summary */}
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">Stock vs. previsão próximo fim de semana</p>
+              <div className="mt-4 space-y-3">
+                {purchaseAlerts.map(item => (
+                  <div key={item.id} className={cn(
+                    'flex items-center justify-between rounded-lg p-3',
+                    item.urgency === 'critico' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20'
                   )}>
-                    {item.daysLeft <= 1 ? 'Encomendar HOJE' : `~${item.daysLeft} dias`}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground mt-0.5">€{(item.minStock * item.costPerUnit).toFixed(2)} estimado</p>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.currentStock}{item.unit} em stock · mín: {item.minStock}{item.unit}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className={cn(
+                        'text-[10px]',
+                        item.urgency === 'critico' ? 'text-destructive border-destructive/30' : 'text-warning border-warning/30'
+                      )}>
+                        {item.daysLeft <= 1 ? 'Encomendar HOJE' : `~${item.daysLeft} dias`}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-0.5">€{(item.minStock * item.costPerUnit).toFixed(2)} estimado</p>
+                    </div>
+                  </div>
+                ))}
+                {purchaseAlerts.length === 0 && (
+                  <div className="text-center py-6 text-sm text-muted-foreground">Stock dentro dos limites ✓</div>
+                )}
+              </div>
+
+              {/* Quick summary row */}
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Em sala</p>
+                  <p className="text-lg font-bold text-foreground">{totalPax}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Tabuleiros</p>
+                  <p className="text-lg font-bold text-primary">{activeTrays.length}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Checklist</p>
+                  <p className="text-lg font-bold text-foreground">{mockChecklist.filter(i => i.done).length}/{mockChecklist.length}</p>
                 </div>
               </div>
-            ))}
-            {purchaseAlerts.length === 0 && (
-              <div className="text-center py-6 text-sm text-muted-foreground">Stock dentro dos limites ✓</div>
-            )}
+            </motion.div>
           </div>
+        </TabsContent>
 
-          {/* Quick summary row */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Em sala</p>
-              <p className="text-lg font-bold text-foreground">{totalPax}</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Tabuleiros</p>
-              <p className="text-lg font-bold text-primary">{activeTrays.length}</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Checklist</p>
-              <p className="text-lg font-bold text-foreground">{mockChecklist.filter(i => i.done).length}/{mockChecklist.length}</p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
+        <TabsContent value="precos" className="mt-4">
+          <PriceManagementPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice } from 'lucide-react';
+import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, Trash2 } from 'lucide-react';
 import { beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { printReceipt } from '@/components/mesas/ReceiptPrint';
+import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -75,7 +76,9 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
 }
 
 /* ── Mesa Detail (occupied/conta) ── */
-function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => void }) {
+function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Mesa) => void; onCancel: () => void }) {
+  const [pinAction, setPinAction] = useState<'cancel' | 'delete-item' | null>(null);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<string | null>(null);
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const dessertCategory = 'Sobremesas';
@@ -101,9 +104,18 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
     const existing = mesa.beverages.find(b => b.name === name);
     if (!existing) return;
     if (existing.quantity <= 1) {
-      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== name) });
+      setPendingDeleteItem(name);
+      setPinAction('delete-item');
     } else {
       onUpdate({ ...mesa, beverages: mesa.beverages.map(b => b.name === name ? { ...b, quantity: b.quantity - 1 } : b) });
+    }
+  };
+
+  const handleDeleteItemAuthorized = (userName: string) => {
+    if (pendingDeleteItem) {
+      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== pendingDeleteItem) });
+      toast.success(`${pendingDeleteItem} removido por ${userName}`);
+      setPendingDeleteItem(null);
     }
   };
 
@@ -117,7 +129,8 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
               <button onClick={() => removeItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Minus className="h-3.5 w-3.5 text-muted-foreground" /></button>
               <span className="w-6 text-center text-sm font-medium text-foreground">{b.quantity}</span>
               <button onClick={() => addItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Plus className="h-3.5 w-3.5 text-primary" /></button>
-              <span className="ml-2 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
+              <button onClick={() => { setPendingDeleteItem(b.name); setPinAction('delete-item'); }} className="rounded-full p-1 hover:bg-destructive/10 ml-1"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+              <span className="ml-1 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
             </div>
           </div>
         ))}
@@ -236,59 +249,77 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
       {/* Actions */}
       <div className="flex gap-2">
         {mesa.status === 'ocupada' && (
-          <Button variant="outline" className="flex-1 gap-2" onClick={() => onUpdate({ ...mesa, status: 'conta' })}>
-            Pedir Conta
-          </Button>
+          <>
+            <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setPinAction('cancel')}>
+              <XCircle className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button variant="outline" className="flex-1 gap-2" onClick={() => onUpdate({ ...mesa, status: 'conta' })}>
+              Pedir Conta
+            </Button>
+          </>
         )}
         {mesa.status === 'conta' && (
-          <Button className="flex-1 gap-2" onClick={async () => {
-            printReceipt(mesa);
-            // Deduct beverages from stock
-            try {
-              const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
-              if (produtos && mesa.beverages.length > 0) {
-                for (const bev of mesa.beverages) {
-                  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                  const bevNorm = normalize(bev.name);
-                  let bestMatch: typeof produtos[0] | null = null;
-                  let bestScore = 0;
-                  for (const p of produtos) {
-                    const pNorm = normalize(p.nome);
-                    if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) {
-                      bestMatch = p;
-                      bestScore = 1;
-                      break;
+          <>
+            <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setPinAction('cancel')}>
+              <XCircle className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button className="flex-1 gap-2" onClick={async () => {
+              printReceipt(mesa);
+              try {
+                const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
+                if (produtos && mesa.beverages.length > 0) {
+                  for (const bev of mesa.beverages) {
+                    const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    const bevNorm = normalize(bev.name);
+                    let bestMatch: typeof produtos[0] | null = null;
+                    let bestScore = 0;
+                    for (const p of produtos) {
+                      const pNorm = normalize(p.nome);
+                      if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) { bestMatch = p; bestScore = 1; break; }
+                      const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
+                      const a = bg(bevNorm), b2 = bg(pNorm);
+                      const inter = a.filter(x => b2.includes(x)).length;
+                      const score = a.length + b2.length > 0 ? (2 * inter) / (a.length + b2.length) : 0;
+                      if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
                     }
-                    const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
-                    const a = bg(bevNorm), b2 = bg(pNorm);
-                    const inter = a.filter(x => b2.includes(x)).length;
-                    const score = a.length + b2.length > 0 ? (2 * inter) / (a.length + b2.length) : 0;
-                    if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
+                    if (bestMatch) {
+                      await supabase.from('produtos').update({ stock_atual: Math.max(0, bestMatch.stock_atual - bev.quantity) }).eq('id', bestMatch.id);
+                      await supabase.from('movimentacoes').insert({ produto_id: bestMatch.id, tipo: 'saida', quantidade: bev.quantity, motivo: `Mesa ${mesa.number} — ${bev.name}`, funcionario: mesa.waiter || null });
+                    }
                   }
-                  if (bestMatch) {
-                    await supabase.from('produtos').update({ stock_atual: Math.max(0, bestMatch.stock_atual - bev.quantity) }).eq('id', bestMatch.id);
-                    await supabase.from('movimentacoes').insert({
-                      produto_id: bestMatch.id,
-                      tipo: 'saida',
-                      quantidade: bev.quantity,
-                      motivo: `Mesa ${mesa.number} — ${bev.name}`,
-                      funcionario: mesa.waiter || null,
-                    });
-                  }
+                  toast.success('Stock de bebidas atualizado');
                 }
-                toast.success('Stock de bebidas atualizado');
+              } catch (e) {
+                console.error('Erro ao descontar stock:', e);
+                toast.error('Erro ao descontar stock de bebidas');
               }
-            } catch (e) {
-              console.error('Erro ao descontar stock:', e);
-              toast.error('Erro ao descontar stock de bebidas');
-            }
-            onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
-          }}>
-            <CreditCard className="h-4 w-4" />
-            Fechar Conta — €{total.toFixed(2)}
-          </Button>
+              onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
+            }}>
+              <CreditCard className="h-4 w-4" />
+              Fechar Conta — €{total.toFixed(2)}
+            </Button>
+          </>
         )}
       </div>
+
+      <PinDialog
+        open={pinAction === 'cancel'}
+        onOpenChange={(o) => !o && setPinAction(null)}
+        title="Cancelar Mesa"
+        description={`Cancelar mesa ${mesa.number}? Todos os consumos serão revertidos.`}
+        allowedRoles={['gerencia']}
+        onAuthorized={() => { setPinAction(null); onCancel(); }}
+      />
+
+      <PinDialog
+        open={pinAction === 'delete-item'}
+        onOpenChange={(o) => { if (!o) { setPinAction(null); setPendingDeleteItem(null); } }}
+        title="Remover Artigo"
+        description={pendingDeleteItem ? `Remover "${pendingDeleteItem}" do talão?` : ''}
+        onAuthorized={handleDeleteItemAuthorized}
+      />
     </div>
   );
 }
@@ -309,6 +340,13 @@ export default function Mesas() {
     } else {
       setSelectedMesa(updated);
     }
+  };
+
+  const handleCancelMesa = async (mesa: Mesa) => {
+    const reset: Mesa = { ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' };
+    await updateMesa(reset);
+    setSelectedMesa(null);
+    toast.success(`Mesa ${mesa.number} cancelada`);
   };
 
   const handleOpenMesa = async (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
@@ -411,7 +449,7 @@ export default function Mesas() {
               {selectedMesa && <Badge variant="outline" className={cn('text-xs', statusConfig[selectedMesa.status].color)}>{statusConfig[selectedMesa.status].label}</Badge>}
             </DialogTitle>
           </DialogHeader>
-          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} />}
+          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} />}
         </DialogContent>
       </Dialog>
     </div>

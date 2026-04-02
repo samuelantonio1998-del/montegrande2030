@@ -103,18 +103,9 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
     const existing = mesa.beverages.find(b => b.name === name);
     if (!existing) return;
     if (existing.quantity <= 1) {
-      setPendingDeleteItem(name);
-      setPinAction('delete-item');
+      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== name) });
     } else {
       onUpdate({ ...mesa, beverages: mesa.beverages.map(b => b.name === name ? { ...b, quantity: b.quantity - 1 } : b) });
-    }
-  };
-
-  const handleDeleteItemAuthorized = (userName: string) => {
-    if (pendingDeleteItem) {
-      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== pendingDeleteItem) });
-      toast.success(`${pendingDeleteItem} removido por ${userName}`);
-      setPendingDeleteItem(null);
     }
   };
 

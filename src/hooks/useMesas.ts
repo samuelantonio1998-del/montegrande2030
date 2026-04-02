@@ -71,7 +71,7 @@ export function useMesas() {
         children7to12: mesa.children7to12,
         waiter: mesa.waiter,
         opened_at: mesa.openedAt,
-        beverages: mesa.beverages as unknown as Record<string, unknown>[],
+        beverages: JSON.parse(JSON.stringify(mesa.beverages)),
         updated_at: new Date().toISOString(),
       })
       .eq('id', mesa.id);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus } from 'lucide-react';
-import { mockMesas, beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
+import { beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { printReceipt } from '@/components/mesas/ReceiptPrint';
+import { useMesas } from '@/hooks/useMesas';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },
@@ -100,7 +101,6 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
 
   return (
     <div className="space-y-5">
-      {/* Guest info */}
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
@@ -214,24 +214,21 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
               const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
               if (produtos && mesa.beverages.length > 0) {
                 for (const bev of mesa.beverages) {
-                  // Fuzzy match beverage name to product
                   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
                   const bevNorm = normalize(bev.name);
                   let bestMatch: typeof produtos[0] | null = null;
                   let bestScore = 0;
                   for (const p of produtos) {
                     const pNorm = normalize(p.nome);
-                    // Exact or includes match
                     if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) {
                       bestMatch = p;
                       bestScore = 1;
                       break;
                     }
-                    // Bigram similarity
                     const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
-                    const a = bg(bevNorm), b = bg(pNorm);
-                    const inter = a.filter(x => b.includes(x)).length;
-                    const score = a.length + b.length > 0 ? (2 * inter) / (a.length + b.length) : 0;
+                    const a = bg(bevNorm), b2 = bg(pNorm);
+                    const inter = a.filter(x => b2.includes(x)).length;
+                    const score = a.length + b2.length > 0 ? (2 * inter) / (a.length + b2.length) : 0;
                     if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
                   }
                   if (bestMatch) {
@@ -264,15 +261,15 @@ function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => voi
 
 /* ── Main Page ── */
 export default function Mesas() {
-  const [mesas, setMesas] = useState(mockMesas);
+  const { mesas, loading, updateMesa } = useMesas();
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [openingMesa, setOpeningMesa] = useState<Mesa | null>(null);
 
   const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
-  const updateMesa = (updated: Mesa) => {
-    setMesas(mesas.map(m => m.id === updated.id ? updated : m));
+  const handleUpdate = async (updated: Mesa) => {
+    await updateMesa(updated);
     if (updated.status === 'livre') {
       setSelectedMesa(null);
     } else {
@@ -280,7 +277,7 @@ export default function Mesas() {
     }
   };
 
-  const handleOpenMesa = (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
+  const handleOpenMesa = async (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
     const opened: Mesa = {
       ...mesa,
       status: 'ocupada',
@@ -292,10 +289,14 @@ export default function Mesas() {
       openedAt: new Date().toISOString(),
       beverages: [],
     };
-    setMesas(mesas.map(m => m.id === mesa.id ? opened : m));
+    await updateMesa(opened);
     setOpeningMesa(null);
     setSelectedMesa(opened);
   };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar mesas...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -316,7 +317,6 @@ export default function Mesas() {
         </div>
       </div>
 
-      {/* Grid de mesas */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {mesas.map((mesa, i) => {
           const cfg = statusConfig[mesa.status];
@@ -351,7 +351,6 @@ export default function Mesas() {
         })}
       </div>
 
-      {/* Legend */}
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         {Object.entries(statusConfig).map(([key, cfg]) => (
           <span key={key} className="flex items-center gap-1.5">
@@ -361,7 +360,6 @@ export default function Mesas() {
         ))}
       </div>
 
-      {/* Open Mesa Dialog */}
       <Dialog open={!!openingMesa} onOpenChange={open => !open && setOpeningMesa(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -371,7 +369,6 @@ export default function Mesas() {
         </DialogContent>
       </Dialog>
 
-      {/* Detail Dialog */}
       <Dialog open={!!selectedMesa} onOpenChange={open => !open && setSelectedMesa(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -380,7 +377,7 @@ export default function Mesas() {
               {selectedMesa && <Badge variant="outline" className={cn('text-xs', statusConfig[selectedMesa.status].color)}>{statusConfig[selectedMesa.status].label}</Badge>}
             </DialogTitle>
           </DialogHeader>
-          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={updateMesa} />}
+          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} />}
         </DialogContent>
       </Dialog>
     </div>

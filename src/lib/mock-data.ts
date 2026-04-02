@@ -147,6 +147,22 @@ export const mockChecklist: ChecklistItem[] = [
   { id: '10', task: 'Lavar chão da cozinha', category: 'limpeza', assignee: 'Pedro', done: false, critical: false },
 ];
 
+export const mockTasks: Task[] = [
+  { id: 't1', title: 'Verificar temperatura câmara fria', category: 'abertura', assignee: 'João', priority: 'alta', critical: true, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't2', title: 'Ligar fornos e equipamentos', category: 'abertura', assignee: 'Maria', priority: 'alta', critical: true, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't3', title: 'Preparar mise en place', category: 'abertura', assignee: 'Pedro', priority: 'media', critical: false, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't4', title: 'Verificar stock de bebidas', category: 'abertura', assignee: 'Ana', priority: 'media', critical: false, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't5', title: 'Limpar mesas e cadeiras', category: 'abertura', assignee: 'Carlos', priority: 'baixa', critical: false, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't6', title: 'Desligar equipamentos', category: 'fecho', assignee: 'João', priority: 'alta', critical: true, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't7', title: 'Limpar cozinha profunda', category: 'fecho', assignee: 'Maria', priority: 'alta', critical: true, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't8', title: 'Fechar caixa do dia', category: 'fecho', assignee: 'Ana', priority: 'alta', critical: true, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't9', title: 'Desinfetar superfícies', category: 'limpeza', assignee: 'Carlos', priority: 'media', critical: false, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't10', title: 'Lavar chão da cozinha', category: 'limpeza', assignee: 'Pedro', priority: 'media', critical: false, done: false, periodicity: 'diaria', createdAt: '2026-03-25T07:00:00' },
+  { id: 't11', title: 'Verificar fuga de água na pia 2', description: 'A pia da cozinha está com gotejamento constante.', category: 'manutencao', assignee: 'Carlos', priority: 'alta', critical: true, done: false, periodicity: 'unica', createdAt: '2026-03-25T08:30:00' },
+  { id: 't12', title: 'Repor stock de guardanapos', description: 'Guardanapos do salão estão acabando.', category: 'outro', assignee: 'Ana', priority: 'media', critical: false, done: false, periodicity: 'unica', createdAt: '2026-03-25T09:15:00' },
+  { id: 't13', title: 'Limpar exaustor da cozinha', description: 'Limpeza profunda programada.', category: 'limpeza', assignee: 'Pedro', priority: 'media', critical: false, done: false, periodicity: 'trimestral', createdAt: '2026-03-24T14:00:00' },
+];
+
 export const mockInventory: InventoryItem[] = [
   { id: '1', name: 'Carne de Vaca', unit: 'kg', currentStock: 8, minStock: 10, maxStock: 50, costPerUnit: 12.50, supplier: 'Carnes Lisboa', leadTimeDays: 2 },
   { id: '2', name: 'Frango', unit: 'kg', currentStock: 15, minStock: 8, maxStock: 40, costPerUnit: 5.80, supplier: 'Carnes Lisboa', leadTimeDays: 2 },

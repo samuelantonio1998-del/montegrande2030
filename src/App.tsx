@@ -10,6 +10,7 @@ import DashboardSala from "./pages/DashboardSala";
 import DashboardCozinha from "./pages/DashboardCozinha";
 import DashboardGerencia from "./pages/DashboardGerencia";
 import Tarefas from "./pages/Tarefas";
+import Inventario from "./pages/Inventario";
 import FichasTecnicas from "./pages/FichasTecnicas";
 import Mesas from "./pages/Mesas";
 import Previsao from "./pages/Previsao";

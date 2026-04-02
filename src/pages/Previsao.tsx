@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { TrendingUp, Users, ChefHat, BarChart3, Calendar } from 'lucide-react';
 import { mockHistorical, mockFichasTecnicas } from '@/lib/mock-data';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function Previsao() {
+  const { user } = useAuth();
+  const isGerencia = user?.role === 'gerencia';
   // Simple prediction: average of same day-of-week from history
   const tomorrow = 'Quarta';
   const sameDayData = mockHistorical.filter(d => d.dayOfWeek === tomorrow);
@@ -76,41 +79,43 @@ export default function Previsao() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Dish predictions */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-xl border border-border bg-card p-6 shadow-sm"
-        >
-          <h2 className="font-display text-xl text-card-foreground flex items-center gap-2 mb-4">
-            <ChefHat className="h-5 w-5 text-primary" />
-            Ordem de Preparação Sugerida
-          </h2>
-          <div className="space-y-3">
-            {predictedDishes.map((dish, i) => (
-              <div key={dish.name} className="flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">{dish.name}</span>
-                    <span className="text-sm font-bold text-foreground">{dish.predicted} doses</span>
+      <div className={cn("grid grid-cols-1 gap-6", isGerencia ? "lg:grid-cols-2" : "")}>
+        {/* Dish predictions - only for gerencia */}
+        {isGerencia && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-xl border border-border bg-card p-6 shadow-sm"
+          >
+            <h2 className="font-display text-xl text-card-foreground flex items-center gap-2 mb-4">
+              <ChefHat className="h-5 w-5 text-primary" />
+              Ordem de Preparação Sugerida
+            </h2>
+            <div className="space-y-3">
+              {predictedDishes.map((dish, i) => (
+                <div key={dish.name} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">{dish.name}</span>
+                      <span className="text-sm font-bold text-foreground">{dish.predicted} doses</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${Math.min(dish.percentage * 2, 100)}%` }}
+                      />
+                    </div>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{dish.percentage}% dos clientes</p>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${Math.min(dish.percentage * 2, 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">{dish.percentage}% dos clientes</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Client trend chart */}
         <motion.div
@@ -141,36 +146,6 @@ export default function Previsao() {
           </ResponsiveContainer>
         </motion.div>
       </div>
-
-      {/* Revenue trend */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="rounded-xl border border-border bg-card p-6 shadow-sm"
-      >
-        <h2 className="font-display text-xl text-card-foreground flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-success" />
-          Receita Semanal
-        </h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={weekChartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-            <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `€${v}`} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                fontSize: '12px',
-              }}
-              formatter={(value: number) => [`€${value}`, 'Receita']}
-            />
-            <Line type="monotone" dataKey="receita" stroke="hsl(var(--success))" strokeWidth={2} dot={{ fill: 'hsl(var(--success))' }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </motion.div>
     </div>
   );
 }

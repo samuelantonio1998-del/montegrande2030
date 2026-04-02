@@ -312,19 +312,20 @@ function YearlyComparisonChart({ vendas, targetWeek }: { vendas: { data: string;
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   };
 
-  const byYear: Record<number, number> = {};
+  const byYear: Record<number, { total: number; dias: number }> = {};
   vendas.forEach(v => {
     const d = new Date(v.data);
     const w = getISOWeek(d);
-    if (Math.abs(w - targetWeek) <= 1 && v.total > 5) {
+    if (w === targetWeek && v.total > 5) {
       const y = d.getFullYear();
-      if (!byYear[y]) byYear[y] = 0;
-      byYear[y] += v.total;
+      if (!byYear[y]) byYear[y] = { total: 0, dias: 0 };
+      byYear[y].total += v.total;
+      byYear[y].dias += 1;
     }
   });
 
   const chartData = Object.entries(byYear)
-    .map(([year, total]) => ({ ano: year, total: Math.round(total / 7) }))
+    .map(([year, { total, dias }]) => ({ ano: year, total: Math.round(total / dias) }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
   return (

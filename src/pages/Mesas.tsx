@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, Trash2 } from 'lucide-react';
+import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle } from 'lucide-react';
 import { beverageMenu, beverageMenuFlat, type Mesa, PRICING, getAdultPrice, calcMesaTotal, isWeekdayLunch } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -77,8 +77,7 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
 
 /* ── Mesa Detail (occupied/conta) ── */
 function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Mesa) => void; onCancel: () => void }) {
-  const [pinAction, setPinAction] = useState<'cancel' | 'delete-item' | null>(null);
-  const [pendingDeleteItem, setPendingDeleteItem] = useState<string | null>(null);
+  const [pinAction, setPinAction] = useState<'cancel' | null>(null);
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const dessertCategory = 'Sobremesas';
@@ -104,18 +103,9 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
     const existing = mesa.beverages.find(b => b.name === name);
     if (!existing) return;
     if (existing.quantity <= 1) {
-      setPendingDeleteItem(name);
-      setPinAction('delete-item');
+      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== name) });
     } else {
       onUpdate({ ...mesa, beverages: mesa.beverages.map(b => b.name === name ? { ...b, quantity: b.quantity - 1 } : b) });
-    }
-  };
-
-  const handleDeleteItemAuthorized = (userName: string) => {
-    if (pendingDeleteItem) {
-      onUpdate({ ...mesa, beverages: mesa.beverages.filter(b => b.name !== pendingDeleteItem) });
-      toast.success(`${pendingDeleteItem} removido por ${userName}`);
-      setPendingDeleteItem(null);
     }
   };
 
@@ -129,8 +119,7 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
               <button onClick={() => removeItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Minus className="h-3.5 w-3.5 text-muted-foreground" /></button>
               <span className="w-6 text-center text-sm font-medium text-foreground">{b.quantity}</span>
               <button onClick={() => addItem(b.name)} className="rounded-full p-1 hover:bg-muted"><Plus className="h-3.5 w-3.5 text-primary" /></button>
-              <button onClick={() => { setPendingDeleteItem(b.name); setPinAction('delete-item'); }} className="rounded-full p-1 hover:bg-destructive/10 ml-1"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
-              <span className="ml-1 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
+              <span className="ml-2 text-sm font-medium text-foreground w-16 text-right">€{(b.quantity * b.unitPrice).toFixed(2)}</span>
             </div>
           </div>
         ))}
@@ -311,14 +300,6 @@ function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Me
         description={`Cancelar mesa ${mesa.number}? Todos os consumos serão revertidos.`}
         allowedRoles={['gerencia']}
         onAuthorized={() => { setPinAction(null); onCancel(); }}
-      />
-
-      <PinDialog
-        open={pinAction === 'delete-item'}
-        onOpenChange={(o) => { if (!o) { setPinAction(null); setPendingDeleteItem(null); } }}
-        title="Remover Artigo"
-        description={pendingDeleteItem ? `Remover "${pendingDeleteItem}" do talão?` : ''}
-        onAuthorized={handleDeleteItemAuthorized}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProductionProvider } from "@/contexts/ProductionContext";
+import { SidebarCollapseProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "./pages/Login";
 import DashboardSala from "./pages/DashboardSala";
@@ -64,6 +65,7 @@ const App = () => (
       <Toaster />
       <AuthProvider>
         <ProductionProvider>
+        <SidebarCollapseProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
@@ -71,6 +73,7 @@ const App = () => (
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
+        </SidebarCollapseProvider>
         </ProductionProvider>
       </AuthProvider>
     </TooltipProvider>

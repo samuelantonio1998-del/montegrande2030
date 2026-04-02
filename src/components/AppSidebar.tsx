@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
@@ -18,6 +18,8 @@ const navItems: NavItem[] = [
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
   { to: '/ordens', icon: MessageSquare, label: 'Ordens', roles: ['gerencia'] },
+  { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
+  { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
 ];
 
 const roleLabels: Record<UserRole, string> = {

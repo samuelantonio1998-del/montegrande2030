@@ -18,6 +18,8 @@ import Previsao from "./pages/Previsao";
 import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
+import Precario from "./pages/Precario";
+import Funcionarios from "./pages/Funcionarios";
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 
@@ -49,6 +51,8 @@ function ProtectedRoutes() {
         <Route path="/producao" element={<Producao />} />
         <Route path="/desperdicio" element={<Desperdicio />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
+        <Route path="/precario" element={<Precario />} />
+        <Route path="/funcionarios" element={<Funcionarios />} />
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, MessageSquare, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
@@ -10,14 +10,14 @@ type NavItem = { to: string; icon: React.ElementType; label: string; roles: User
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/mesas', icon: Grid3X3, label: 'Talão de Mesa', roles: ['sala', 'gerencia'] },
-  { to: '/checklist', icon: ClipboardCheck, label: 'Checklist', roles: ['sala', 'cozinha', 'gerencia'] },
+  { to: '/tarefas', icon: ClipboardCheck, label: 'Tarefas', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/inventario', icon: Package, label: 'Inventário', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/producao', icon: UtensilsCrossed, label: 'Produção Buffet', roles: ['cozinha', 'gerencia'] },
   { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas', roles: ['cozinha', 'gerencia'] },
   { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['gerencia'] },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
-  { to: '/ordens', icon: MessageSquare, label: 'Ordens', roles: ['gerencia'] },
+  
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
   { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
 ];

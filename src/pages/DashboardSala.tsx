@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardCheck } from 'lucide-react';
-import { mockChecklist, mockMesas, type ChecklistItem } from '@/lib/mock-data';
+import { mockTasks, mockMesas, type Task } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ const categories = [
 
 export default function DashboardSala() {
   const { user, logout } = useAuth();
-  const [items, setItems] = useState<ChecklistItem[]>(mockChecklist);
+  const [items, setItems] = useState<Task[]>(mockTasks);
   const [filter, setFilter] = useState<string>('all');
 
   const totalInRoom = mockMesas.reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
@@ -27,7 +27,8 @@ export default function DashboardSala() {
     setItems(prev => prev.map(i => i.id === id ? { ...i, done: !i.done } : i));
   };
 
-  const filtered = filter === 'all' ? items : items.filter(i => i.category === filter);
+  const activeTasks = items.filter(i => !i.done);
+  const filtered = filter === 'all' ? activeTasks : activeTasks.filter(i => i.category === filter);
   const doneCount = items.filter(i => i.done).length;
   const progress = items.length > 0 ? (doneCount / items.length) * 100 : 0;
 
@@ -131,7 +132,7 @@ export default function DashboardSala() {
                   'text-sm font-medium truncate',
                   item.done ? 'text-muted-foreground line-through' : 'text-foreground'
                 )}>
-                  {item.task}
+                  {item.title}
                 </p>
                 <p className="text-xs text-muted-foreground">{item.assignee}</p>
               </div>
@@ -142,11 +143,17 @@ export default function DashboardSala() {
                   </span>
                 )}
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">
-                  {item.category}
+                  {item.category === 'manutencao' ? 'Manutenção' : item.category}
                 </span>
               </div>
             </motion.div>
           ))}
+          {filtered.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="mx-auto h-8 w-8 mb-2 text-success" />
+              <p className="text-sm">Tudo feito!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

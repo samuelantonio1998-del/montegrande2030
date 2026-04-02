@@ -9,9 +9,8 @@ import Login from "./pages/Login";
 import DashboardSala from "./pages/DashboardSala";
 import DashboardCozinha from "./pages/DashboardCozinha";
 import DashboardGerencia from "./pages/DashboardGerencia";
-import Checklist from "./pages/Checklist";
+import Tarefas from "./pages/Tarefas";
 import Inventario from "./pages/Inventario";
-import Ordens from "./pages/Ordens";
 import FichasTecnicas from "./pages/FichasTecnicas";
 import Mesas from "./pages/Mesas";
 import Previsao from "./pages/Previsao";
@@ -43,9 +42,8 @@ function ProtectedRoutes() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<DashboardRouter />} />
-        <Route path="/checklist" element={<Checklist />} />
+        <Route path="/tarefas" element={<Tarefas />} />
         <Route path="/inventario" element={<Inventario />} />
-        <Route path="/ordens" element={<Ordens />} />
         <Route path="/fichas-tecnicas" element={<FichasTecnicas />} />
         <Route path="/mesas" element={<Mesas />} />
         <Route path="/producao" element={<Producao />} />

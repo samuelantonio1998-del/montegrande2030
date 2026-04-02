@@ -349,8 +349,8 @@ export default function Mesas() {
     toast.success(`Mesa ${mesa.number} cancelada`);
   };
 
-
-    const handleOpenMesa = async (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
+  const handleOpenMesa = async (mesa: Mesa, adults: number, c2to6: number, c7to12: number) => {
+    const opened: Mesa = {
       ...mesa,
       status: 'ocupada',
       adults,

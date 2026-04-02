@@ -76,7 +76,7 @@ function OpenMesaDialog({ mesa, onOpen }: { mesa: Mesa; onOpen: (adults: number,
 }
 
 /* ── Mesa Detail (occupied/conta) ── */
-function MesaDetail({ mesa, onUpdate }: { mesa: Mesa; onUpdate: (m: Mesa) => void }) {
+function MesaDetail({ mesa, onUpdate, onCancel }: { mesa: Mesa; onUpdate: (m: Mesa) => void; onCancel: () => void }) {
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa);
 
   const dessertCategory = 'Sobremesas';

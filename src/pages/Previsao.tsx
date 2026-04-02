@@ -9,6 +9,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export default function Previsao() {
   const { user } = useAuth();
   const isGerencia = user?.role === 'gerencia';
+  const isCozinha = user?.role === 'cozinha';
+  const showOrdem = isCozinha || isGerencia;
   // Simple prediction: average of same day-of-week from history
   const tomorrow = 'Quarta';
   const sameDayData = mockHistorical.filter(d => d.dayOfWeek === tomorrow);

@@ -62,10 +62,13 @@ export default function DashboardCozinha() {
   // Real data: pax from DB
   const currentPax = realMesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children, 0);
   
-  // Forecast from vendas_historico
-  const avgClients = vendasData.length > 0 
-    ? Math.round(vendasData.reduce((s, d) => s + d.total, 0) / vendasData.length) 
-    : 0;
+  // Forecast from vendas_historico using intelligent prediction
+  const todayForecast = useMemo(() => {
+    if (!vendasData.length) return null;
+    const previsoes = calcularPrevisao(vendasData, today, 1);
+    return previsoes[0] || null;
+  }, [vendasData, today]);
+  const avgClients = todayForecast?.previsaoTotal ?? 0;
 
   // Waste from registos_producao
   const waste = wasteSummary();

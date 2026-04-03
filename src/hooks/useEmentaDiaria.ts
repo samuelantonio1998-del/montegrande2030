@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
+export const PERMANENT_DATE = '9999-12-31';
+
 export type EmentaItem = {
   id: string;
   data: string;
@@ -31,9 +33,50 @@ export function useEmentaDiaria(date?: Date) {
       const { data, error } = await supabase
         .from('ementa_diaria')
         .select('*, buffet_item:buffet_items(id, nome, zona, ativo, ficha_tecnica_id)')
-        .eq('data', dateStr)
+        .in('data', [dateStr, PERMANENT_DATE])
         .order('created_at');
 
+      if (error) throw error;
+      
+      // Deduplicate: if an item exists for today AND as permanent, prefer today's entry
+      const seen = new Set<string>();
+      const result: EmentaItem[] = [];
+      const allItems = (data || []).map(d => ({
+        ...d,
+        historico_consumo_kg: (d.historico_consumo_kg as number[]) || [],
+        historico_sobra_kg: (d.historico_sobra_kg as number[]) || [],
+        buffet_item: d.buffet_item as unknown as EmentaItem['buffet_item'],
+      }));
+      
+      // First pass: today's items
+      for (const item of allItems) {
+        if (item.data !== PERMANENT_DATE) {
+          seen.add(item.buffet_item_id);
+          result.push(item);
+        }
+      }
+      // Second pass: permanent items not already covered by today
+      for (const item of allItems) {
+        if (item.data === PERMANENT_DATE && !seen.has(item.buffet_item_id)) {
+          seen.add(item.buffet_item_id);
+          result.push(item);
+        }
+      }
+      
+      return result;
+    },
+  });
+}
+
+export function usePermanentEmentaItems() {
+  return useQuery({
+    queryKey: ['ementa_diaria', PERMANENT_DATE],
+    queryFn: async (): Promise<EmentaItem[]> => {
+      const { data, error } = await supabase
+        .from('ementa_diaria')
+        .select('*, buffet_item:buffet_items(id, nome, zona, ativo, ficha_tecnica_id)')
+        .eq('data', PERMANENT_DATE)
+        .order('created_at');
       if (error) throw error;
       return (data || []).map(d => ({
         ...d,

@@ -6,7 +6,7 @@ import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
 import { useVendasHistorico, calcularPrevisao } from '@/hooks/useVendasHistorico';
-import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
+import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta, usePermanentEmentaItems, PERMANENT_DATE } from '@/hooks/useEmentaDiaria';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,7 @@ export default function DashboardCozinha() {
   const today = new Date();
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();
+  const { data: permanentItems = [] } = usePermanentEmentaItems();
   const bulkAdd = useBulkAddEmenta();
   const { mesas: realMesas } = useMesas();
   const { wasteSummary, activeTrays: prodActiveTrays } = useRegistosProducao();
@@ -41,6 +42,7 @@ export default function DashboardCozinha() {
   const { log } = useActivityLog();
 
   const existingItemIds = useMemo(() => new Set(ementaItems.map(e => e.buffet_item_id)), [ementaItems]);
+  const permanentItemIds = useMemo(() => new Set(permanentItems.map(e => e.buffet_item_id)), [permanentItems]);
 
   const ementaByZone = useMemo(() => {
     const map: Record<string, typeof ementaItems> = { entradas: [], pratos_principais: [], sobremesas: [] };
@@ -116,6 +118,17 @@ export default function DashboardCozinha() {
         historico_sobra_kg: [0.5, 0.3, 0.8, 0.2, 0.6, 0.4],
       }))
     );
+    bulkAdd.mutate(rows);
+  };
+
+  const handlePermanentAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[]) => {
+    const rows = items.map(i => ({
+      ...i,
+      data: PERMANENT_DATE,
+      criado_por: user?.name || '',
+      historico_consumo_kg: [2.5, 3.1, 2.8, 3.5, 2.9, 3.2],
+      historico_sobra_kg: [0.5, 0.3, 0.8, 0.2, 0.6, 0.4],
+    }));
     bulkAdd.mutate(rows);
   };
 
@@ -219,7 +232,7 @@ export default function DashboardCozinha() {
         </div>
       )}
 
-      <EmentaSetupDialog open={showSetup} onOpenChange={setShowSetup} allItems={allBuffetItems} existingItemIds={existingItemIds} onConfirm={handleBulkAdd} date={today} userName={user?.name || ''} />
+      <EmentaSetupDialog open={showSetup} onOpenChange={setShowSetup} allItems={allBuffetItems} existingItemIds={existingItemIds} permanentItemIds={permanentItemIds} onConfirm={handleBulkAdd} onConfirmPermanent={handlePermanentAdd} date={today} userName={user?.name || ''} />
     </div>
   );
 }

@@ -30,6 +30,7 @@ export default function DashboardSala() {
   const toggleItem = async (task: Tarefa) => {
     if (!task.concluida) {
       await completeTarefa(task.id, task.periodicidade);
+      log('Tarefa concluída', 'Tarefas', task.titulo, { tarefa_id: task.id, categoria: task.categoria });
     }
   };
 

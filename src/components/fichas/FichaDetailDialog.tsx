@@ -260,7 +260,10 @@ export function FichaDetailDialog({
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Recipiente (Dose)</label>
-              <Select value={String(editPorcoes)} onValueChange={v => setEditPorcoes(Number(v))}>
+              <Select
+                value={Object.entries(recipientCapacity).find(([_, v]) => v.capacityKg === editPorcoes)?.[0] ?? 'unitario'}
+                onValueChange={v => setEditPorcoes(recipientCapacity[v as RecipientSize]?.capacityKg ?? 1)}
+              >
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {doseOptions.map(opt => (

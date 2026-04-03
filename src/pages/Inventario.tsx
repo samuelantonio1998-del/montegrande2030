@@ -86,6 +86,7 @@ const FUZZY_THRESHOLD = 0.55;
 
 export default function Inventario() {
   const { toast } = useToast();
+  const { log } = useActivityLog();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);

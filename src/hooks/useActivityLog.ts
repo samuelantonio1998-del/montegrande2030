@@ -49,14 +49,14 @@ export async function logActivity(
   metadata?: Record<string, unknown>
 ) {
   try {
-    await supabase.from('activity_logs').insert({
+    await supabase.from('activity_logs').insert([{
       user_name: userName,
       user_role: userRole,
       action,
       module,
       details: details || '',
       metadata: metadata || {},
-    });
+    }]);
   } catch (e) {
     console.error('Erro ao registar log:', e);
   }

@@ -463,6 +463,37 @@ export default function Mesas() {
           {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} />}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showCloseDay} onOpenChange={setShowCloseDay}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Fechar Dia</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Registar as refeições de hoje no histórico de vendas?
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Almoço</p>
+                <p className="text-2xl font-bold text-foreground">{dailyTotals.almoco}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Jantar</p>
+                <p className="text-2xl font-bold text-foreground">{dailyTotals.jantar}</p>
+              </div>
+              <div className="rounded-lg bg-primary/10 p-3">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold text-primary">{dailyTotals.total}</p>
+              </div>
+            </div>
+            {occupiedCount > 0 && (
+              <p className="text-xs text-destructive">⚠ Ainda existem {occupiedCount} mesa(s) ocupada(s)</p>
+            )}
+            <Button className="w-full" disabled={closingDay || dailyTotals.total === 0} onClick={handleCloseDay}>
+              {closingDay ? 'A registar...' : 'Confirmar fecho do dia'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function DashboardCozinha() {
   const { data: permanentItems = [] } = usePermanentEmentaItems();
   const bulkAdd = useBulkAddEmenta();
   const { mesas: realMesas } = useMesas();
-  const { wasteSummary, activeTrays: prodActiveTrays } = useRegistosProducao();
+  const { wasteSummary, activeTrays: prodActiveTrays, addRegisto, recolherRegisto } = useRegistosProducao();
   const { data: vendasData = [] } = useVendasHistorico();
 
   const [showSetup, setShowSetup] = useState(false);
@@ -89,19 +89,32 @@ export default function DashboardCozinha() {
     priority: 'alta' as const,
   }));
 
-  const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
+  const handleReplenish = useCallback(async (itemId: string, recipient: RecipientSize, weightKg: number) => {
     ctxReplenish(itemId, recipient, weightKg, user?.name || '');
     const item = activeItems.find(i => i.id === itemId);
+    // Persist to DB
+    await addRegisto({
+      dish_name: item?.name || itemId,
+      buffet_item_id: itemId,
+      recipiente: recipient,
+      peso_kg: weightKg,
+      registado_por: user?.name || '',
+    });
     log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, {
       undo_type: 'reposicao_buffet',
       itemId, recipient, weightKg, itemName: item?.name,
     });
-  }, [ctxReplenish, user?.name, activeItems, log]);
+  }, [ctxReplenish, user?.name, activeItems, log, addRegisto]);
 
-  const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
+  const handleCollect = useCallback(async (itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
+    // Find the latest active DB record for this buffet item and update it
+    const activeRecord = prodActiveTrays.find(r => r.buffet_item_id === itemId);
+    if (activeRecord) {
+      await recolherRegisto(activeRecord.id, leftoverKg, action, note);
+    }
     log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, {
       undo_type: 'recolha_tabuleiro',
       itemId, itemName: item.name, leftoverKg, action,
@@ -173,8 +186,8 @@ export default function DashboardCozinha() {
           <div><p className="text-[10px] text-muted-foreground leading-none">Aproveitamento</p><p className="text-sm font-bold text-success">{totalReused.toFixed(1)}kg</p></div>
         </div>
         <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
-          <Recycle className="h-3 w-3 text-primary shrink-0" />
-          <div><p className="text-[10px] text-muted-foreground leading-none">Poupança</p><p className={cn('text-sm font-bold', totalSavings >= totalLoss ? 'text-success' : 'text-destructive')}>{totalSavings.toFixed(0)}kg</p></div>
+          <Euro className="h-3 w-3 text-primary shrink-0" />
+          <div><p className="text-[10px] text-muted-foreground leading-none">Poupança</p><p className={cn('text-sm font-bold', totalSavings >= totalLoss ? 'text-success' : 'text-destructive')}>€{totalSavings.toFixed(0)}</p></div>
         </div>
       </div>
 

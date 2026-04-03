@@ -24,7 +24,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 /* ── Open Mesa Dialog ── */
-function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adults: number, c2to6: number, c7to12: number) => void; mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number } }) {
+function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adults: number, c2to6: number, c7to12: number) => void; mealPrices: MealPrices }) {
   const [adults, setAdults] = useState(2);
   const [c2to6, setC2to6] = useState(0);
   const [c7to12, setC7to12] = useState(0);

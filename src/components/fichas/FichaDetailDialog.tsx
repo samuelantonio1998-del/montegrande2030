@@ -21,8 +21,8 @@ type EditIngredient = {
 
 /** Dose options from recipientes */
 const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
-  value: String(val.capacityKg),
-  label: val.capacityKg === 1 && key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
+  value: key,
+  label: key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
 }));
 
 function calcCostFromProdutos(

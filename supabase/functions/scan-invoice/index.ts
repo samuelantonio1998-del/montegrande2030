@@ -35,14 +35,21 @@ serve(async (req) => {
             role: "system",
             content: `You are an invoice/receipt OCR assistant for a restaurant. Extract product items from the invoice image. Return a JSON array of items with these fields:
 - nome: product name (string)
-- quantidade: quantity (number)
-- unidade: unit of measure - kg, L, un, garrafa, caixa, etc. (string)
-- custo_unitario: NET unit cost in euros WITHOUT VAT/IVA (number). CRITICAL: Always use the value BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
+- quantidade: TOTAL quantity of individual units (number). CRITICAL RULE FOR PACKS/BUNDLES: If the product is sold in packs or bundles, you MUST multiply the number of packs by the units per pack to get the total individual units. Look for patterns like:
+  * "X6", "x6", "X12", "x24" in the product name → multiply ordered quantity by that number
+  * "1,5LTX6" means pack of 6 bottles of 1.5L → if 4 ordered, quantidade = 4 * 6 = 24
+  * "24X33C" or "24x33cl" means pack of 24 units of 33cl → if 2 ordered, quantidade = 2 * 24 = 48
+  * "Pack", "Pk", "Cx" followed by a number → multiply accordingly
+  * "6x1L", "12x0.5L" → the first number is units per pack
+  Always calculate: quantidade = packs_ordered × units_per_pack. If no pack indicator, use the quantity as-is.
+- unidade: unit of measure - un, garrafa, kg, L, caixa, etc. (string). For packed items, use the individual unit (e.g., "un" for bottles, "garrafa" for wine bottles).
+- custo_unitario: NET unit cost in euros WITHOUT VAT/IVA PER INDIVIDUAL UNIT (number). CRITICAL: If the invoice price is per pack, divide by the number of units in the pack to get the per-unit cost. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
 - fornecedor: supplier name if visible on the invoice header/footer (string or null). IMPORTANT: Always extract the supplier/company name from the invoice header, logo, or footer.
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available - look for codes like "REF:", "Art.", "Cod.", numbers at the start of each line, or any alphanumeric identifier associated with each product.
 
 Only return the JSON array, no other text. If you cannot read the invoice, return an empty array [].
-Always use Portuguese product names when possible. Pay special attention to product codes/references and supplier identification as they are crucial for inventory matching.`,
+Always use Portuguese product names when possible. Pay special attention to product codes/references and supplier identification as they are crucial for inventory matching.
+REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units and divide cost to get per-unit cost.`,
           },
           {
             role: "user",

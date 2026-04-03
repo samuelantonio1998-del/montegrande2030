@@ -22,6 +22,7 @@ export default function DashboardSala() {
   const { tarefas, completeTarefa } = useTarefas();
   const { mesas } = useMesas();
   const [filter, setFilter] = useState<string>('all');
+  const { log } = useActivityLog();
 
   const totalInRoom = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;

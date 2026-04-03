@@ -29,6 +29,13 @@ export default function DashboardGerencia() {
       .then(({ data }) => {
         if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_atual <= p.stock_minimo));
       });
+    // Fetch recent activity logs
+    supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(({ data }) => {
+        if (data) setLogs(data as unknown as ActivityLog[]);
+      });
   }, []);
 
   const totalPax = mesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);

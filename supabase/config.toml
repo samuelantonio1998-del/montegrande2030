@@ -14,3 +14,7 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.close-day]
+verify_jwt = false
+schedule = "5 0 * * *"

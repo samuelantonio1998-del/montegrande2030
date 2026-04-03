@@ -5,7 +5,7 @@ import { useProduction } from '@/contexts/ProductionContext';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
-import { useVendasHistorico } from '@/hooks/useVendasHistorico';
+import { useVendasHistorico, calcularPrevisao } from '@/hooks/useVendasHistorico';
 import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -62,10 +62,13 @@ export default function DashboardCozinha() {
   // Real data: pax from DB
   const currentPax = realMesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children, 0);
   
-  // Forecast from vendas_historico
-  const avgClients = vendasData.length > 0 
-    ? Math.round(vendasData.reduce((s, d) => s + d.total, 0) / vendasData.length) 
-    : 0;
+  // Forecast from vendas_historico using intelligent prediction
+  const todayForecast = useMemo(() => {
+    if (!vendasData.length) return null;
+    const previsoes = calcularPrevisao(vendasData, today, 1);
+    return previsoes[0] || null;
+  }, [vendasData, today]);
+  const avgClients = todayForecast?.previsaoTotal ?? 0;
 
   // Waste from registos_producao
   const waste = wasteSummary();

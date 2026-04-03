@@ -329,6 +329,7 @@ export type Database = {
           foto_url: string | null
           id: string
           nome: string
+          notas_preparacao: string | null
           porcoes: number
           preco_venda: number
           tempo_preparacao: number | null
@@ -341,6 +342,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           nome: string
+          notas_preparacao?: string | null
           porcoes?: number
           preco_venda?: number
           tempo_preparacao?: number | null
@@ -353,6 +355,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           nome?: string
+          notas_preparacao?: string | null
           porcoes?: number
           preco_venda?: number
           tempo_preparacao?: number | null

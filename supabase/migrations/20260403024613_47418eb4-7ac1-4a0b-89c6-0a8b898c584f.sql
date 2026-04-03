@@ -1,0 +1,1 @@
+ALTER TABLE public.fichas_tecnicas ADD COLUMN notas_preparacao TEXT DEFAULT NULL;

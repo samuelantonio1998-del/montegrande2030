@@ -89,7 +89,9 @@ export default function DashboardCozinha() {
 
   const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
     ctxReplenish(itemId, recipient, weightKg, user?.name || '');
-  }, [ctxReplenish, user?.name]);
+    const item = activeItems.find(i => i.id === itemId);
+    log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, { itemId, recipient, weightKg });
+  }, [ctxReplenish, user?.name, activeItems, log]);
 
   const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);

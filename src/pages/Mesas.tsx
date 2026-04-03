@@ -368,8 +368,12 @@ export default function Mesas() {
 
   const handleUpdate = async (updated: Mesa) => {
     await updateMesa(updated);
-    if (updated.status === 'livre') setSelectedMesa(null);
-    else setSelectedMesa(updated);
+    if (updated.status === 'livre') {
+      setSelectedMesa(null);
+      fetchDailyTotals();
+    } else {
+      setSelectedMesa(updated);
+    }
   };
 
   const handleCancelMesa = async (mesa: Mesa) => {

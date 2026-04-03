@@ -26,7 +26,16 @@ const ZONES = [
 
 export default function DashboardCozinha() {
   const { user, logout } = useAuth();
-  const { trayStates, handleReplenish: ctxReplenish, handleCollect: ctxCollect, leftoverHistory } = useProduction();
+  const { trayStates: ctxTrayStates, handleReplenish: ctxReplenish, handleCollect: ctxCollect, leftoverHistory } = useProduction();
+  // Use DB-derived tray states (persists across refresh), merged with in-session context
+  const trayStates = useMemo(() => {
+    const merged = { ...ctxTrayStates };
+    // DB states override/supplement in-memory states
+    for (const [id, dbState] of Object.entries(derivedTrayStates)) {
+      merged[id] = dbState;
+    }
+    return merged;
+  }, [ctxTrayStates, derivedTrayStates]);
   const today = new Date();
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();

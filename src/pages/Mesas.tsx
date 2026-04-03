@@ -416,7 +416,14 @@ export default function Mesas() {
     await updateMesa(opened);
     setOpeningMesa(null);
     setSelectedMesa(opened);
-    log('Mesa aberta', 'Mesas', `Mesa ${mesa.number}: ${adults} adultos, ${c2to6 + c7to12} crianças`, { mesa_number: mesa.number, adults, children2to6: c2to6, children7to12: c7to12 });
+    log('Mesa aberta', 'Mesas', `Mesa ${mesa.number}: ${adults} adultos, ${c2to6 + c7to12} crianças`, {
+      undo_type: 'mesa_aberta',
+      mesa_id: mesa.id,
+      mesa_number: mesa.number,
+      adults,
+      children2to6: c2to6,
+      children7to12: c7to12,
+    });
   };
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar mesas...</div>;

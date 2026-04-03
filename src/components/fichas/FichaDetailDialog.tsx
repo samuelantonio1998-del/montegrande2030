@@ -19,14 +19,11 @@ type EditIngredient = {
   unidade: string;
 };
 
-/** Dose options: recipientes + unitário */
-const doseOptions = [
-  ...Object.entries(recipientCapacity).map(([key, val]) => ({
-    value: String(val.capacityKg),
-    label: `${val.label} (${val.capacityKg}kg)`,
-  })),
-  { value: '1', label: 'Unitário (un)' },
-];
+/** Dose options from recipientes */
+const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
+  value: String(val.capacityKg),
+  label: val.capacityKg === 1 && key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
+}));
 
 function calcCostFromProdutos(
   ingredientes: EditIngredient[],

@@ -365,7 +365,13 @@ export function FichaDetailDialog({
                           <span className="text-muted-foreground">{ing.quantidade} {ing.unidade}</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">€{cost.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">
+                        {editing ? (
+                          <span className="text-muted-foreground">€{cost.toFixed(2)}</span>
+                        ) : (
+                          <CostHistoryPopover produtoId={ing.produto_id} currentCost={cost} unidade={p?.unidade || 'un'} />
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">€{(ing.quantidade * cost).toFixed(2)}</td>
                       {editing && (
                         <td className="px-1 py-2">

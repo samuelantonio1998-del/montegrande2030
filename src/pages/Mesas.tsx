@@ -293,7 +293,18 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                 console.error('Erro ao descontar stock:', e);
                 toast.error('Erro ao descontar stock de bebidas');
               }
-              onLog('Conta fechada', `Mesa ${mesa.number}: ${mesa.adults + mesa.children2to6 + mesa.children7to12} pax, €${total.toFixed(2)}`, { mesa_number: mesa.number, pax: mesa.adults + mesa.children2to6 + mesa.children7to12, total });
+              onLog('Conta fechada', `Mesa ${mesa.number}: ${mesa.adults + mesa.children2to6 + mesa.children7to12} pax, €${total.toFixed(2)}`, {
+                undo_type: 'mesa_fechada',
+                mesa_id: mesa.id,
+                mesa_number: mesa.number,
+                adults: mesa.adults,
+                children2to6: mesa.children2to6,
+                children7to12: mesa.children7to12,
+                waiter: mesa.waiter,
+                openedAt: mesa.openedAt,
+                beverages: mesa.beverages,
+                data: new Date().toISOString().slice(0, 10),
+              });
               onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
             }}>
               <CreditCard className="h-4 w-4" /> Fechar Conta — €{total.toFixed(2)}

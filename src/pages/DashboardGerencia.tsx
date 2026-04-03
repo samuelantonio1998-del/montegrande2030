@@ -230,6 +230,9 @@ export default function DashboardGerencia() {
                   {entry.details && <p className="text-xs text-muted-foreground truncate">{entry.details}</p>}
                   <p className="text-[10px] text-muted-foreground/70">{entry.user_name}{entry.user_role ? ` · ${entry.user_role}` : ''}</p>
                 </div>
+                <button onClick={() => deleteLog(entry.id)} className="shrink-0 rounded-full p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all" title="Eliminar">
+                  <X className="h-3.5 w-3.5 text-destructive" />
+                </button>
               </div>
             );
           })}

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, CalendarCheck } from 'lucide-react';
 import { type Mesa } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -247,7 +247,22 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
             </Button>
             <Button className="flex-1 gap-2" onClick={async () => {
               printReceipt(mesa);
+              const now = new Date();
+              const periodo = now.getHours() < 16 ? 'almoco' : 'jantar';
+              const totalPax = mesa.adults + mesa.children2to6 + mesa.children7to12;
               try {
+                // Register meal closing
+                await supabase.from('fecho_mesas').insert({
+                  mesa_number: mesa.number,
+                  adults: mesa.adults,
+                  children2to6: mesa.children2to6,
+                  children7to12: mesa.children7to12,
+                  total_pax: totalPax,
+                  periodo,
+                  funcionario: mesa.waiter || '',
+                  data: now.toISOString().slice(0, 10),
+                });
+
                 const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
                 if (produtos && mesa.beverages.length > 0) {
                   for (const bev of mesa.beverages) {
@@ -300,10 +315,65 @@ export default function Mesas() {
   const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
+  // Daily closed meals from fecho_mesas
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [dailyTotals, setDailyTotals] = useState({ almoco: 0, jantar: 0, total: 0 });
+  const [closingDay, setClosingDay] = useState(false);
+  const [showCloseDay, setShowCloseDay] = useState(false);
+
+  const fetchDailyTotals = async () => {
+    const { data } = await supabase.from('fecho_mesas').select('total_pax, periodo').eq('data', todayStr);
+    if (data) {
+      const almoco = data.filter(r => r.periodo === 'almoco').reduce((s, r) => s + r.total_pax, 0);
+      const jantar = data.filter(r => r.periodo === 'jantar').reduce((s, r) => s + r.total_pax, 0);
+      setDailyTotals({ almoco, jantar, total: almoco + jantar });
+    }
+  };
+
+  useEffect(() => { fetchDailyTotals(); }, [todayStr]);
+
+  const handleCloseDay = async () => {
+    if (occupiedCount > 0) {
+      toast.error('Ainda existem mesas ocupadas. Feche todas as mesas antes de fechar o dia.');
+      return;
+    }
+    setClosingDay(true);
+    try {
+      // Check if already exists for today
+      const { data: existing } = await supabase.from('vendas_historico').select('id').eq('data', todayStr).limit(1);
+      if (existing && existing.length > 0) {
+        // Update
+        await supabase.from('vendas_historico').update({
+          almoco: dailyTotals.almoco,
+          jantar: dailyTotals.jantar,
+          total: dailyTotals.total,
+        }).eq('id', existing[0].id);
+      } else {
+        // Insert
+        await supabase.from('vendas_historico').insert({
+          data: todayStr,
+          almoco: dailyTotals.almoco,
+          jantar: dailyTotals.jantar,
+          total: dailyTotals.total,
+        });
+      }
+      toast.success(`Dia fechado: ${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total} refeições`);
+      setShowCloseDay(false);
+    } catch (e) {
+      console.error('Erro ao fechar dia:', e);
+      toast.error('Erro ao registar fecho do dia');
+    }
+    setClosingDay(false);
+  };
+
   const handleUpdate = async (updated: Mesa) => {
     await updateMesa(updated);
-    if (updated.status === 'livre') setSelectedMesa(null);
-    else setSelectedMesa(updated);
+    if (updated.status === 'livre') {
+      setSelectedMesa(null);
+      fetchDailyTotals();
+    } else {
+      setSelectedMesa(updated);
+    }
   };
 
   const handleCancelMesa = async (mesa: Mesa) => {
@@ -338,6 +408,14 @@ export default function Mesas() {
             <p className="text-xs text-muted-foreground">Mesas ocupadas</p>
             <p className="text-xl font-bold text-primary">{occupiedCount}/{mesas.length}</p>
           </div>
+          <div className="rounded-lg bg-card border border-border px-4 py-2 text-center">
+            <p className="text-xs text-muted-foreground">Refeições hoje</p>
+            <p className="text-xl font-bold text-foreground">{dailyTotals.total}</p>
+            <p className="text-[10px] text-muted-foreground">{dailyTotals.almoco} alm · {dailyTotals.jantar} jant</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowCloseDay(true)}>
+            <CalendarCheck className="h-4 w-4" /> Fechar Dia
+          </Button>
         </div>
       </div>
 
@@ -387,6 +465,37 @@ export default function Mesas() {
             </DialogTitle>
           </DialogHeader>
           {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCloseDay} onOpenChange={setShowCloseDay}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Fechar Dia</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Registar as refeições de hoje no histórico de vendas?
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Almoço</p>
+                <p className="text-2xl font-bold text-foreground">{dailyTotals.almoco}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Jantar</p>
+                <p className="text-2xl font-bold text-foreground">{dailyTotals.jantar}</p>
+              </div>
+              <div className="rounded-lg bg-primary/10 p-3">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold text-primary">{dailyTotals.total}</p>
+              </div>
+            </div>
+            {occupiedCount > 0 && (
+              <p className="text-xs text-destructive">⚠ Ainda existem {occupiedCount} mesa(s) ocupada(s)</p>
+            )}
+            <Button className="w-full" disabled={closingDay || dailyTotals.total === 0} onClick={handleCloseDay}>
+              {closingDay ? 'A registar...' : 'Confirmar fecho do dia'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

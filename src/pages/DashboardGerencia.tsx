@@ -23,6 +23,8 @@ export default function DashboardGerencia() {
   const { tarefas } = useTarefas();
   const [lowStock, setLowStock] = useState<ProdutoStock[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [logModuleFilter, setLogModuleFilter] = useState<string>('all');
+  const [logPeriodFilter, setLogPeriodFilter] = useState<string>('hoje');
 
   useEffect(() => {
     supabase.from('produtos').select('id, nome, stock_atual, stock_minimo, stock_maximo, custo_medio, unidade, fornecedor_id')

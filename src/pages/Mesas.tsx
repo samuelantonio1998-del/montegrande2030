@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { printReceipt } from '@/components/mesas/ReceiptPrint';
 import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
-import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal } from '@/hooks/usePrecario';
+import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal, type MealPrices } from '@/hooks/usePrecario';
 import { useActivityLog } from '@/hooks/useActivityLog';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -24,7 +24,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 /* ── Open Mesa Dialog ── */
-function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adults: number, c2to6: number, c7to12: number) => void; mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number } }) {
+function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adults: number, c2to6: number, c7to12: number) => void; mealPrices: MealPrices }) {
   const [adults, setAdults] = useState(2);
   const [c2to6, setC2to6] = useState(0);
   const [c7to12, setC7to12] = useState(0);
@@ -85,7 +85,7 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
   onCancel: () => void;
   beverageMenu: { category: string; items: { id: string; name: string; price: number }[] }[];
   beverageMenuFlat: { id: string; name: string; price: number }[];
-  mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number };
+  mealPrices: MealPrices;
   onLog: (action: string, details: string, metadata?: Record<string, unknown>) => void;
 }) {
   const [pinAction, setPinAction] = useState<'cancel' | null>(null);

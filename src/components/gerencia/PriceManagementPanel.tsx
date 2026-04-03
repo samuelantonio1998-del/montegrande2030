@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus } from 'lucide-react';
+import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +10,14 @@ import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-const mealLabels: Record<keyof MealPrices, string> = {
+const mealLabels: Record<string, string> = {
   adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',
   adultPremium: 'Adulto Premium (Jantar/Fds/Feriado)',
   child2to6: 'Criança 2–6 anos',
   child7to12: 'Criança 7–12 anos',
 };
+
+const MEAL_KEYS: (keyof MealPrices)[] = ['adultWeekdayLunch', 'adultPremium', 'child2to6', 'child7to12'];
 
 export default function PriceManagementPanel() {
   const { beverageMenu, mealPrices, saveMealPrices, saveBevPrices, addBebida, deleteBebida, deleteCategoria, fetchAll } = usePrecario();
@@ -117,7 +119,7 @@ export default function PriceManagementPanel() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(Object.keys(mealLabels) as (keyof MealPrices)[]).map(key => (
+          {MEAL_KEYS.map(key => (
             <div key={key} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
               <span className="text-sm text-foreground">{mealLabels[key]}</span>
               <div className="flex items-center gap-1">
@@ -126,6 +128,24 @@ export default function PriceManagementPanel() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Dessert pricing */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+            <CakeSlice className="h-5 w-5 text-primary" /> Preços de Sobremesa
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <span className="text-sm text-foreground">Sobremesa (preço único)</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">€</span>
+              <Input type="number" step="0.05" min="0" value={localMealPrices.sobremesa} onChange={e => updateMeal('sobremesa', e.target.value)} className="w-24 h-8 text-right text-sm" />
+            </div>
+          </div>
         </div>
       </div>
 

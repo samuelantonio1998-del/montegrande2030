@@ -145,6 +145,7 @@ export function useUpdateFicha() {
           preco_venda: data.preco_venda,
           tempo_preparacao: data.tempo_preparacao,
           foto_url: data.foto_url || null,
+          notas_preparacao: data.notas_preparacao || null,
         })
         .eq('id', data.id);
       if (error) throw error;

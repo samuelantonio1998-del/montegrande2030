@@ -293,7 +293,18 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                 console.error('Erro ao descontar stock:', e);
                 toast.error('Erro ao descontar stock de bebidas');
               }
-              onLog('Conta fechada', `Mesa ${mesa.number}: ${mesa.adults + mesa.children2to6 + mesa.children7to12} pax, €${total.toFixed(2)}`, { mesa_number: mesa.number, pax: mesa.adults + mesa.children2to6 + mesa.children7to12, total });
+              onLog('Conta fechada', `Mesa ${mesa.number}: ${mesa.adults + mesa.children2to6 + mesa.children7to12} pax, €${total.toFixed(2)}`, {
+                undo_type: 'mesa_fechada',
+                mesa_id: mesa.id,
+                mesa_number: mesa.number,
+                adults: mesa.adults,
+                children2to6: mesa.children2to6,
+                children7to12: mesa.children7to12,
+                waiter: mesa.waiter,
+                openedAt: mesa.openedAt,
+                beverages: mesa.beverages,
+                data: new Date().toISOString().slice(0, 10),
+              });
               onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
             }}>
               <CreditCard className="h-4 w-4" /> Fechar Conta — €{total.toFixed(2)}
@@ -362,7 +373,13 @@ export default function Mesas() {
           total: dailyTotals.total,
         });
       }
-      log('Dia fechado', 'Mesas', `${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total}`, { almoco: dailyTotals.almoco, jantar: dailyTotals.jantar, total: dailyTotals.total });
+      log('Dia fechado', 'Mesas', `${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total}`, {
+        undo_type: 'dia_fechado',
+        data: todayStr,
+        almoco: dailyTotals.almoco,
+        jantar: dailyTotals.jantar,
+        total: dailyTotals.total,
+      });
       toast.success(`Dia fechado: ${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total} refeições`);
       setShowCloseDay(false);
     } catch (e) {
@@ -386,7 +403,17 @@ export default function Mesas() {
     const reset: Mesa = { ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' };
     await updateMesa(reset);
     setSelectedMesa(null);
-    log('Mesa cancelada', 'Mesas', `Mesa ${mesa.number} cancelada`, { mesa_number: mesa.number });
+    log('Mesa cancelada', 'Mesas', `Mesa ${mesa.number} cancelada`, {
+      undo_type: 'mesa_cancelada',
+      mesa_id: mesa.id,
+      mesa_number: mesa.number,
+      adults: mesa.adults,
+      children2to6: mesa.children2to6,
+      children7to12: mesa.children7to12,
+      waiter: mesa.waiter,
+      openedAt: mesa.openedAt,
+      beverages: mesa.beverages,
+    });
     toast.success(`Mesa ${mesa.number} cancelada`);
   };
 
@@ -395,7 +422,14 @@ export default function Mesas() {
     await updateMesa(opened);
     setOpeningMesa(null);
     setSelectedMesa(opened);
-    log('Mesa aberta', 'Mesas', `Mesa ${mesa.number}: ${adults} adultos, ${c2to6 + c7to12} crianças`, { mesa_number: mesa.number, adults, children2to6: c2to6, children7to12: c7to12 });
+    log('Mesa aberta', 'Mesas', `Mesa ${mesa.number}: ${adults} adultos, ${c2to6 + c7to12} crianças`, {
+      undo_type: 'mesa_aberta',
+      mesa_id: mesa.id,
+      mesa_number: mesa.number,
+      adults,
+      children2to6: c2to6,
+      children7to12: c7to12,
+    });
   };
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar mesas...</div>;

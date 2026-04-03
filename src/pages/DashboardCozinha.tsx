@@ -90,14 +90,20 @@ export default function DashboardCozinha() {
   const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
     ctxReplenish(itemId, recipient, weightKg, user?.name || '');
     const item = activeItems.find(i => i.id === itemId);
-    log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, { itemId, recipient, weightKg });
+    log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, {
+      undo_type: 'reposicao_buffet',
+      itemId, recipient, weightKg, itemName: item?.name,
+    });
   }, [ctxReplenish, user?.name, activeItems, log]);
 
   const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
-    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, { itemId, leftoverKg, action });
+    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, {
+      undo_type: 'recolha_tabuleiro',
+      itemId, itemName: item.name, leftoverKg, action,
+    });
   }, [activeItems, ctxCollect, user?.name, log]);
 
   const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {

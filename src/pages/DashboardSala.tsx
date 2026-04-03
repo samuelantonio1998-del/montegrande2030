@@ -2,6 +2,7 @@ import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardChe
 import { useTarefas, type Tarefa } from '@/hooks/useTarefas';
 import { useMesas } from '@/hooks/useMesas';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

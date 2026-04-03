@@ -655,6 +655,31 @@ export default function Inventario() {
                   </Button>
                 </div>
 
+                {/* Duplicate warning banner */}
+                {duplicateWarning?.found && (
+                  <div className="px-4 py-3 bg-warning/15 border-b border-warning/30 flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground">⚠️ Fatura possivelmente duplicada</p>
+                      <p className="text-xs text-muted-foreground">
+                        {invoiceMeta.numero_fatura && <>Fatura <strong>{invoiceMeta.numero_fatura}</strong> </>}
+                        {invoiceMeta.fornecedor_nome && <>de <strong>{invoiceMeta.fornecedor_nome}</strong> </>}
+                        já foi processada em {duplicateWarning.created_at ? new Date(duplicateWarning.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'data desconhecida'}.
+                        Pode continuar se pretender processar novamente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Invoice metadata display */}
+                {(invoiceMeta.numero_fatura || invoiceMeta.data_fatura || invoiceMeta.fornecedor_nome) && (
+                  <div className="px-4 py-2 border-b border-border bg-muted/30 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {invoiceMeta.numero_fatura && <span>📄 <strong>Nº:</strong> {invoiceMeta.numero_fatura}</span>}
+                    {invoiceMeta.data_fatura && <span>📅 <strong>Data:</strong> {invoiceMeta.data_fatura}</span>}
+                    {invoiceMeta.fornecedor_nome && <span>🏢 <strong>Fornecedor:</strong> {invoiceMeta.fornecedor_nome}</span>}
+                  </div>
+                )}
+
                 {scannedItems.length === 0 ? (
                   <div className="p-8 text-center">
                     <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />

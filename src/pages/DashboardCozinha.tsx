@@ -63,7 +63,7 @@ export default function DashboardCozinha() {
 
   // Forecast
   const avgClients = Math.round(mockHistorical.reduce((s, d) => s + d.totalClients, 0) / mockHistorical.length);
-  const currentPax = mockMesas.reduce((s, m) => s + m.adults + m.children, 0);
+  const currentPax = realMesas.filter(m => m.status === 'occupied').reduce((s, m) => s + m.adults + m.children, 0);
   const forecastPct = Math.round((currentPax / avgClients) * 100);
 
   // Waste summary

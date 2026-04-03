@@ -247,7 +247,22 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
             </Button>
             <Button className="flex-1 gap-2" onClick={async () => {
               printReceipt(mesa);
+              const now = new Date();
+              const periodo = now.getHours() < 16 ? 'almoco' : 'jantar';
+              const totalPax = mesa.adults + mesa.children2to6 + mesa.children7to12;
               try {
+                // Register meal closing
+                await supabase.from('fecho_mesas').insert({
+                  mesa_number: mesa.number,
+                  adults: mesa.adults,
+                  children2to6: mesa.children2to6,
+                  children7to12: mesa.children7to12,
+                  total_pax: totalPax,
+                  periodo,
+                  funcionario: mesa.waiter || '',
+                  data: now.toISOString().slice(0, 10),
+                });
+
                 const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
                 if (produtos && mesa.beverages.length > 0) {
                   for (const bev of mesa.beverages) {

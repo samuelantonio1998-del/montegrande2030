@@ -38,7 +38,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
   const [nome, setNome] = useState('');
   const [categoria, setCategoria] = useState('prato_principal');
   const [porcoes, setPorcoes] = useState(1);
-  const [precoVenda, setPrecoVenda] = useState(0);
+  const [precoVenda, setPrecoVenda] = useState(14.90);
   const [tempoPreparacao, setTempoPreparacao] = useState(0);
   const [notasPreparacao, setNotasPreparacao] = useState('');
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);

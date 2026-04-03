@@ -38,6 +38,7 @@ export default function DashboardCozinha() {
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');
   const [showRecolha, setShowRecolha] = useState(false);
+  const { log } = useActivityLog();
 
   const existingItemIds = useMemo(() => new Set(ementaItems.map(e => e.buffet_item_id)), [ementaItems]);
 

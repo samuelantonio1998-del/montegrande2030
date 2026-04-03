@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
+import { useActivityLog } from '@/hooks/useActivityLog';
 
 type Produto = {
   id: string;
@@ -85,6 +86,7 @@ const FUZZY_THRESHOLD = 0.55;
 
 export default function Inventario() {
   const { toast } = useToast();
+  const { log } = useActivityLog();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -324,6 +326,9 @@ export default function Inventario() {
       }
     }
     toast({ title: `${selected.length} itens registados com sucesso` });
+    for (const item of selected) {
+      await log('Entrada stock (OCR)', 'Inventário', `${item.nome} +${item.quantidade} ${item.unidade}`, { produto_id: item.produto_id, quantidade: item.quantidade, custo_unitario: item.custo_unitario });
+    }
     setConfirmingEntry(false);
     resetScanner();
     fetchData();
@@ -359,6 +364,7 @@ export default function Inventario() {
       custo_unitario: cost, motivo: 'Entrada manual',
     });
     toast({ title: 'Entrada registada' });
+    await log('Entrada stock (manual)', 'Inventário', `${produto.nome} +${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, custo_unitario: cost });
     setShowManualEntry(false);
     setManualForm({ produto_id: '', quantidade: '', custo_unitario: '', tipo: 'entrada' });
     fetchData();
@@ -376,6 +382,7 @@ export default function Inventario() {
       motivo: exitForm.motivo || (exitForm.tipo === 'quebra' ? 'Desperdício/Estrago' : 'Saída manual'),
     });
     toast({ title: exitForm.tipo === 'quebra' ? 'Quebra registada' : 'Saída registada' });
+    await log(exitForm.tipo === 'quebra' ? 'Quebra stock' : 'Saída stock', 'Inventário', `${produto.nome} -${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, motivo: exitForm.motivo });
     setShowExit(false);
     setExitForm({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' });
     fetchData();

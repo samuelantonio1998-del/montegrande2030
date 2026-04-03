@@ -382,6 +382,7 @@ export default function Inventario() {
       motivo: exitForm.motivo || (exitForm.tipo === 'quebra' ? 'Desperdício/Estrago' : 'Saída manual'),
     });
     toast({ title: exitForm.tipo === 'quebra' ? 'Quebra registada' : 'Saída registada' });
+    await log(exitForm.tipo === 'quebra' ? 'Quebra stock' : 'Saída stock', 'Inventário', `${produto.nome} -${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, motivo: exitForm.motivo });
     setShowExit(false);
     setExitForm({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' });
     fetchData();

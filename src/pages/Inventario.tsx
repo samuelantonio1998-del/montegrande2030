@@ -379,6 +379,8 @@ export default function Inventario() {
     setPreviewFile(null);
     setScannedItems([]);
     setProcessingProgress(0);
+    setInvoiceMeta({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
+    setDuplicateWarning(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 

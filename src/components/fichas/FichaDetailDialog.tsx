@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useProdutos, useUpdateFicha, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useProdutos, useUpdateFicha, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -17,6 +18,15 @@ type EditIngredient = {
   quantidade: number;
   unidade: string;
 };
+
+/** Dose options: recipientes + unitário */
+const doseOptions = [
+  ...Object.entries(recipientCapacity).map(([key, val]) => ({
+    value: String(val.capacityKg),
+    label: `${val.label} (${val.capacityKg}kg)`,
+  })),
+  { value: '1', label: 'Unitário (un)' },
+];
 
 function calcCostFromProdutos(
   ingredientes: EditIngredient[],
@@ -135,6 +145,7 @@ export function FichaDetailDialog({
   const [editPorcoes, setEditPorcoes] = useState(1);
   const [editPreco, setEditPreco] = useState(0);
   const [editTempo, setEditTempo] = useState(0);
+  const [editNotas, setEditNotas] = useState('');
   const [editIngredientes, setEditIngredientes] = useState<EditIngredient[]>([]);
 
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
@@ -145,6 +156,7 @@ export function FichaDetailDialog({
       setEditPorcoes(ficha.porcoes);
       setEditPreco(ficha.preco_venda);
       setEditTempo(ficha.tempo_preparacao ?? 0);
+      setEditNotas((ficha as any).notas_preparacao ?? '');
       setEditIngredientes(
         ficha.ingredientes.map(i => ({
           produto_id: i.produto_id,
@@ -162,7 +174,10 @@ export function FichaDetailDialog({
     produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade,
   }));
 
-  const totalCost = calcCostFromProdutos(currentIngredientes, produtosMap);
+  const ingredientCost = calcCostFromProdutos(currentIngredientes, produtosMap);
+  const tempo = editing ? editTempo : (ficha.tempo_preparacao ?? 0);
+  const laborCost = (tempo / 60) * LABOR_COST_PER_HOUR;
+  const totalCost = ingredientCost + laborCost;
   const porcoes = editing ? editPorcoes : ficha.porcoes;
   const precoVenda = editing ? editPreco : ficha.preco_venda;
   const costPerPortion = porcoes > 0 ? totalCost / porcoes : 0;
@@ -178,6 +193,7 @@ export function FichaDetailDialog({
       preco_venda: editPreco,
       tempo_preparacao: editTempo,
       foto_url: ficha.foto_url,
+      notas_preparacao: editNotas || null,
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
     setEditing(false);
@@ -195,7 +211,6 @@ export function FichaDetailDialog({
   const updateIngredient = (index: number, field: keyof EditIngredient, value: any) => {
     const copy = [...editIngredientes];
     (copy[index] as any)[field] = value;
-    // Auto-set unidade from produto
     if (field === 'produto_id') {
       const p = produtosMap.get(value);
       if (p) copy[index].unidade = p.unidade;
@@ -203,8 +218,8 @@ export function FichaDetailDialog({
     setEditIngredientes(copy);
   };
 
-  // Produtos not yet used in this ficha
   const usedProdutoIds = new Set(editIngredientes.map(i => i.produto_id));
+  const notasPreparacao = editing ? editNotas : ((ficha as any).notas_preparacao ?? '');
 
   return (
     <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
@@ -251,9 +266,9 @@ export function FichaDetailDialog({
               <Select value={String(editPorcoes)} onValueChange={v => setEditPorcoes(Number(v))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(recipientCapacity).map(([key, val]) => (
-                    <SelectItem key={key} value={String(val.capacityKg)}>
-                      {val.label} ({val.capacityKg}kg)
+                  {doseOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -264,8 +279,21 @@ export function FichaDetailDialog({
               <Input type="number" step="0.01" value={editPreco} onChange={e => setEditPreco(parseFloat(e.target.value) || 0)} className="mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Tempo Prep. (min)</label>
-              <Input type="number" value={editTempo} onChange={e => setEditTempo(parseInt(e.target.value) || 0)} className="mt-1" />
+              <label className="text-xs text-muted-foreground">
+                Tempo Prep. (min) <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="number"
+                min={1}
+                value={editTempo || ''}
+                onChange={e => setEditTempo(parseInt(e.target.value) || 0)}
+                className={cn('mt-1', !editTempo && 'border-destructive/50')}
+              />
+              {editTempo > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  M.O.: €{laborCost.toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -383,9 +411,19 @@ export function FichaDetailDialog({
                     </tr>
                   );
                 })}
+                {/* Labor cost row */}
+                {tempo > 0 && (
+                  <tr className="border-t border-border bg-muted/20">
+                    <td className="px-3 py-2 text-xs text-muted-foreground" colSpan={3}>
+                      Mão-de-obra ({tempo} min × €{LABOR_COST_PER_HOUR}/h s/ IVA)
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium text-foreground">€{laborCost.toFixed(2)}</td>
+                    {editing && <td></td>}
+                  </tr>
+                )}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? `${porcoes}kg`})
+                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? (porcoes === 1 ? 'Unitário' : `${porcoes}kg`)})
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}
@@ -395,28 +433,50 @@ export function FichaDetailDialog({
           </div>
         </div>
 
-        {!editing && ficha.tempo_preparacao ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Tempo de preparação: {ficha.tempo_preparacao} min</span>
+        {/* Notas de preparação */}
+        {editing ? (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Nota de Preparação / Confecção</label>
+            <Textarea
+              value={editNotas}
+              onChange={e => setEditNotas(e.target.value)}
+              placeholder="Instruções de preparação, dicas de confecção, temperaturas..."
+              rows={3}
+              className="mt-1 resize-none"
+            />
+          </div>
+        ) : notasPreparacao ? (
+          <div className="rounded-lg border border-border bg-muted/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Nota de Preparação</span>
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{notasPreparacao}</p>
           </div>
         ) : null}
+
+        {!editing && tempo > 0 && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>Tempo de preparação: {tempo} min (M.O.: €{laborCost.toFixed(2)})</span>
+          </div>
+        )}
 
         {/* Save/Cancel buttons */}
         {editing && (
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => {
               setEditing(false);
-              // Reset to original
               setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));
               setEditPorcoes(ficha.porcoes);
               setEditPreco(ficha.preco_venda);
               setEditTempo(ficha.tempo_preparacao ?? 0);
               setEditNome(ficha.nome);
+              setEditNotas((ficha as any).notas_preparacao ?? '');
             }}>
               <X className="h-4 w-4 mr-1.5" /> Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={updateFicha.isPending}>
+            <Button onClick={handleSave} disabled={updateFicha.isPending || !editTempo}>
               <Save className="h-4 w-4 mr-1.5" />
               {updateFicha.isPending ? 'A guardar...' : 'Guardar'}
             </Button>

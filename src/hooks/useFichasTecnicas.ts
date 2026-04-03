@@ -10,10 +10,14 @@ export type FichaTecnicaDB = {
   preco_venda: number;
   tempo_preparacao: number | null;
   foto_url: string | null;
+  notas_preparacao: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
 };
+
+/** Custo de mão-de-obra por hora (sem IVA) */
+export const LABOR_COST_PER_HOUR = 11;
 
 export type IngredienteDB = {
   id: string;
@@ -67,6 +71,7 @@ export function useCreateFicha() {
       preco_venda: number;
       tempo_preparacao: number;
       foto_url?: string | null;
+      notas_preparacao?: string | null;
       ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
     }) => {
       const { data: ficha, error } = await supabase
@@ -78,6 +83,7 @@ export function useCreateFicha() {
           preco_venda: data.preco_venda,
           tempo_preparacao: data.tempo_preparacao,
           foto_url: data.foto_url || null,
+          notas_preparacao: data.notas_preparacao || null,
         })
         .select()
         .single();
@@ -127,6 +133,7 @@ export function useUpdateFicha() {
       preco_venda: number;
       tempo_preparacao: number;
       foto_url?: string | null;
+      notas_preparacao?: string | null;
       ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
     }) => {
       const { error } = await supabase
@@ -138,6 +145,7 @@ export function useUpdateFicha() {
           preco_venda: data.preco_venda,
           tempo_preparacao: data.tempo_preparacao,
           foto_url: data.foto_url || null,
+          notas_preparacao: data.notas_preparacao || null,
         })
         .eq('id', data.id);
       if (error) throw error;

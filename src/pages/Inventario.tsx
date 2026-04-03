@@ -58,6 +58,12 @@ type ScannedItem = {
   produto_id?: string;
 };
 
+type InvoiceMeta = {
+  numero_fatura: string | null;
+  data_fatura: string | null;
+  fornecedor_nome: string | null;
+};
+
 type ScannerStep = 'idle' | 'preview' | 'processing' | 'review';
 
 // Fuzzy string similarity (bigram-based Dice coefficient)

@@ -315,6 +315,57 @@ export default function Mesas() {
   const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
 
+  // Daily closed meals from fecho_mesas
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [dailyTotals, setDailyTotals] = useState({ almoco: 0, jantar: 0, total: 0 });
+  const [closingDay, setClosingDay] = useState(false);
+  const [showCloseDay, setShowCloseDay] = useState(false);
+
+  const fetchDailyTotals = async () => {
+    const { data } = await supabase.from('fecho_mesas').select('total_pax, periodo').eq('data', todayStr);
+    if (data) {
+      const almoco = data.filter(r => r.periodo === 'almoco').reduce((s, r) => s + r.total_pax, 0);
+      const jantar = data.filter(r => r.periodo === 'jantar').reduce((s, r) => s + r.total_pax, 0);
+      setDailyTotals({ almoco, jantar, total: almoco + jantar });
+    }
+  };
+
+  useEffect(() => { fetchDailyTotals(); }, [todayStr]);
+
+  const handleCloseDay = async () => {
+    if (occupiedCount > 0) {
+      toast.error('Ainda existem mesas ocupadas. Feche todas as mesas antes de fechar o dia.');
+      return;
+    }
+    setClosingDay(true);
+    try {
+      // Check if already exists for today
+      const { data: existing } = await supabase.from('vendas_historico').select('id').eq('data', todayStr).limit(1);
+      if (existing && existing.length > 0) {
+        // Update
+        await supabase.from('vendas_historico').update({
+          almoco: dailyTotals.almoco,
+          jantar: dailyTotals.jantar,
+          total: dailyTotals.total,
+        }).eq('id', existing[0].id);
+      } else {
+        // Insert
+        await supabase.from('vendas_historico').insert({
+          data: todayStr,
+          almoco: dailyTotals.almoco,
+          jantar: dailyTotals.jantar,
+          total: dailyTotals.total,
+        });
+      }
+      toast.success(`Dia fechado: ${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total} refeições`);
+      setShowCloseDay(false);
+    } catch (e) {
+      console.error('Erro ao fechar dia:', e);
+      toast.error('Erro ao registar fecho do dia');
+    }
+    setClosingDay(false);
+  };
+
   const handleUpdate = async (updated: Mesa) => {
     await updateMesa(updated);
     if (updated.status === 'livre') setSelectedMesa(null);

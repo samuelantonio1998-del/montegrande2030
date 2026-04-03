@@ -397,7 +397,17 @@ export default function Mesas() {
     const reset: Mesa = { ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' };
     await updateMesa(reset);
     setSelectedMesa(null);
-    log('Mesa cancelada', 'Mesas', `Mesa ${mesa.number} cancelada`, { mesa_number: mesa.number });
+    log('Mesa cancelada', 'Mesas', `Mesa ${mesa.number} cancelada`, {
+      undo_type: 'mesa_cancelada',
+      mesa_id: mesa.id,
+      mesa_number: mesa.number,
+      adults: mesa.adults,
+      children2to6: mesa.children2to6,
+      children7to12: mesa.children7to12,
+      waiter: mesa.waiter,
+      openedAt: mesa.openedAt,
+      beverages: mesa.beverages,
+    });
     toast.success(`Mesa ${mesa.number} cancelada`);
   };
 

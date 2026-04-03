@@ -219,5 +219,5 @@ export function useRegistosProducao() {
     }));
   }, [registos, getCostPerKg]);
 
-  return { registos, loading, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary };
+  return { registos, loading, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary, derivedTrayStates };
 }

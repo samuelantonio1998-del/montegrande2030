@@ -364,6 +364,7 @@ export default function Inventario() {
       custo_unitario: cost, motivo: 'Entrada manual',
     });
     toast({ title: 'Entrada registada' });
+    await log('Entrada stock (manual)', 'Inventário', `${produto.nome} +${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, custo_unitario: cost });
     setShowManualEntry(false);
     setManualForm({ produto_id: '', quantidade: '', custo_unitario: '', tipo: 'entrada' });
     fetchData();

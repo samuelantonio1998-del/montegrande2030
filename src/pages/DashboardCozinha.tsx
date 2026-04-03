@@ -3,7 +3,8 @@ import { Users, AlertTriangle, TrendingUp, UtensilsCrossed, Salad, CakeSlice, Pa
 import { useAuth } from '@/contexts/AuthContext';
 import { useProduction } from '@/contexts/ProductionContext';
 import { mockProductionAlerts, mockWeeklyWaste, recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
-import { mockMesas, mockHistorical } from '@/lib/mock-data';
+import { mockHistorical } from '@/lib/mock-data';
+import { useMesas } from '@/hooks/useMesas';
 import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ export default function DashboardCozinha() {
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();
   const bulkAdd = useBulkAddEmenta();
+  const { mesas: realMesas } = useMesas();
 
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');
@@ -61,7 +63,7 @@ export default function DashboardCozinha() {
 
   // Forecast
   const avgClients = Math.round(mockHistorical.reduce((s, d) => s + d.totalClients, 0) / mockHistorical.length);
-  const currentPax = mockMesas.reduce((s, m) => s + m.adults + m.children, 0);
+  const currentPax = realMesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children, 0);
   const forecastPct = Math.round((currentPax / avgClients) * 100);
 
   // Waste summary

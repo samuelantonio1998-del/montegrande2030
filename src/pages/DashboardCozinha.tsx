@@ -97,7 +97,8 @@ export default function DashboardCozinha() {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
-  }, [activeItems, ctxCollect, user?.name]);
+    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, { itemId, leftoverKg, action });
+  }, [activeItems, ctxCollect, user?.name, log]);
 
   const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {
     const rows = dates.flatMap(d =>

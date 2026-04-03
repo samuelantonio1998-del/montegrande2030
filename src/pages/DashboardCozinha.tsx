@@ -27,15 +27,6 @@ const ZONES = [
 export default function DashboardCozinha() {
   const { user, logout } = useAuth();
   const { trayStates: ctxTrayStates, handleReplenish: ctxReplenish, handleCollect: ctxCollect, leftoverHistory } = useProduction();
-  // Use DB-derived tray states (persists across refresh), merged with in-session context
-  const trayStates = useMemo(() => {
-    const merged = { ...ctxTrayStates };
-    // DB states override/supplement in-memory states
-    for (const [id, dbState] of Object.entries(derivedTrayStates)) {
-      merged[id] = dbState;
-    }
-    return merged;
-  }, [ctxTrayStates, derivedTrayStates]);
   const today = new Date();
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();
@@ -44,6 +35,15 @@ export default function DashboardCozinha() {
   const { mesas: realMesas } = useMesas();
   const { wasteSummary, activeTrays: prodActiveTrays, addRegisto, recolherRegisto, derivedTrayStates } = useRegistosProducao();
   const { data: vendasData = [] } = useVendasHistorico();
+
+  // Use DB-derived tray states (persists across refresh), merged with in-session context
+  const trayStates = useMemo(() => {
+    const merged = { ...ctxTrayStates };
+    for (const [id, dbState] of Object.entries(derivedTrayStates)) {
+      merged[id] = dbState;
+    }
+    return merged;
+  }, [ctxTrayStates, derivedTrayStates]);
 
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');

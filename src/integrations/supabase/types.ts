@@ -52,6 +52,27 @@ export type Database = {
           },
         ]
       }
+      configuracao_precos: {
+        Row: {
+          chave: string
+          id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          chave: string
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          chave?: string
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -399,6 +420,39 @@ export type Database = {
           },
         ]
       }
+      precario_bebidas: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          preco?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           ativo: boolean
@@ -455,6 +509,75 @@ export type Database = {
           },
         ]
       }
+      registos_producao: {
+        Row: {
+          aproveitamento_nota: string | null
+          buffet_item_id: string | null
+          created_at: string
+          dish_name: string
+          enviado_at: string
+          estado: string
+          ficha_tecnica_id: string | null
+          id: string
+          peso_kg: number
+          recipiente: string
+          recolhido_at: string | null
+          registado_por: string
+          sobra_acao: string | null
+          sobra_kg: number | null
+          updated_at: string
+        }
+        Insert: {
+          aproveitamento_nota?: string | null
+          buffet_item_id?: string | null
+          created_at?: string
+          dish_name: string
+          enviado_at?: string
+          estado?: string
+          ficha_tecnica_id?: string | null
+          id?: string
+          peso_kg?: number
+          recipiente?: string
+          recolhido_at?: string | null
+          registado_por?: string
+          sobra_acao?: string | null
+          sobra_kg?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aproveitamento_nota?: string | null
+          buffet_item_id?: string | null
+          created_at?: string
+          dish_name?: string
+          enviado_at?: string
+          estado?: string
+          ficha_tecnica_id?: string | null
+          id?: string
+          peso_kg?: number
+          recipiente?: string
+          recolhido_at?: string | null
+          registado_por?: string
+          sobra_acao?: string | null
+          sobra_kg?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registos_producao_buffet_item_id_fkey"
+            columns: ["buffet_item_id"]
+            isOneToOne: false
+            referencedRelation: "buffet_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registos_producao_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -476,6 +599,48 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      tarefas: {
+        Row: {
+          categoria: string
+          concluida: boolean
+          created_at: string
+          critica: boolean
+          descricao: string | null
+          id: string
+          periodicidade: string
+          prioridade: string
+          responsavel: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string
+          concluida?: boolean
+          created_at?: string
+          critica?: boolean
+          descricao?: string | null
+          id?: string
+          periodicidade?: string
+          prioridade?: string
+          responsavel?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          concluida?: boolean
+          created_at?: string
+          critica?: boolean
+          descricao?: string | null
+          id?: string
+          periodicidade?: string
+          prioridade?: string
+          responsavel?: string
+          titulo?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -133,6 +133,7 @@ export function useUpdateFicha() {
       preco_venda: number;
       tempo_preparacao: number;
       foto_url?: string | null;
+      notas_preparacao?: string | null;
       ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
     }) => {
       const { error } = await supabase

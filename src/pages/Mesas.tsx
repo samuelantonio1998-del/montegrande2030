@@ -470,7 +470,7 @@ export default function Mesas() {
               {selectedMesa && <Badge variant="outline" className={cn('text-xs', statusConfig[selectedMesa.status].color)}>{statusConfig[selectedMesa.status].label}</Badge>}
             </DialogTitle>
           </DialogHeader>
-          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} />}
+          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} onLog={(action, details, metadata) => log(action, 'Mesas', details, metadata)} />}
         </DialogContent>
       </Dialog>
 

@@ -217,7 +217,7 @@ export default function DashboardGerencia() {
             const moduleColor = moduleColors[entry.module] || 'bg-muted text-muted-foreground';
 
             return (
-              <div key={entry.id} className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
+              <div key={entry.id} className="group flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
                 <div className="flex flex-col items-center shrink-0 pt-0.5">
                   <span className="text-[10px] text-muted-foreground">{isToday ? timeStr : dateStr}</span>
                   {!isToday && <span className="text-[10px] text-muted-foreground">{timeStr}</span>}

@@ -100,7 +100,10 @@ export default function DashboardCozinha() {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
-    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, { itemId, leftoverKg, action });
+    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, {
+      undo_type: 'recolha_tabuleiro',
+      itemId, itemName: item.name, leftoverKg, action,
+    });
   }, [activeItems, ctxCollect, user?.name, log]);
 
   const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {

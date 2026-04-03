@@ -232,7 +232,7 @@ export default function DashboardCozinha() {
         </div>
       )}
 
-      <EmentaSetupDialog open={showSetup} onOpenChange={setShowSetup} allItems={allBuffetItems} existingItemIds={existingItemIds} onConfirm={handleBulkAdd} date={today} userName={user?.name || ''} />
+      <EmentaSetupDialog open={showSetup} onOpenChange={setShowSetup} allItems={allBuffetItems} existingItemIds={existingItemIds} permanentItemIds={permanentItemIds} onConfirm={handleBulkAdd} onConfirmPermanent={handlePermanentAdd} date={today} userName={user?.name || ''} />
     </div>
   );
 }

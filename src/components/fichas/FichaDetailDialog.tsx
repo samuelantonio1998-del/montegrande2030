@@ -19,14 +19,11 @@ type EditIngredient = {
   unidade: string;
 };
 
-/** Dose options: recipientes + unitário */
-const doseOptions = [
-  ...Object.entries(recipientCapacity).map(([key, val]) => ({
-    value: String(val.capacityKg),
-    label: `${val.label} (${val.capacityKg}kg)`,
-  })),
-  { value: '1', label: 'Unitário (un)' },
-];
+/** Dose options from recipientes */
+const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
+  value: key,
+  label: key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
+}));
 
 function calcCostFromProdutos(
   ingredientes: EditIngredient[],
@@ -263,7 +260,10 @@ export function FichaDetailDialog({
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Recipiente (Dose)</label>
-              <Select value={String(editPorcoes)} onValueChange={v => setEditPorcoes(Number(v))}>
+              <Select
+                value={Object.entries(recipientCapacity).find(([_, v]) => v.capacityKg === editPorcoes)?.[0] ?? 'unitario'}
+                onValueChange={v => setEditPorcoes(recipientCapacity[v as RecipientSize]?.capacityKg ?? 1)}
+              >
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {doseOptions.map(opt => (

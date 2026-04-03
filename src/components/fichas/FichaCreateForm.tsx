@@ -24,14 +24,11 @@ type IngredienteLine = {
   unidade: string;
 };
 
-/** Dose options: recipientes + unitário */
-const doseOptions = [
-  ...Object.entries(recipientCapacity).map(([key, val]) => ({
-    value: String(val.capacityKg),
-    label: `${val.label} (${val.capacityKg}kg)`,
-  })),
-  { value: '1', label: 'Unitário (un)' },
-];
+/** Dose options from recipientes */
+const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
+  value: key,
+  label: key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
+}));
 
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
@@ -169,7 +166,10 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Nº de Doses (Recipiente)</label>
-                  <Select value={String(porcoes)} onValueChange={v => setPorcoes(Number(v))}>
+                  <Select
+                    value={Object.entries(recipientCapacity).find(([_, v]) => v.capacityKg === porcoes)?.[0] ?? 'unitario'}
+                    onValueChange={v => setPorcoes(recipientCapacity[v as RecipientSize]?.capacityKg ?? 1)}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {doseOptions.map(opt => (

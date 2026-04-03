@@ -1,4 +1,4 @@
-export type RecipientSize = 'tabuleiro_grande' | 'tabuleiro_medio' | 'couvete_grande' | 'couvete_media' | 'couvete_pequena';
+export type RecipientSize = 'tabuleiro_grande' | 'tabuleiro_medio' | 'couvete_grande' | 'couvete_media' | 'couvete_pequena' | 'unitario';
 
 export const recipientCapacity: Record<RecipientSize, { label: string; capacityKg: number }> = {
   tabuleiro_grande: { label: 'Tabuleiro Grande', capacityKg: 5 },
@@ -6,6 +6,7 @@ export const recipientCapacity: Record<RecipientSize, { label: string; capacityK
   couvete_grande: { label: 'Couvete Grande', capacityKg: 2.5 },
   couvete_media: { label: 'Couvete Média', capacityKg: 2 },
   couvete_pequena: { label: 'Couvete Pequena', capacityKg: 1 },
+  unitario: { label: 'Unitário', capacityKg: 1 },
 };
 
 export type TrayStatus = 'no_buffet' | 'recolhido' | 'aproveitado' | 'desperdicio';

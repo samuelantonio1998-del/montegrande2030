@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 type EditIngredient = {
   produto_id: string;

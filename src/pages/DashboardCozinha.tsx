@@ -7,6 +7,7 @@ import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
 import { useVendasHistorico, calcularPrevisao } from '@/hooks/useVendasHistorico';
 import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';

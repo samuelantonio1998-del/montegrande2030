@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, CalendarCheck } from 'lucide-react';
 import { type Mesa } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';

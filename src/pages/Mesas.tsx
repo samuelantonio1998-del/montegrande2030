@@ -79,13 +79,14 @@ function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adu
 }
 
 /* ── Mesa Detail (occupied/conta) ── */
-function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, mealPrices }: {
+function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, mealPrices, onLog }: {
   mesa: Mesa;
   onUpdate: (m: Mesa) => void;
   onCancel: () => void;
   beverageMenu: { category: string; items: { id: string; name: string; price: number }[] }[];
   beverageMenuFlat: { id: string; name: string; price: number }[];
   mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number };
+  onLog: (action: string, details: string, metadata?: Record<string, unknown>) => void;
 }) {
   const [pinAction, setPinAction] = useState<'cancel' | null>(null);
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa, mealPrices);

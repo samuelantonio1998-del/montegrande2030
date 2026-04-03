@@ -312,6 +312,7 @@ export default function Mesas() {
   const { beverageMenu, beverageMenuFlat, mealPrices } = usePrecario();
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [openingMesa, setOpeningMesa] = useState<Mesa | null>(null);
+  const { log } = useActivityLog();
 
   const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;

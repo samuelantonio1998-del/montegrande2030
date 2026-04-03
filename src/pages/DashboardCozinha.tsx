@@ -121,6 +121,17 @@ export default function DashboardCozinha() {
     bulkAdd.mutate(rows);
   };
 
+  const handlePermanentAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[]) => {
+    const rows = items.map(i => ({
+      ...i,
+      data: PERMANENT_DATE,
+      criado_por: user?.name || '',
+      historico_consumo_kg: [2.5, 3.1, 2.8, 3.5, 2.9, 3.2],
+      historico_sobra_kg: [0.5, 0.3, 0.8, 0.2, 0.6, 0.4],
+    }));
+    bulkAdd.mutate(rows);
+  };
+
   const dayLabel = format(today, "EEEE, d 'de' MMMM", { locale: pt });
 
   return (

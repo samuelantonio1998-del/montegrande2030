@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Check, Plus, Search, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Check, Plus, Search, ChevronLeft, ChevronRight, CalendarDays, Infinity } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { PERMANENT_DATE } from '@/hooks/useEmentaDiaria';
 
 type BuffetItemRow = {
   id: string;
@@ -22,7 +24,9 @@ interface EmentaSetupDialogProps {
   onOpenChange: (open: boolean) => void;
   allItems: BuffetItemRow[];
   existingItemIds: Set<string>;
+  permanentItemIds?: Set<string>;
   onConfirm: (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => void;
+  onConfirmPermanent?: (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[]) => void;
   date: Date;
   userName?: string;
 }
@@ -35,13 +39,14 @@ const ZONE_LIMITS: Record<string, { label: string; max: number }> = {
 
 type Step = 'items' | 'dates';
 
-export default function EmentaSetupDialog({ open, onOpenChange, allItems, existingItemIds, onConfirm, date: initialDate, userName }: EmentaSetupDialogProps) {
+export default function EmentaSetupDialog({ open, onOpenChange, allItems, existingItemIds, permanentItemIds, onConfirm, onConfirmPermanent, date: initialDate, userName }: EmentaSetupDialogProps) {
   const [step, setStep] = useState<Step>('items');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('entradas');
   const [calendarMonth, setCalendarMonth] = useState<Date>(initialDate);
+  const [isPermanent, setIsPermanent] = useState(false);
 
   const filteredItems = useMemo(() => {
     return allItems
@@ -82,13 +87,19 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   };
 
   const handleConfirm = () => {
-    if (selectedDates.length === 0 || selected.size === 0) return;
+    if (selected.size === 0) return;
     const items = Array.from(selected).map(id => ({
       buffet_item_id: id,
       quantidade_prevista: 3,
       recipiente_sugerido: 'couvete_media',
     }));
-    onConfirm(items, selectedDates);
+
+    if (isPermanent) {
+      onConfirmPermanent?.(items);
+    } else {
+      if (selectedDates.length === 0) return;
+      onConfirm(items, selectedDates);
+    }
     resetState();
     onOpenChange(false);
   };
@@ -99,6 +110,7 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
     setStep('items');
     setSearch('');
     setTab('entradas');
+    setIsPermanent(false);
   };
 
   const handleClose = (open: boolean) => {
@@ -107,6 +119,7 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   };
 
   const totalSelected = selected.size;
+  const canConfirm = isPermanent ? totalSelected > 0 : (totalSelected > 0 && selectedDates.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -162,21 +175,31 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
 
               {Object.keys(ZONE_LIMITS).map(zone => (
                 <TabsContent key={zone} value={zone} className="overflow-y-auto max-h-[35vh] space-y-1 mt-2">
-                  {filteredItems.map(item => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleItem(item.id)}
-                      className={cn(
-                        'w-full flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors text-left',
-                        selected.has(item.id)
-                          ? 'bg-primary/10 border border-primary/30 text-foreground'
-                          : 'bg-card border border-border text-foreground hover:bg-muted/50'
-                      )}
-                    >
-                      <span>{item.nome}</span>
-                      {selected.has(item.id) && <Check className="h-4 w-4 text-primary" />}
-                    </button>
-                  ))}
+                  {filteredItems.map(item => {
+                    const isPerm = permanentItemIds?.has(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => toggleItem(item.id)}
+                        className={cn(
+                          'w-full flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors text-left',
+                          selected.has(item.id)
+                            ? 'bg-primary/10 border border-primary/30 text-foreground'
+                            : 'bg-card border border-border text-foreground hover:bg-muted/50'
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{item.nome}</span>
+                          {isPerm && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                              Sempre
+                            </Badge>
+                          )}
+                        </div>
+                        {selected.has(item.id) && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    );
+                  })}
                   {filteredItems.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum artigo disponível</p>
                   )}
@@ -213,29 +236,45 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-sm text-muted-foreground">
-                Selecione os dias para aplicar esta ementa
-              </p>
-              <Calendar
-                mode="multiple"
-                selected={selectedDates}
-                onSelect={(dates) => setSelectedDates(dates || [])}
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                locale={pt}
-                className="rounded-md border border-border"
-              />
+            {/* Permanent toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Infinity className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Sempre disponível</p>
+                  <p className="text-[11px] text-muted-foreground">Estes pratos ficam na ementa todos os dias automaticamente</p>
+                </div>
+              </div>
+              <Switch checked={isPermanent} onCheckedChange={setIsPermanent} />
             </div>
+
+            {!isPermanent && (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Selecione os dias para aplicar esta ementa
+                </p>
+                <Calendar
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={(dates) => setSelectedDates(dates || [])}
+                  month={calendarMonth}
+                  onMonthChange={setCalendarMonth}
+                  locale={pt}
+                  className="rounded-md border border-border"
+                />
+              </div>
+            )}
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                {selectedDates.length === 0
-                  ? 'Nenhum dia selecionado'
-                  : `${selectedDates.length} dia${selectedDates.length > 1 ? 's' : ''} selecionado${selectedDates.length > 1 ? 's' : ''}`}
+                {isPermanent
+                  ? 'Ementa permanente — todos os dias'
+                  : selectedDates.length === 0
+                    ? 'Nenhum dia selecionado'
+                    : `${selectedDates.length} dia${selectedDates.length > 1 ? 's' : ''} selecionado${selectedDates.length > 1 ? 's' : ''}`}
               </p>
-              <Button onClick={handleConfirm} disabled={selectedDates.length === 0} className="gap-1.5">
-                <Plus className="h-4 w-4" /> Aplicar Ementa
+              <Button onClick={handleConfirm} disabled={!canConfirm} className="gap-1.5">
+                <Plus className="h-4 w-4" /> {isPermanent ? 'Aplicar Sempre' : 'Aplicar Ementa'}
               </Button>
             </div>
           </>

@@ -5,69 +5,37 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { beverageMenu, PRICING, type BeverageCategory, reloadBeverageMenu } from '@/lib/mock-data';
+import { usePrecario, type MealPrices } from '@/hooks/usePrecario';
 import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-const STORAGE_KEY_BEVERAGES = 'mg_beverage_prices';
-const STORAGE_KEY_MEALS = 'mg_meal_prices';
-
-export type MealPrices = typeof PRICING;
-
-export function loadMealPrices(): MealPrices {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_MEALS);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return { ...PRICING };
-}
-
-export function loadBeveragePrices(): BeverageCategory[] {
-  let data: BeverageCategory[];
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_BEVERAGES);
-    data = stored ? JSON.parse(stored) : beverageMenu.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
-  } catch {
-    data = beverageMenu.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
-  }
-
-  // Migration: ensure Sobremesas items are in their own category, not mixed into Digestivos
-  const sobremesaNames = ['Pudim Flan', 'Mousse de Chocolate', 'Leite-creme', 'Bolo do dia', 'Fruta da época', 'Sobremesa'];
-  let sobremesaCat = data.find(c => c.category === 'Sobremesas');
-  const moved: { name: string; price: number }[] = [];
-
-  data.forEach(cat => {
-    if (cat.category === 'Sobremesas') return;
-    const toMove = cat.items.filter(i => sobremesaNames.includes(i.name));
-    if (toMove.length > 0) {
-      cat.items = cat.items.filter(i => !sobremesaNames.includes(i.name));
-      moved.push(...toMove);
-    }
-  });
-
-  if (moved.length > 0) {
-    if (!sobremesaCat) {
-      sobremesaCat = { category: 'Sobremesas', items: [] };
-      data.push(sobremesaCat);
-    }
-    moved.forEach(m => {
-      if (!sobremesaCat!.items.some(i => i.name === m.name)) {
-        sobremesaCat!.items.push(m);
-      }
-    });
-    // Persist the fix
-    localStorage.setItem(STORAGE_KEY_BEVERAGES, JSON.stringify(data));
-  }
-
-  return data;
-}
+const mealLabels: Record<keyof MealPrices, string> = {
+  adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',
+  adultPremium: 'Adulto Premium (Jantar/Fds/Feriado)',
+  child2to6: 'Criança 2–6 anos',
+  child7to12: 'Criança 7–12 anos',
+};
 
 export default function PriceManagementPanel() {
-  const [mealPrices, setMealPrices] = useState<MealPrices>(loadMealPrices);
-  const [bevPrices, setBevPrices] = useState<BeverageCategory[]>(loadBeveragePrices);
+  const { beverageMenu, mealPrices, saveMealPrices, saveBevPrices, addBebida, deleteBebida, deleteCategoria, fetchAll } = usePrecario();
+  
+  const [localMealPrices, setLocalMealPrices] = useState<MealPrices>(mealPrices);
+  const [localBev, setLocalBev] = useState(beverageMenu);
   const [dirty, setDirty] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
+
+  // Sync when data loads
+  const [prevMeal, setPrevMeal] = useState(mealPrices);
+  if (JSON.stringify(mealPrices) !== JSON.stringify(prevMeal)) {
+    setPrevMeal(mealPrices);
+    setLocalMealPrices(mealPrices);
+  }
+  const [prevBev, setPrevBev] = useState(beverageMenu);
+  if (JSON.stringify(beverageMenu) !== JSON.stringify(prevBev)) {
+    setPrevBev(beverageMenu);
+    setLocalBev(beverageMenu);
+  }
 
   // Add item dialog
   const [addDialogCat, setAddDialogCat] = useState<number | null>(null);
@@ -84,14 +52,14 @@ export default function PriceManagementPanel() {
   const updateMeal = (key: keyof MealPrices, val: string) => {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    setMealPrices(prev => ({ ...prev, [key]: num }));
+    setLocalMealPrices(prev => ({ ...prev, [key]: num }));
     setDirty(true);
   };
 
   const updateBev = (catIdx: number, itemIdx: number, val: string) => {
     const num = parseFloat(val);
     if (isNaN(num)) return;
-    setBevPrices(prev => {
+    setLocalBev(prev => {
       const next = prev.map(c => ({ ...c, items: c.items.map(i => ({ ...i })) }));
       next[catIdx].items[itemIdx].price = num;
       return next;
@@ -99,65 +67,44 @@ export default function PriceManagementPanel() {
     setDirty(true);
   };
 
-  const addItem = () => {
+  const handleAddItem = async () => {
     if (addDialogCat === null || !newItemName.trim()) return;
     const price = parseFloat(newItemPrice) || 0;
-    setBevPrices(prev => {
-      const next = prev.map(c => ({ ...c, items: [...c.items] }));
-      next[addDialogCat].items.push({ name: newItemName.trim(), price });
-      return next;
-    });
+    const categoria = localBev[addDialogCat]?.category;
+    if (categoria) {
+      await addBebida(newItemName.trim(), price, categoria);
+    }
     setAddDialogCat(null);
     setNewItemName('');
     setNewItemPrice('');
-    setDirty(true);
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCatName.trim()) return;
-    setBevPrices(prev => [...prev, { category: newCatName.trim(), items: [] }]);
+    // Add a placeholder item to create the category
+    await addBebida('Novo artigo', 0, newCatName.trim());
     setExpandedCat(newCatName.trim());
     setShowCatDialog(false);
     setNewCatName('');
-    setDirty(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setBevPrices(prev => {
-      const next = prev.map(c => ({ ...c, items: [...c.items] }));
-      if (deleteTarget.itemIdx !== undefined) {
-        next[deleteTarget.catIdx].items.splice(deleteTarget.itemIdx, 1);
-      } else {
-        next.splice(deleteTarget.catIdx, 1);
-      }
-      return next;
-    });
+    if (deleteTarget.itemIdx !== undefined) {
+      const item = localBev[deleteTarget.catIdx]?.items[deleteTarget.itemIdx];
+      if (item?.id) await deleteBebida(item.id);
+    } else {
+      const cat = localBev[deleteTarget.catIdx];
+      if (cat) await deleteCategoria(cat.category);
+    }
     setDeleteTarget(null);
-    setDirty(true);
   };
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEY_MEALS, JSON.stringify(mealPrices));
-    localStorage.setItem(STORAGE_KEY_BEVERAGES, JSON.stringify(bevPrices));
-
-    // Update runtime objects
-    (PRICING as any).adultWeekdayLunch = mealPrices.adultWeekdayLunch;
-    (PRICING as any).adultPremium = mealPrices.adultPremium;
-    (PRICING as any).child2to6 = mealPrices.child2to6;
-    (PRICING as any).child7to12 = mealPrices.child7to12;
-
-    reloadBeverageMenu(bevPrices);
-
+  const save = async () => {
+    await saveMealPrices(localMealPrices);
+    await saveBevPrices(localBev);
     setDirty(false);
     toast.success('Preços atualizados com sucesso');
-  };
-
-  const mealLabels: Record<keyof MealPrices, string> = {
-    adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',
-    adultPremium: 'Adulto Premium (Jantar/Fds/Feriado)',
-    child2to6: 'Criança 2–6 anos',
-    child7to12: 'Criança 7–12 anos',
   };
 
   return (
@@ -175,14 +122,7 @@ export default function PriceManagementPanel() {
               <span className="text-sm text-foreground">{mealLabels[key]}</span>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground">€</span>
-                <Input
-                  type="number"
-                  step="0.05"
-                  min="0"
-                  value={mealPrices[key]}
-                  onChange={e => updateMeal(key, e.target.value)}
-                  className="w-24 h-8 text-right text-sm"
-                />
+                <Input type="number" step="0.05" min="0" value={localMealPrices[key]} onChange={e => updateMeal(key, e.target.value)} className="w-24 h-8 text-right text-sm" />
               </div>
             </div>
           ))}
@@ -200,21 +140,13 @@ export default function PriceManagementPanel() {
           </Button>
         </div>
         <div className="space-y-2">
-          {bevPrices.map((cat, ci) => (
+          {localBev.map((cat, ci) => (
             <div key={cat.category + ci} className="rounded-lg border border-border overflow-hidden">
-              <button
-                onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)}
-                className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
-              >
+              <button onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)} className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
                 <span className="text-sm font-medium text-foreground">{cat.category}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">{cat.items.length} artigos</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={e => { e.stopPropagation(); setDeleteTarget({ catIdx: ci }); }}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={e => { e.stopPropagation(); setDeleteTarget({ catIdx: ci }); }}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -222,35 +154,18 @@ export default function PriceManagementPanel() {
               {expandedCat === cat.category && (
                 <div className="border-t border-border p-3 space-y-2 bg-muted/20">
                   {cat.items.map((item, ii) => (
-                    <div key={item.name + ii} className="flex items-center justify-between gap-3">
+                    <div key={item.id || item.name + ii} className="flex items-center justify-between gap-3">
                       <span className="text-sm text-foreground truncate flex-1">{item.name}</span>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">€</span>
-                        <Input
-                          type="number"
-                          step="0.05"
-                          min="0"
-                          value={item.price}
-                          onChange={e => updateBev(ci, ii, e.target.value)}
-                          className="w-24 h-8 text-right text-sm"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteTarget({ catIdx: ci, itemIdx: ii })}
-                        >
+                        <Input type="number" step="0.05" min="0" value={item.price} onChange={e => updateBev(ci, ii, e.target.value)} className="w-24 h-8 text-right text-sm" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ catIdx: ci, itemIdx: ii })}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
                   ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-1.5 mt-2"
-                    onClick={() => { setAddDialogCat(ci); setNewItemName(''); setNewItemPrice(''); }}
-                  >
+                  <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2" onClick={() => { setAddDialogCat(ci); setNewItemName(''); setNewItemPrice(''); }}>
                     <Plus className="h-4 w-4" /> Adicionar Artigo
                   </Button>
                 </div>
@@ -260,48 +175,30 @@ export default function PriceManagementPanel() {
         </div>
       </div>
 
-      {/* Save button */}
       {dirty && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="sticky bottom-4">
-          <Button onClick={save} size="lg" className="w-full gap-2">
-            <Save className="h-4 w-4" /> Guardar Alterações de Preços
-          </Button>
+          <Button onClick={save} size="lg" className="w-full gap-2"><Save className="h-4 w-4" /> Guardar Alterações de Preços</Button>
         </motion.div>
       )}
 
-      {/* Add item dialog */}
       <Dialog open={addDialogCat !== null} onOpenChange={open => { if (!open) setAddDialogCat(null); }}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar Artigo</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Adicionar Artigo</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <label className="text-sm text-muted-foreground">Nome</label>
-              <Input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Ex: Água c/ Gás 0,5l" />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground">Preço (€)</label>
-              <Input type="number" step="0.05" min="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} placeholder="0.00" />
-            </div>
+            <div><label className="text-sm text-muted-foreground">Nome</label><Input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Ex: Água c/ Gás 0,5l" /></div>
+            <div><label className="text-sm text-muted-foreground">Preço (€)</label><Input type="number" step="0.05" min="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} placeholder="0.00" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddDialogCat(null)}>Cancelar</Button>
-            <Button onClick={addItem} disabled={!newItemName.trim()}>Adicionar</Button>
+            <Button onClick={handleAddItem} disabled={!newItemName.trim()}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Add category dialog */}
       <Dialog open={showCatDialog} onOpenChange={setShowCatDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nova Categoria</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <label className="text-sm text-muted-foreground">Nome da categoria</label>
-            <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Ex: Sobremesas" />
-          </div>
+          <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
+          <div className="py-2"><label className="text-sm text-muted-foreground">Nome da categoria</label><Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Ex: Sobremesas" /></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCatDialog(false)}>Cancelar</Button>
             <Button onClick={addCategory} disabled={!newCatName.trim()}>Criar</Button>
@@ -309,15 +206,14 @@ export default function PriceManagementPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar eliminação</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.itemIdx !== undefined
-                ? `Eliminar "${bevPrices[deleteTarget.catIdx]?.items[deleteTarget.itemIdx]?.name}"?`
-                : `Eliminar a categoria "${bevPrices[deleteTarget?.catIdx ?? 0]?.category}" e todos os seus artigos?`}
+                ? `Eliminar "${localBev[deleteTarget.catIdx]?.items[deleteTarget.itemIdx]?.name}"?`
+                : `Eliminar a categoria "${localBev[deleteTarget?.catIdx ?? 0]?.category}" e todos os seus artigos?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

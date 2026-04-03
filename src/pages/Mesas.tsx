@@ -85,7 +85,7 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
   onCancel: () => void;
   beverageMenu: { category: string; items: { id: string; name: string; price: number }[] }[];
   beverageMenuFlat: { id: string; name: string; price: number }[];
-  mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number };
+  mealPrices: MealPrices;
   onLog: (action: string, details: string, metadata?: Record<string, unknown>) => void;
 }) {
   const [pinAction, setPinAction] = useState<'cancel' | null>(null);

@@ -29,6 +29,7 @@ export default function DashboardCozinha() {
   const { data: ementaItems = [], isLoading } = useEmentaDiaria(today);
   const { data: allBuffetItems = [] } = useBuffetItems();
   const bulkAdd = useBulkAddEmenta();
+  const { mesas: realMesas } = useMesas();
 
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');

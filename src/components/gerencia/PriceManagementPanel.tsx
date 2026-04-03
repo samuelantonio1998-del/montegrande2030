@@ -10,13 +10,14 @@ import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-const mealLabels: Record<keyof MealPrices, string> = {
+const mealLabels: Record<string, string> = {
   adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',
   adultPremium: 'Adulto Premium (Jantar/Fds/Feriado)',
   child2to6: 'Criança 2–6 anos',
   child7to12: 'Criança 7–12 anos',
-  sobremesa: 'Sobremesa (preço único)',
 };
+
+const MEAL_KEYS: (keyof MealPrices)[] = ['adultWeekdayLunch', 'adultPremium', 'child2to6', 'child7to12'];
 
 export default function PriceManagementPanel() {
   const { beverageMenu, mealPrices, saveMealPrices, saveBevPrices, addBebida, deleteBebida, deleteCategoria, fetchAll } = usePrecario();

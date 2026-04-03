@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { RecipientSize } from '@/lib/buffet-data';
+import { LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
 
 export type RegistoProducao = {
   id: string;
@@ -20,12 +21,69 @@ export type RegistoProducao = {
   created_at: string;
 };
 
+/** Cost per kg for a ficha técnica, computed from ingredients + labor */
+type FichaCostInfo = {
+  totalCost: number; // ingredients + labor
+  capacityKg: number; // porcoes (= recipient capacity in kg)
+  costPerKg: number;
+};
+
+const FALLBACK_COST_PER_KG = 5; // €5/kg when no ficha linked
+
 export function useRegistosProducao() {
   const [registos, setRegistos] = useState<RegistoProducao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fichaCosts, setFichaCosts] = useState<Map<string, FichaCostInfo>>(new Map());
 
-  const fetch = useCallback(async () => {
-    // Only fetch today's records
+  const fetchFichaCosts = useCallback(async () => {
+    const { data: fichas } = await supabase
+      .from('fichas_tecnicas')
+      .select('id, porcoes, tempo_preparacao')
+      .eq('ativo', true);
+    
+    const { data: ingredientes } = await supabase
+      .from('ficha_ingredientes')
+      .select('ficha_id, quantidade, produto:produtos(custo_medio)');
+
+    if (!fichas) return;
+
+    // Sum ingredient costs per ficha
+    const ingCostMap = new Map<string, number>();
+    (ingredientes || []).forEach((ing: any) => {
+      const cost = ing.quantidade * (ing.produto?.custo_medio ?? 0);
+      ingCostMap.set(ing.ficha_id, (ingCostMap.get(ing.ficha_id) ?? 0) + cost);
+    });
+
+    const map = new Map<string, FichaCostInfo>();
+    fichas.forEach(f => {
+      const ingredientCost = ingCostMap.get(f.id) ?? 0;
+      const laborCost = ((f.tempo_preparacao ?? 0) / 60) * LABOR_COST_PER_HOUR;
+      const totalCost = ingredientCost + laborCost;
+      const capacityKg = f.porcoes || 1;
+      map.set(f.id, {
+        totalCost,
+        capacityKg,
+        costPerKg: capacityKg > 0 ? totalCost / capacityKg : FALLBACK_COST_PER_KG,
+      });
+    });
+    setFichaCosts(map);
+  }, []);
+
+  // Also build a buffet_item → ficha_tecnica_id map
+  const [buffetFichaMap, setBuffetFichaMap] = useState<Map<string, string>>(new Map());
+
+  const fetchBuffetFichaMap = useCallback(async () => {
+    const { data } = await supabase
+      .from('buffet_items')
+      .select('id, ficha_tecnica_id')
+      .not('ficha_tecnica_id', 'is', null);
+    if (!data) return;
+    const map = new Map<string, string>();
+    data.forEach(b => { if (b.ficha_tecnica_id) map.set(b.id, b.ficha_tecnica_id); });
+    setBuffetFichaMap(map);
+  }, []);
+
+  const fetchRegistos = useCallback(async () => {
     const today = new Date().toISOString().slice(0, 10);
     const { data, error } = await supabase
       .from('registos_producao')
@@ -41,13 +99,30 @@ export function useRegistosProducao() {
   }, []);
 
   useEffect(() => {
-    fetch();
+    fetchRegistos();
+    fetchFichaCosts();
+    fetchBuffetFichaMap();
     const ch = supabase
       .channel('registos-producao-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'registos_producao' }, () => fetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registos_producao' }, () => fetchRegistos())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchRegistos, fetchFichaCosts, fetchBuffetFichaMap]);
+
+  /** Get cost per kg for a registo, using ficha técnica if available */
+  const getCostPerKg = useCallback((r: RegistoProducao): number => {
+    // Try direct ficha link first
+    let fichaId = r.ficha_tecnica_id;
+    // Fallback: buffet_item → ficha_tecnica_id
+    if (!fichaId && r.buffet_item_id) {
+      fichaId = buffetFichaMap.get(r.buffet_item_id) ?? null;
+    }
+    if (fichaId) {
+      const info = fichaCosts.get(fichaId);
+      if (info) return info.costPerKg;
+    }
+    return FALLBACK_COST_PER_KG;
+  }, [fichaCosts, buffetFichaMap]);
 
   const addRegisto = useCallback(async (r: {
     dish_name: string;
@@ -89,25 +164,33 @@ export function useRegistosProducao() {
   const activeTrays = registos.filter(r => r.estado === 'no_buffet');
   const completedTrays = registos.filter(r => r.estado !== 'no_buffet');
 
-  // Waste summary (computed from registos)
+  // Waste summary with real costs from fichas técnicas
+  // Cost is proportional: if recipe costs €10 for 5kg, sending 2.5kg costs €5
   const wasteSummary = useCallback(() => {
-    const map = new Map<string, { dishName: string; totalProducedKg: number; totalWasteKg: number; totalReusedKg: number }>();
+    const map = new Map<string, { dishName: string; totalProducedKg: number; totalWasteKg: number; totalReusedKg: number; estimatedLoss: number; estimatedSavings: number }>();
     registos.forEach(r => {
       if (!map.has(r.dish_name)) {
-        map.set(r.dish_name, { dishName: r.dish_name, totalProducedKg: 0, totalWasteKg: 0, totalReusedKg: 0 });
+        map.set(r.dish_name, { dishName: r.dish_name, totalProducedKg: 0, totalWasteKg: 0, totalReusedKg: 0, estimatedLoss: 0, estimatedSavings: 0 });
       }
       const m = map.get(r.dish_name)!;
       m.totalProducedKg += r.peso_kg;
-      if (r.sobra_acao === 'desperdicio' && r.sobra_kg) m.totalWasteKg += r.sobra_kg;
-      if (r.sobra_acao === 'aproveitamento' && r.sobra_kg) m.totalReusedKg += r.sobra_kg;
+
+      const costPerKg = getCostPerKg(r);
+
+      if (r.sobra_acao === 'desperdicio' && r.sobra_kg) {
+        m.totalWasteKg += r.sobra_kg;
+        m.estimatedLoss += r.sobra_kg * costPerKg;
+      }
+      if (r.sobra_acao === 'aproveitamento' && r.sobra_kg) {
+        m.totalReusedKg += r.sobra_kg;
+        m.estimatedSavings += r.sobra_kg * costPerKg;
+      }
     });
     return Array.from(map.values()).map(m => ({
       ...m,
       wastePercentage: m.totalProducedKg > 0 ? (m.totalWasteKg / m.totalProducedKg) * 100 : 0,
-      estimatedLoss: m.totalWasteKg * 5, // rough estimate €5/kg
-      estimatedSavings: m.totalReusedKg * 5,
     }));
-  }, [registos]);
+  }, [registos, getCostPerKg]);
 
   return { registos, loading, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary };
 }

@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 type EditIngredient = {
   produto_id: string;
@@ -22,6 +26,97 @@ function calcCostFromProdutos(
     const p = produtosMap.get(ing.produto_id);
     return sum + ing.quantidade * (p?.custo_medio ?? 0);
   }, 0);
+}
+
+function CostHistoryPopover({ produtoId, currentCost, unidade }: { produtoId: string; currentCost: number; unidade: string }) {
+  const [history, setHistory] = useState<{ date: string; cost: number }[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadHistory = async () => {
+    if (history !== null) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('movimentacoes')
+      .select('created_at, custo_unitario')
+      .eq('produto_id', produtoId)
+      .eq('tipo', 'entrada')
+      .not('custo_unitario', 'is', null)
+      .order('created_at', { ascending: true })
+      .limit(20);
+    const entries = (data || [])
+      .filter(d => d.custo_unitario != null)
+      .map(d => ({ date: d.created_at, cost: d.custo_unitario as number }));
+    setHistory(entries);
+    setLoading(false);
+  };
+
+  const trend = history && history.length >= 2 ? history[history.length - 1].cost - history[history.length - 2].cost : 0;
+  const trendPct = history && history.length >= 2 && history[history.length - 2].cost > 0
+    ? ((trend / history[history.length - 2].cost) * 100) : 0;
+
+  const renderSparkline = (items: { cost: number }[]) => {
+    if (items.length < 2) return null;
+    const costs = items.map(d => d.cost);
+    const min = Math.min(...costs);
+    const max = Math.max(...costs);
+    const range = max - min || 1;
+    const w = 180, h = 40;
+    const points = costs.map((c, i) => {
+      const x = (i / (costs.length - 1)) * w;
+      const y = h - ((c - min) / range) * (h - 4) - 2;
+      return `${x},${y}`;
+    }).join(' ');
+    const isUp = costs[costs.length - 1] > costs[0];
+    return (
+      <svg width={w} height={h} className="mt-2">
+        <polyline points={points} fill="none" stroke={isUp ? 'hsl(var(--destructive))' : 'hsl(var(--success))'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {costs.map((c, i) => {
+          const x = (i / (costs.length - 1)) * w;
+          const y = h - ((c - min) / range) * (h - 4) - 2;
+          return <circle key={i} cx={x} cy={y} r="2.5" fill={i === costs.length - 1 ? (isUp ? 'hsl(var(--destructive))' : 'hsl(var(--success))') : 'hsl(var(--muted-foreground))'} opacity={i === costs.length - 1 ? 1 : 0.4} />;
+        })}
+      </svg>
+    );
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button onClick={loadHistory} className="text-right text-muted-foreground hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-2">
+          €{currentCost.toFixed(2)}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" side="left">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-foreground">Histórico de Custo</p>
+            {history && history.length >= 2 && (
+              <div className={cn('flex items-center gap-0.5 text-[10px] font-medium rounded-full px-1.5 py-0.5',
+                trendPct > 0 ? 'bg-destructive/10 text-destructive' : trendPct < 0 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground')}>
+                {trendPct > 0 ? <TrendingUp className="h-3 w-3" /> : trendPct < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                {trendPct > 0 ? '+' : ''}{trendPct.toFixed(1)}%
+              </div>
+            )}
+          </div>
+          {loading && <p className="text-xs text-muted-foreground">A carregar...</p>}
+          {history && history.length === 0 && <p className="text-xs text-muted-foreground">Sem entradas registadas</p>}
+          {history && history.length > 0 && (
+            <>
+              {renderSparkline(history)}
+              <div className="space-y-1 max-h-32 overflow-y-auto mt-2">
+                {[...history].reverse().slice(0, 8).map((h, i) => (
+                  <div key={i} className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">{format(new Date(h.date), 'dd MMM yy', { locale: pt })}</span>
+                    <span className={cn('font-medium', i === 0 ? 'text-foreground' : 'text-muted-foreground')}>€{h.cost.toFixed(2)}/{unidade}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function FichaDetailDialog({
@@ -270,7 +365,13 @@ export function FichaDetailDialog({
                           <span className="text-muted-foreground">{ing.quantidade} {ing.unidade}</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">€{cost.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">
+                        {editing ? (
+                          <span className="text-muted-foreground">€{cost.toFixed(2)}</span>
+                        ) : (
+                          <CostHistoryPopover produtoId={ing.produto_id} currentCost={cost} unidade={p?.unidade || 'un'} />
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right font-medium text-foreground">€{(ing.quantidade * cost).toFixed(2)}</td>
                       {editing && (
                         <td className="px-1 py-2">

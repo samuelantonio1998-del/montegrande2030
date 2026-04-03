@@ -77,9 +77,127 @@ export default function DashboardGerencia() {
     basedOn: 'Dados de produção de hoje',
   }));
 
-  const deleteLog = async (id: string) => {
-    await supabase.from('activity_logs').delete().eq('id', id);
-    setLogs(prev => prev.filter(l => l.id !== id));
+  const undoAction = async (entry: ActivityLog) => {
+    const meta = entry.metadata;
+    if (!meta?.undo_type) {
+      toast.error('Esta ação não pode ser desfeita');
+      return;
+    }
+    try {
+      switch (meta.undo_type) {
+        case 'mesa_fechada':
+        case 'mesa_cancelada': {
+          // Reopen mesa with original data
+          await supabase.from('mesas').update({
+            status: 'ocupada',
+            adults: meta.adults as number,
+            children2to6: meta.children2to6 as number,
+            children7to12: meta.children7to12 as number,
+            waiter: (meta.waiter as string) || '',
+            opened_at: (meta.openedAt as string) || new Date().toISOString(),
+            beverages: JSON.parse(JSON.stringify(meta.beverages || [])),
+          }).eq('id', meta.mesa_id as string);
+          // Remove fecho_mesas record for today if it was a close
+          if (meta.undo_type === 'mesa_fechada' && meta.data) {
+            await supabase.from('fecho_mesas').delete()
+              .eq('mesa_number', meta.mesa_number as number)
+              .eq('data', meta.data as string)
+              .order('created_at', { ascending: false })
+              .limit(1);
+            // Reverse stock deductions for beverages
+            if (Array.isArray(meta.beverages)) {
+              const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
+              if (produtos) {
+                for (const bev of meta.beverages as any[]) {
+                  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                  const bevNorm = normalize(bev.name);
+                  const match = produtos.find(p => {
+                    const pNorm = normalize(p.nome);
+                    return pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm);
+                  });
+                  if (match) {
+                    await supabase.from('produtos').update({ stock_atual: match.stock_atual + bev.quantity }).eq('id', match.id);
+                  }
+                }
+              }
+            }
+          }
+          toast.success(`Mesa ${meta.mesa_number} reaberta`);
+          break;
+        }
+        case 'mesa_aberta': {
+          // Close mesa back to livre
+          await supabase.from('mesas').update({
+            status: 'livre', adults: 0, children2to6: 0, children7to12: 0, waiter: '', opened_at: null, beverages: '[]',
+          }).eq('id', meta.mesa_id as string);
+          toast.success(`Mesa ${meta.mesa_number} fechada (undo)`);
+          break;
+        }
+        case 'tarefa_concluida': {
+          const periodicidade = meta.periodicidade as string;
+          if (periodicidade === 'unica') {
+            // Re-insert the task
+            await supabase.from('tarefas').insert([{
+              titulo: meta.titulo as string,
+              categoria: (meta.categoria as string) || 'outro',
+              periodicidade,
+              concluida: false,
+              responsavel: '',
+              prioridade: 'media',
+            }]);
+          } else {
+            await supabase.from('tarefas').update({ concluida: false }).eq('id', meta.tarefa_id as string);
+          }
+          toast.success(`Tarefa "${meta.titulo}" revertida`);
+          break;
+        }
+        case 'reposicao_buffet': {
+          // Delete the last production record for this item
+          const { data: registos } = await supabase.from('registos_producao')
+            .select('id')
+            .eq('buffet_item_id', meta.itemId as string)
+            .eq('estado', 'no_buffet')
+            .order('created_at', { ascending: false })
+            .limit(1);
+          if (registos?.[0]) {
+            await supabase.from('registos_producao').delete().eq('id', registos[0].id);
+          }
+          toast.success(`Reposição de "${meta.itemName}" revertida`);
+          break;
+        }
+        case 'recolha_tabuleiro': {
+          // Revert the last collected tray back to no_buffet
+          const { data: recolhidos } = await supabase.from('registos_producao')
+            .select('id')
+            .eq('buffet_item_id', meta.itemId as string)
+            .in('estado', ['aproveitado', 'desperdicio'])
+            .order('recolhido_at', { ascending: false })
+            .limit(1);
+          if (recolhidos?.[0]) {
+            await supabase.from('registos_producao').update({
+              estado: 'no_buffet', recolhido_at: null, sobra_kg: null, sobra_acao: null, aproveitamento_nota: null,
+            }).eq('id', recolhidos[0].id);
+          }
+          toast.success(`Recolha de "${meta.itemName}" revertida`);
+          break;
+        }
+        case 'dia_fechado': {
+          // Remove the vendas_historico entry for that day
+          await supabase.from('vendas_historico').delete().eq('data', meta.data as string);
+          toast.success(`Fecho do dia ${meta.data} revertido`);
+          break;
+        }
+        default:
+          toast.error('Tipo de ação não suportado para undo');
+          return;
+      }
+      // Delete the log entry
+      await supabase.from('activity_logs').delete().eq('id', entry.id);
+      setLogs(prev => prev.filter(l => l.id !== entry.id));
+    } catch (e) {
+      console.error('Erro ao desfazer ação:', e);
+      toast.error('Erro ao desfazer ação');
+    }
   };
 
   const today = new Date();

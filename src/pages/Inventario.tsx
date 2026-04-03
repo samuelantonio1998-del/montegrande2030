@@ -197,12 +197,31 @@ export default function Inventario() {
 
       if (error) throw error;
 
+      // Extract invoice metadata
+      const meta: InvoiceMeta = {
+        numero_fatura: data.numero_fatura || null,
+        data_fatura: data.data_fatura || null,
+        fornecedor_nome: data.fornecedor_nome || null,
+      };
+      setInvoiceMeta(meta);
+
+      // Build hash and check for duplicate
+      const hashParts = [meta.numero_fatura, meta.data_fatura, meta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
+      const hashStr = hashParts.join('|');
+      if (hashStr) {
+        const { data: existing } = await supabase.from('faturas_processadas').select('created_at').eq('hash_identificador', hashStr).maybeSingle();
+        if (existing) {
+          setDuplicateWarning({ found: true, created_at: existing.created_at });
+        } else {
+          setDuplicateWarning(null);
+        }
+      } else {
+        setDuplicateWarning(null);
+      }
+
       const items: ScannedItem[] = (data.items || []).map((item: any) => {
-        // Match by SKU first (most reliable)
         const matchBySku = item.sku ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) : null;
-        // Exact name match
         const matchByName = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
-        // Name + supplier match
         const matchByNameAndSupplier = item.fornecedor
           ? produtos.find(p => {
               if (p.nome.toLowerCase() !== item.nome?.toLowerCase()) return false;
@@ -211,7 +230,6 @@ export default function Inventario() {
               return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
             })
           : null;
-        // Fuzzy name match — find most similar product above threshold
         let matchByFuzzy: Produto | null = null;
         if (!matchBySku && !matchByNameAndSupplier && !matchByName && item.nome) {
           let bestScore = 0;

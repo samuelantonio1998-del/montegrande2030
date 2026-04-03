@@ -164,6 +164,33 @@ export function useRegistosProducao() {
   const activeTrays = registos.filter(r => r.estado === 'no_buffet');
   const completedTrays = registos.filter(r => r.estado !== 'no_buffet');
 
+  // Derive tray states from DB registos (persisted across refresh)
+  const derivedTrayStates = useMemo(() => {
+    const states: Record<string, import('@/lib/buffet-zones').BuffetTrayState> = {};
+    registos.forEach(r => {
+      if (!r.buffet_item_id) return;
+      const itemId = r.buffet_item_id;
+      if (!states[itemId]) {
+        states[itemId] = { itemId, replenishments: [], totalSentKg: 0, currentRecipient: null, isOnBuffet: false };
+      }
+      const s = states[itemId];
+      s.replenishments.push({
+        id: r.id,
+        itemId,
+        recipient: r.recipiente,
+        weightKg: r.peso_kg,
+        timestamp: r.enviado_at,
+        registeredBy: r.registado_por,
+      });
+      s.totalSentKg += r.peso_kg;
+      s.currentRecipient = r.recipiente;
+      if (r.estado === 'no_buffet') {
+        s.isOnBuffet = true;
+      }
+    });
+    return states;
+  }, [registos]);
+
   // Waste summary with real costs from fichas técnicas
   // Cost is proportional: if recipe costs €10 for 5kg, sending 2.5kg costs €5
   const wasteSummary = useCallback(() => {

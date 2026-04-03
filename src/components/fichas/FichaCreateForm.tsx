@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { Plus, Trash2, Save, Upload, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateFicha, useProdutos } from '@/hooks/useFichasTecnicas';
+import { useCreateFicha, useProdutos, LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,15 @@ type IngredienteLine = {
   unidade: string;
 };
 
+/** Dose options: recipientes + unitário */
+const doseOptions = [
+  ...Object.entries(recipientCapacity).map(([key, val]) => ({
+    value: String(val.capacityKg),
+    label: `${val.label} (${val.capacityKg}kg)`,
+  })),
+  { value: '1', label: 'Unitário (un)' },
+];
+
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
   const createFicha = useCreateFicha();
@@ -33,6 +43,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
   const [porcoes, setPorcoes] = useState(1);
   const [precoVenda, setPrecoVenda] = useState(0);
   const [tempoPreparacao, setTempoPreparacao] = useState(0);
+  const [notasPreparacao, setNotasPreparacao] = useState('');
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,15 +80,20 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
     return urlData.publicUrl;
   };
 
-  const totalCost = ingredientes.reduce((sum, ing) => {
+  const ingredientCost = ingredientes.reduce((sum, ing) => {
     const prod = produtos.find(p => p.id === ing.produto_id);
     return sum + (prod ? ing.quantidade * prod.custo_medio : 0);
   }, 0);
+  const laborCost = (tempoPreparacao / 60) * LABOR_COST_PER_HOUR;
+  const totalCost = ingredientCost + laborCost;
   const costPerDose = porcoes > 0 ? totalCost / porcoes : 0;
   const margem = precoVenda > 0 ? ((precoVenda - costPerDose) / precoVenda) * 100 : 0;
   const racio = precoVenda > 0 ? (costPerDose / precoVenda) * 100 : 0;
 
+  const canSubmit = nome && tempoPreparacao > 0 && !createFicha.isPending && !uploading;
+
   const handleSubmit = async () => {
+    if (!canSubmit) return;
     const fotoUrl = await uploadPhoto();
     const validIngredients = ingredientes.filter(i => i.produto_id && i.quantidade > 0);
     createFicha.mutate(
@@ -88,6 +104,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
         preco_venda: precoVenda,
         tempo_preparacao: tempoPreparacao,
         foto_url: fotoUrl,
+        notas_preparacao: notasPreparacao || null,
         ingredientes: validIngredients,
       },
       {
@@ -98,6 +115,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
           setPorcoes(1);
           setPrecoVenda(0);
           setTempoPreparacao(0);
+          setNotasPreparacao('');
           setFotoPreview(null);
           setFotoFile(null);
           setIngredientes([{ produto_id: '', quantidade: 0, unidade: 'kg' }]);
@@ -154,9 +172,9 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
                   <Select value={String(porcoes)} onValueChange={v => setPorcoes(Number(v))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(recipientCapacity).map(([key, val]) => (
-                        <SelectItem key={key} value={String(val.capacityKg)}>
-                          {val.label} ({val.capacityKg}kg)
+                      {doseOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -172,8 +190,22 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
               <Input type="number" step="0.01" min={0} value={precoVenda} onChange={e => setPrecoVenda(Number(e.target.value))} />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Tempo Preparação (min)</label>
-              <Input type="number" min={0} value={tempoPreparacao} onChange={e => setTempoPreparacao(Number(e.target.value))} />
+              <label className="text-xs font-medium text-muted-foreground">
+                Tempo Preparação (min) <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="number"
+                min={1}
+                value={tempoPreparacao || ''}
+                onChange={e => setTempoPreparacao(Number(e.target.value))}
+                placeholder="Obrigatório"
+                className={cn(!tempoPreparacao && 'border-destructive/50')}
+              />
+              {tempoPreparacao > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Custo M.O.: €{laborCost.toFixed(2)} (€{LABOR_COST_PER_HOUR}/h s/ IVA)
+                </p>
+              )}
             </div>
           </div>
 
@@ -231,9 +263,31 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
                       </tr>
                     );
                   })}
+                  {/* Labor cost row */}
+                  {tempoPreparacao > 0 && (
+                    <tr className="border-t border-border bg-muted/20">
+                      <td className="px-2 py-1 text-xs text-muted-foreground" colSpan={4}>
+                        Mão-de-obra ({tempoPreparacao} min × €{LABOR_COST_PER_HOUR}/h)
+                      </td>
+                      <td className="px-2 py-1 text-right text-xs font-medium text-foreground">€{laborCost.toFixed(2)}</td>
+                      <td></td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Notas de preparação */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Nota de Preparação / Confecção</label>
+            <Textarea
+              value={notasPreparacao}
+              onChange={e => setNotasPreparacao(e.target.value)}
+              placeholder="Instruções de preparação, dicas de confecção, temperaturas..."
+              rows={3}
+              className="mt-1 resize-none"
+            />
           </div>
 
           {/* Summary */}
@@ -260,7 +314,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
             </div>
           </div>
 
-          <Button className="w-full gap-2" onClick={handleSubmit} disabled={!nome || createFicha.isPending || uploading}>
+          <Button className="w-full gap-2" onClick={handleSubmit} disabled={!canSubmit}>
             <Save className="h-4 w-4" />
             {uploading ? 'A enviar foto...' : createFicha.isPending ? 'A guardar...' : 'Guardar Ficha Técnica'}
           </Button>

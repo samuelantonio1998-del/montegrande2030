@@ -33,7 +33,7 @@ export default function DashboardGerencia() {
         if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_atual <= p.stock_minimo));
       });
     // Fetch recent activity logs
-    supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, created_at')
+    supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, metadata, created_at')
       .order('created_at', { ascending: false })
       .limit(50)
       .then(({ data }) => {

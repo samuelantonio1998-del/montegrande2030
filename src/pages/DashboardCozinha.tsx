@@ -186,8 +186,8 @@ export default function DashboardCozinha() {
           <div><p className="text-[10px] text-muted-foreground leading-none">Aproveitamento</p><p className="text-sm font-bold text-success">{totalReused.toFixed(1)}kg</p></div>
         </div>
         <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
-          <Recycle className="h-3 w-3 text-primary shrink-0" />
-          <div><p className="text-[10px] text-muted-foreground leading-none">Poupança</p><p className={cn('text-sm font-bold', totalSavings >= totalLoss ? 'text-success' : 'text-destructive')}>{totalSavings.toFixed(0)}kg</p></div>
+          <Euro className="h-3 w-3 text-primary shrink-0" />
+          <div><p className="text-[10px] text-muted-foreground leading-none">Poupança</p><p className={cn('text-sm font-bold', totalSavings >= totalLoss ? 'text-success' : 'text-destructive')}>€{totalSavings.toFixed(0)}</p></div>
         </div>
       </div>
 

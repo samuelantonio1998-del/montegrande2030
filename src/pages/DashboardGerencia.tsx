@@ -190,6 +190,52 @@ export default function DashboardGerencia() {
           </div>
         </motion.div>
       </div>
+
+      {/* Activity Feed */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
+        <h2 className="font-display text-lg text-card-foreground flex items-center gap-2 mb-1">
+          <Activity className="h-5 w-5 text-primary" /> Registo de Atividade
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Últimas ações da equipa</p>
+        <div className="space-y-1 max-h-80 overflow-y-auto">
+          {logs.map((entry) => {
+            const time = new Date(entry.created_at);
+            const timeStr = time.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = time.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+            const isToday = time.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10);
+
+            const moduleColors: Record<string, string> = {
+              Mesas: 'bg-primary/10 text-primary',
+              Cozinha: 'bg-orange-100 text-orange-700',
+              Tarefas: 'bg-success/10 text-success',
+            };
+            const moduleColor = moduleColors[entry.module] || 'bg-muted text-muted-foreground';
+
+            return (
+              <div key={entry.id} className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
+                <div className="flex flex-col items-center shrink-0 pt-0.5">
+                  <span className="text-[10px] text-muted-foreground">{isToday ? timeStr : dateStr}</span>
+                  {!isToday && <span className="text-[10px] text-muted-foreground">{timeStr}</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-foreground">{entry.action}</span>
+                    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', moduleColor)}>{entry.module}</span>
+                  </div>
+                  {entry.details && <p className="text-xs text-muted-foreground truncate">{entry.details}</p>}
+                  <p className="text-[10px] text-muted-foreground/70">{entry.user_name}{entry.user_role ? ` · ${entry.user_role}` : ''}</p>
+                </div>
+              </div>
+            );
+          })}
+          {logs.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <Clock className="mx-auto h-6 w-6 mb-2" />
+              Sem atividade registada
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

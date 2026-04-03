@@ -362,6 +362,7 @@ export default function Mesas() {
           total: dailyTotals.total,
         });
       }
+      log('Dia fechado', 'Mesas', `${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total}`, { almoco: dailyTotals.almoco, jantar: dailyTotals.jantar, total: dailyTotals.total });
       toast.success(`Dia fechado: ${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total} refeições`);
       setShowCloseDay(false);
     } catch (e) {

@@ -33,7 +33,14 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an invoice/receipt OCR assistant for a restaurant. Extract product items from the invoice image. Return a JSON array of items with these fields:
+            content: `You are an invoice/receipt OCR assistant for a restaurant. Extract product items AND invoice metadata from the invoice image.
+
+INVOICE METADATA - CRITICAL: Always extract these from the invoice header/footer:
+- numero_fatura: The invoice number, document number, receipt number, or any unique identifier (e.g., "FT 2024/1234", "Fatura nº 567", "Doc. 890", "Recibo 123"). Look for labels like "Fatura", "FT", "Doc.", "Nº", "Invoice", "Receipt", etc.
+- data_fatura: The invoice date AND time if available, in the format shown on the document (e.g., "03/04/2026 14:30", "2026-04-03"). Look for "Data:", "Date:", or date patterns near the top of the document.
+- fornecedor_nome: The supplier/company name from the invoice header or logo.
+
+PRODUCT ITEMS - Extract with these fields:
 - nome: product name (string)
 - quantidade: TOTAL quantity of individual units (number). CRITICAL RULE FOR PACKS/BUNDLES: If the product is sold in packs or bundles, you MUST multiply the number of packs by the units per pack to get the total individual units. Look for patterns like:
   * "X6", "x6", "X12", "x24" in the product name → multiply ordered quantity by that number
@@ -47,7 +54,7 @@ serve(async (req) => {
 - fornecedor: supplier name if visible on the invoice header/footer (string or null). IMPORTANT: Always extract the supplier/company name from the invoice header, logo, or footer.
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available - look for codes like "REF:", "Art.", "Cod.", numbers at the start of each line, or any alphanumeric identifier associated with each product.
 
-Only return the JSON array, no other text. If you cannot read the invoice, return an empty array [].
+Only return the JSON via the tool call, no other text. If you cannot read the invoice, return empty items array.
 Always use Portuguese product names when possible. Pay special attention to product codes/references and supplier identification as they are crucial for inventory matching.
 REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units and divide cost to get per-unit cost.`,
           },
@@ -56,7 +63,7 @@ REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units 
             content: [
               {
                 type: "text",
-                text: "Extract all product items from this invoice/receipt image:",
+                text: "Extract all product items AND invoice metadata (number, date, supplier) from this invoice/receipt image:",
               },
               {
                 type: "image_url",
@@ -69,11 +76,14 @@ REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units 
           {
             type: "function",
             function: {
-              name: "extract_invoice_items",
-              description: "Extract product items from an invoice image",
+              name: "extract_invoice_data",
+              description: "Extract invoice metadata and product items from an invoice image",
               parameters: {
                 type: "object",
                 properties: {
+                  numero_fatura: { type: "string", description: "Invoice/document number or unique identifier" },
+                  data_fatura: { type: "string", description: "Invoice date and time as shown on document" },
+                  fornecedor_nome: { type: "string", description: "Supplier/company name" },
                   items: {
                     type: "array",
                     items: {
@@ -95,7 +105,7 @@ REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units 
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "extract_invoice_items" } },
+        tool_choice: { type: "function", function: { name: "extract_invoice_data" } },
       }),
     });
 
@@ -123,13 +133,20 @@ REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units 
     const data = await response.json();
     
     let items = [];
+    let numero_fatura = null;
+    let data_fatura = null;
+    let fornecedor_nome = null;
+
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
       items = parsed.items || [];
+      numero_fatura = parsed.numero_fatura || null;
+      data_fatura = parsed.data_fatura || null;
+      fornecedor_nome = parsed.fornecedor_nome || null;
     }
 
-    return new Response(JSON.stringify({ items }), {
+    return new Response(JSON.stringify({ items, numero_fatura, data_fatura, fornecedor_nome }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

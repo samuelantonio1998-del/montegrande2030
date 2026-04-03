@@ -58,6 +58,12 @@ type ScannedItem = {
   produto_id?: string;
 };
 
+type InvoiceMeta = {
+  numero_fatura: string | null;
+  data_fatura: string | null;
+  fornecedor_nome: string | null;
+};
+
 type ScannerStep = 'idle' | 'preview' | 'processing' | 'review';
 
 // Fuzzy string similarity (bigram-based Dice coefficient)
@@ -101,6 +107,8 @@ export default function Inventario() {
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [confirmingEntry, setConfirmingEntry] = useState(false);
+  const [invoiceMeta, setInvoiceMeta] = useState<InvoiceMeta>({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
+  const [duplicateWarning, setDuplicateWarning] = useState<{ found: boolean; created_at?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Manual entry state
@@ -189,12 +197,31 @@ export default function Inventario() {
 
       if (error) throw error;
 
+      // Extract invoice metadata
+      const meta: InvoiceMeta = {
+        numero_fatura: data.numero_fatura || null,
+        data_fatura: data.data_fatura || null,
+        fornecedor_nome: data.fornecedor_nome || null,
+      };
+      setInvoiceMeta(meta);
+
+      // Build hash and check for duplicate
+      const hashParts = [meta.numero_fatura, meta.data_fatura, meta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
+      const hashStr = hashParts.join('|');
+      if (hashStr) {
+        const { data: existing } = await supabase.from('faturas_processadas').select('created_at').eq('hash_identificador', hashStr).maybeSingle();
+        if (existing) {
+          setDuplicateWarning({ found: true, created_at: existing.created_at });
+        } else {
+          setDuplicateWarning(null);
+        }
+      } else {
+        setDuplicateWarning(null);
+      }
+
       const items: ScannedItem[] = (data.items || []).map((item: any) => {
-        // Match by SKU first (most reliable)
         const matchBySku = item.sku ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) : null;
-        // Exact name match
         const matchByName = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
-        // Name + supplier match
         const matchByNameAndSupplier = item.fornecedor
           ? produtos.find(p => {
               if (p.nome.toLowerCase() !== item.nome?.toLowerCase()) return false;
@@ -203,7 +230,6 @@ export default function Inventario() {
               return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
             })
           : null;
-        // Fuzzy name match — find most similar product above threshold
         let matchByFuzzy: Produto | null = null;
         if (!matchBySku && !matchByNameAndSupplier && !matchByName && item.nome) {
           let bestScore = 0;
@@ -325,6 +351,19 @@ export default function Inventario() {
         }
       }
     }
+    // Save invoice hash to prevent future duplicates
+    const hashParts = [invoiceMeta.numero_fatura, invoiceMeta.data_fatura, invoiceMeta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
+    const hashStr = hashParts.join('|');
+    if (hashStr) {
+      await supabase.from('faturas_processadas' as any).insert({
+        numero_fatura: invoiceMeta.numero_fatura,
+        data_fatura: invoiceMeta.data_fatura,
+        fornecedor: invoiceMeta.fornecedor_nome,
+        hash_identificador: hashStr,
+        total_itens: selected.length,
+      });
+    }
+
     toast({ title: `${selected.length} itens registados com sucesso` });
     for (const item of selected) {
       await log('Entrada stock (OCR)', 'Inventário', `${item.nome} +${item.quantidade} ${item.unidade}`, { produto_id: item.produto_id, quantidade: item.quantidade, custo_unitario: item.custo_unitario });
@@ -340,6 +379,8 @@ export default function Inventario() {
     setPreviewFile(null);
     setScannedItems([]);
     setProcessingProgress(0);
+    setInvoiceMeta({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
+    setDuplicateWarning(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -613,6 +654,31 @@ export default function Inventario() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {/* Duplicate warning banner */}
+                {duplicateWarning?.found && (
+                  <div className="px-4 py-3 bg-warning/15 border-b border-warning/30 flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground">⚠️ Fatura possivelmente duplicada</p>
+                      <p className="text-xs text-muted-foreground">
+                        {invoiceMeta.numero_fatura && <>Fatura <strong>{invoiceMeta.numero_fatura}</strong> </>}
+                        {invoiceMeta.fornecedor_nome && <>de <strong>{invoiceMeta.fornecedor_nome}</strong> </>}
+                        já foi processada em {duplicateWarning.created_at ? new Date(duplicateWarning.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'data desconhecida'}.
+                        Pode continuar se pretender processar novamente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Invoice metadata display */}
+                {(invoiceMeta.numero_fatura || invoiceMeta.data_fatura || invoiceMeta.fornecedor_nome) && (
+                  <div className="px-4 py-2 border-b border-border bg-muted/30 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {invoiceMeta.numero_fatura && <span>📄 <strong>Nº:</strong> {invoiceMeta.numero_fatura}</span>}
+                    {invoiceMeta.data_fatura && <span>📅 <strong>Data:</strong> {invoiceMeta.data_fatura}</span>}
+                    {invoiceMeta.fornecedor_nome && <span>🏢 <strong>Fornecedor:</strong> {invoiceMeta.fornecedor_nome}</span>}
+                  </div>
+                )}
 
                 {scannedItems.length === 0 ? (
                   <div className="p-8 text-center">

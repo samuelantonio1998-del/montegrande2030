@@ -89,19 +89,32 @@ export default function DashboardCozinha() {
     priority: 'alta' as const,
   }));
 
-  const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
+  const handleReplenish = useCallback(async (itemId: string, recipient: RecipientSize, weightKg: number) => {
     ctxReplenish(itemId, recipient, weightKg, user?.name || '');
     const item = activeItems.find(i => i.id === itemId);
+    // Persist to DB
+    await addRegisto({
+      dish_name: item?.name || itemId,
+      buffet_item_id: itemId,
+      recipiente: recipient,
+      peso_kg: weightKg,
+      registado_por: user?.name || '',
+    });
     log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, {
       undo_type: 'reposicao_buffet',
       itemId, recipient, weightKg, itemName: item?.name,
     });
-  }, [ctxReplenish, user?.name, activeItems, log]);
+  }, [ctxReplenish, user?.name, activeItems, log, addRegisto]);
 
-  const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
+  const handleCollect = useCallback(async (itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
+    // Find the latest active DB record for this buffet item and update it
+    const activeRecord = prodActiveTrays.find(r => r.buffet_item_id === itemId);
+    if (activeRecord) {
+      await recolherRegisto(activeRecord.id, leftoverKg, action, note);
+    }
     log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, {
       undo_type: 'recolha_tabuleiro',
       itemId, itemName: item.name, leftoverKg, action,

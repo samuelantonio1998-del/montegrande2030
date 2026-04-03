@@ -119,7 +119,7 @@ export default function PriceManagementPanel() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(Object.keys(mealLabels) as (keyof MealPrices)[]).map(key => (
+          {MEAL_KEYS.map(key => (
             <div key={key} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
               <span className="text-sm text-foreground">{mealLabels[key]}</span>
               <div className="flex items-center gap-1">
@@ -128,6 +128,24 @@ export default function PriceManagementPanel() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Dessert pricing */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+            <CakeSlice className="h-5 w-5 text-primary" /> Preços de Sobremesa
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <span className="text-sm text-foreground">Sobremesa (preço único)</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">€</span>
+              <Input type="number" step="0.05" min="0" value={localMealPrices.sobremesa} onChange={e => updateMeal('sobremesa', e.target.value)} className="w-24 h-8 text-right text-sm" />
+            </div>
+          </div>
         </div>
       </div>
 

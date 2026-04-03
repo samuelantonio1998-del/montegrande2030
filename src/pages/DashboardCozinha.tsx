@@ -42,6 +42,7 @@ export default function DashboardCozinha() {
   const { log } = useActivityLog();
 
   const existingItemIds = useMemo(() => new Set(ementaItems.map(e => e.buffet_item_id)), [ementaItems]);
+  const permanentItemIds = useMemo(() => new Set(permanentItems.map(e => e.buffet_item_id)), [permanentItems]);
 
   const ementaByZone = useMemo(() => {
     const map: Record<string, typeof ementaItems> = { entradas: [], pratos_principais: [], sobremesas: [] };

@@ -15,6 +15,7 @@ const mealLabels: Record<keyof MealPrices, string> = {
   adultPremium: 'Adulto Premium (Jantar/Fds/Feriado)',
   child2to6: 'Criança 2–6 anos',
   child7to12: 'Criança 7–12 anos',
+  sobremesa: 'Sobremesa (preço único)',
 };
 
 export default function PriceManagementPanel() {

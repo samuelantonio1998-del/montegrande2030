@@ -404,6 +404,14 @@ export default function Mesas() {
             <p className="text-xs text-muted-foreground">Mesas ocupadas</p>
             <p className="text-xl font-bold text-primary">{occupiedCount}/{mesas.length}</p>
           </div>
+          <div className="rounded-lg bg-card border border-border px-4 py-2 text-center">
+            <p className="text-xs text-muted-foreground">Refeições hoje</p>
+            <p className="text-xl font-bold text-foreground">{dailyTotals.total}</p>
+            <p className="text-[10px] text-muted-foreground">{dailyTotals.almoco} alm · {dailyTotals.jantar} jant</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowCloseDay(true)}>
+            <CalendarCheck className="h-4 w-4" /> Fechar Dia
+          </Button>
         </div>
       </div>
 

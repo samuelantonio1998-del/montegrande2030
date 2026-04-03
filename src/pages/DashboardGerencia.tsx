@@ -1,93 +1,130 @@
-import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat } from 'lucide-react';
-import { KPICard } from '@/components/KPICard';
-import { mockKPIs, mockChecklist, mockInventory, mockOrders, mockMesas, mockHistorical } from '@/lib/mock-data';
-import { mockProductionRecords, mockProductionAlerts, mockWeeklyWaste } from '@/lib/buffet-data';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMesas } from '@/hooks/useMesas';
+import { useRegistosProducao } from '@/hooks/useRegistosProducao';
+import { useTarefas } from '@/hooks/useTarefas';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+
+type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 
 export default function DashboardGerencia() {
   const { user, logout } = useAuth();
+  const { mesas } = useMesas();
+  const { activeTrays, wasteSummary } = useRegistosProducao();
+  const { tarefas } = useTarefas();
+  const [lowStock, setLowStock] = useState<ProdutoStock[]>([]);
 
-  const lowStock = mockInventory.filter(i => i.currentStock <= i.minStock);
-  const pendingChecklist = mockChecklist.filter(i => !i.done);
-  const activeTrays = mockProductionRecords.filter(r => r.status === 'no_buffet');
-  const totalWeeklyWaste = mockWeeklyWaste.reduce((s, d) => s + d.totalWasteKg, 0);
-  const totalWeeklySavings = mockWeeklyWaste.reduce((s, d) => s + d.estimatedSavings, 0);
-  const totalWeeklyLoss = mockWeeklyWaste.reduce((s, d) => s + d.estimatedLoss, 0);
-  const totalPax = mockMesas.reduce((s, m) => s + m.adults + m.children, 0);
+  useEffect(() => {
+    supabase.from('produtos').select('id, nome, stock_atual, stock_minimo, stock_maximo, custo_medio, unidade, fornecedor_id')
+      .then(({ data }) => {
+        if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_atual <= p.stock_minimo));
+      });
+  }, []);
 
-  const wasteChartData = mockWeeklyWaste
+  const totalPax = mesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
+  const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
+
+  const waste = wasteSummary();
+  const totalWeeklyWaste = waste.reduce((s, d) => s + d.totalWasteKg, 0);
+  const totalWeeklySavings = waste.reduce((s, d) => s + d.estimatedSavings, 0);
+  const totalWeeklyLoss = waste.reduce((s, d) => s + d.estimatedLoss, 0);
+
+  const wasteChartData = waste
     .sort((a, b) => b.wastePercentage - a.wastePercentage)
     .slice(0, 5)
     .map(w => ({ name: w.dishName.length > 12 ? w.dishName.slice(0, 12) + '…' : w.dishName, desperdicio: w.totalWasteKg, aproveitamento: w.totalReusedKg }));
 
-  const teamPerf = [
-    { name: 'João', mesas: 12, tabuleiros: 8 },
-    { name: 'Maria', mesas: 15, tabuleiros: 6 },
-    { name: 'Pedro', mesas: 8, tabuleiros: 14 },
-    { name: 'Ana', mesas: 10, tabuleiros: 10 },
-    { name: 'Carlos', mesas: 6, tabuleiros: 12 },
-  ];
+  const doneCount = tarefas.filter(t => t.concluida).length;
+  const totalTasks = tarefas.length;
 
   const purchaseAlerts = lowStock.map(item => {
-    const avgDailyUsage = item.maxStock * 0.1;
-    const daysLeft = Math.ceil(item.currentStock / avgDailyUsage);
-    return { ...item, daysLeft, urgency: daysLeft <= 1 ? 'critico' : 'aviso' };
+    const avgDailyUsage = item.stock_maximo * 0.1;
+    const daysLeft = avgDailyUsage > 0 ? Math.ceil(item.stock_atual / avgDailyUsage) : 99;
+    return { ...item, daysLeft, urgency: daysLeft <= 1 ? 'critico' as const : 'aviso' as const };
   });
 
-  const menuInsights = mockWeeklyWaste
+  const menuInsights = waste
     .filter(w => w.wastePercentage > 12)
     .map(w => ({
       dish: w.dishName,
       waste: w.wastePercentage,
-      suggestion: w.wastePercentage > 15
-        ? `Reduzir quantidade inicial em 30%`
-        : `Monitorizar — considerar couvete mais pequena`,
+      suggestion: w.wastePercentage > 15 ? 'Reduzir quantidade inicial em 30%' : 'Monitorizar — considerar couvete mais pequena',
     }));
+
+  const alerts = waste.filter(w => w.wastePercentage > 15).map(w => ({
+    id: w.dishName,
+    message: `${w.dishName} tem ${w.wastePercentage.toFixed(0)}% de desperdício.`,
+    basedOn: 'Dados de produção de hoje',
+  }));
+
+  const today = new Date();
+  const dayLabel = format(today, "EEEE, d 'de' MMMM yyyy", { locale: pt });
+
+  // Compute revenue from occupied tables (rough estimate)
+  const totalRevenue = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta')
+    .reduce((s, m) => s + m.beverages.reduce((bs, b) => bs + b.quantity * b.unitPrice, 0), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display text-foreground">Painel de Gerência</h1>
-          <p className="text-sm text-muted-foreground">Olá, {user?.name} · Terça-feira, 25 de Março 2026</p>
+          <p className="text-sm text-muted-foreground capitalize">Olá, {user?.name} · {dayLabel}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={logout}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+        <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {mockKPIs.map((kpi, i) => (
-          <KPICard key={kpi.label} kpi={kpi} index={i} />
-        ))}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs text-muted-foreground">Em Sala</p>
+          <p className="text-2xl font-bold text-foreground">{totalPax}</p>
+          <p className="text-xs text-muted-foreground">{occupiedCount} mesas ocupadas</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs text-muted-foreground">Tabuleiros Ativos</p>
+          <p className="text-2xl font-bold text-primary">{activeTrays.length}</p>
+          <p className="text-xs text-muted-foreground">no buffet agora</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs text-muted-foreground">Desperdício Hoje</p>
+          <p className="text-2xl font-bold text-destructive">{totalWeeklyWaste.toFixed(1)}kg</p>
+          <p className="text-xs text-muted-foreground">€{totalWeeklyLoss.toFixed(0)} perdidos</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs text-muted-foreground">Tarefas</p>
+          <p className="text-2xl font-bold text-foreground">{doneCount}/{totalTasks}</p>
+          <p className="text-xs text-muted-foreground">concluídas</p>
+        </motion.div>
       </div>
 
-      {/* Main grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Waste analysis chart */}
+        {/* Waste chart */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Cozinhado vs. Lixo vs. Aproveitamento (kg/semana)</p>
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício</h2>
+          <p className="text-xs text-muted-foreground mt-1">Desperdício vs. Aproveitamento (kg/hoje)</p>
           <div className="mt-4 h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={wasteChartData}>
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} unit="kg" />
-                <Tooltip />
-                <Bar dataKey="desperdicio" fill="hsl(var(--destructive))" radius={[4,4,0,0]} name="Desperdício" />
-                <Bar dataKey="aproveitamento" fill="hsl(var(--success))" radius={[4,4,0,0]} name="Aproveitamento" />
-              </BarChart>
-            </ResponsiveContainer>
+            {wasteChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={wasteChartData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} unit="kg" />
+                  <Tooltip />
+                  <Bar dataKey="desperdicio" fill="hsl(var(--destructive))" radius={[4,4,0,0]} name="Desperdício" />
+                  <Bar dataKey="aproveitamento" fill="hsl(var(--success))" radius={[4,4,0,0]} name="Aproveitamento" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados de produção hoje</div>
+            )}
           </div>
           <div className="mt-3 flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total perdido: <span className="text-destructive font-medium">€{totalWeeklyLoss.toFixed(0)}</span></span>
@@ -97,10 +134,8 @@ export default function DashboardGerencia() {
 
         {/* Menu engineering */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas no histórico 2023–2026</p>
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu</h2>
+          <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas nos dados de produção</p>
           <div className="mt-4 space-y-3">
             {menuInsights.map((insight, i) => (
               <div key={i} className="rounded-lg border border-warning/20 bg-warning/5 p-3">
@@ -111,80 +146,38 @@ export default function DashboardGerencia() {
                 <p className="text-xs text-muted-foreground mt-1">💡 {insight.suggestion}</p>
               </div>
             ))}
-            {mockProductionAlerts.map(alert => (
+            {alerts.map(alert => (
               <div key={alert.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <p className="text-sm text-foreground">{alert.message}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">Baseado em: {alert.basedOn}</p>
               </div>
             ))}
-          </div>
-        </motion.div>
-
-        {/* Team performance */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Performance da Equipa
-          </h2>
-          <div className="mt-4 h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={teamPerf} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={60} />
-                <Tooltip />
-                <Bar dataKey="mesas" fill="hsl(var(--primary))" radius={[0,4,4,0]} name="Mesas abertas" />
-                <Bar dataKey="tabuleiros" fill="hsl(var(--warning))" radius={[0,4,4,0]} name="Tabuleiros" />
-              </BarChart>
-            </ResponsiveContainer>
+            {menuInsights.length === 0 && alerts.length === 0 && (
+              <div className="text-center py-6 text-muted-foreground text-sm">Sem alertas de desperdício hoje</div>
+            )}
           </div>
         </motion.div>
 
         {/* Purchase alerts */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">Stock vs. previsão próximo fim de semana</p>
-          <div className="mt-4 space-y-3">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6 lg:col-span-2">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras</h2>
+          <p className="text-xs text-muted-foreground mt-1">Produtos com stock abaixo do mínimo</p>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {purchaseAlerts.map(item => (
-              <div key={item.id} className={cn(
-                'flex items-center justify-between rounded-lg p-3',
-                item.urgency === 'critico' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20'
-              )}>
+              <div key={item.id} className={cn('flex items-center justify-between rounded-lg p-3', item.urgency === 'critico' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20')}>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.currentStock}{item.unit} em stock · mín: {item.minStock}{item.unit}
-                  </p>
+                  <p className="text-sm font-medium text-foreground">{item.nome}</p>
+                  <p className="text-xs text-muted-foreground">{item.stock_atual} {item.unidade} em stock · mín: {item.stock_minimo} {item.unidade}</p>
                 </div>
                 <div className="text-right">
-                  <Badge variant="outline" className={cn(
-                    'text-[10px]',
-                    item.urgency === 'critico' ? 'text-destructive border-destructive/30' : 'text-warning border-warning/30'
-                  )}>
+                  <Badge variant="outline" className={cn('text-[10px]', item.urgency === 'critico' ? 'text-destructive border-destructive/30' : 'text-warning border-warning/30')}>
                     {item.daysLeft <= 1 ? 'Encomendar HOJE' : `~${item.daysLeft} dias`}
                   </Badge>
-                  <p className="text-xs text-muted-foreground mt-0.5">€{(item.minStock * item.costPerUnit).toFixed(2)} estimado</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">€{(item.stock_minimo * item.custo_medio).toFixed(2)} estimado</p>
                 </div>
               </div>
             ))}
-            {purchaseAlerts.length === 0 && (
-              <div className="text-center py-6 text-sm text-muted-foreground">Stock dentro dos limites ✓</div>
-            )}
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Em sala</p>
-              <p className="text-lg font-bold text-foreground">{totalPax}</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Tabuleiros</p>
-              <p className="text-lg font-bold text-primary">{activeTrays.length}</p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Checklist</p>
-              <p className="text-lg font-bold text-foreground">{mockChecklist.filter(i => i.done).length}/{mockChecklist.length}</p>
-            </div>
+            {purchaseAlerts.length === 0 && <div className="text-center py-6 text-sm text-muted-foreground sm:col-span-2">Stock dentro dos limites ✓</div>}
           </div>
         </motion.div>
       </div>

@@ -9,14 +9,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import {
-  mockProductionAlerts, recipientCapacity,
-  type ProductionRecord, type RecipientSize, type TrayStatus
-} from '@/lib/buffet-data';
-import { useProduction } from '@/contexts/ProductionContext';
+import { recipientCapacity, type RecipientSize, type TrayStatus } from '@/lib/buffet-data';
+import { useRegistosProducao, type RegistoProducao } from '@/hooks/useRegistosProducao';
 import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
+import { useAuth } from '@/contexts/AuthContext';
 
-const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typeof Clock }> = {
+const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
   recolhido: { label: 'Recolhido', color: 'bg-muted text-muted-foreground', icon: ArrowRight },
   aproveitado: { label: 'Aproveitado', color: 'bg-success/10 text-success', icon: Recycle },
@@ -24,75 +22,54 @@ const statusConfig: Record<TrayStatus, { label: string; color: string; icon: typ
 };
 
 export default function Producao() {
-  const { records, addRecord, checkoutRecord, leftoverHistory } = useProduction();
+  const { user } = useAuth();
+  const { registos, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary } = useRegistosProducao();
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
-  // Group ementa items by zone for the selector
   const ementaByZone = useMemo(() => {
-    const zones: Record<string, { id: string; nome: string; recipiente: string }[]> = {
-      entradas: [], pratos_principais: [], sobremesas: [],
-    };
+    const zones: Record<string, { id: string; nome: string; recipiente: string }[]> = { entradas: [], pratos_principais: [], sobremesas: [] };
     ementaItems.forEach(e => {
       if (e.buffet_item?.zona && zones[e.buffet_item.zona]) {
-        zones[e.buffet_item.zona].push({
-          id: e.buffet_item.id,
-          nome: e.buffet_item.nome,
-          recipiente: e.recipiente_sugerido,
-        });
+        zones[e.buffet_item.zona].push({ id: e.buffet_item.id, nome: e.buffet_item.nome, recipiente: e.recipiente_sugerido });
       }
     });
     return zones;
   }, [ementaItems]);
 
   const allEmentaDishes = useMemo(() => ementaItems.filter(e => e.buffet_item).map(e => ({
-    id: e.buffet_item!.id,
-    nome: e.buffet_item!.nome,
-    recipiente: e.recipiente_sugerido as RecipientSize,
+    id: e.buffet_item!.id, nome: e.buffet_item!.nome, recipiente: e.recipiente_sugerido as RecipientSize,
   })), [ementaItems]);
-  const [showNewDialog, setShowNewDialog] = useState(false);
-  const [checkoutTarget, setCheckoutTarget] = useState<ProductionRecord | null>(null);
 
-  // New tray form
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
   const [newDish, setNewDish] = useState('');
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
-
-  // Checkout form
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('aproveitamento');
   const [aprovNote, setAprovNote] = useState('');
 
-  const activeTrays = records.filter(r => r.status === 'no_buffet');
-  const completedTrays = records.filter(r => r.status !== 'no_buffet');
-
-  function handleSendTray() {
+  async function handleSendTray() {
     if (!newDish) return;
     const dish = allEmentaDishes.find(d => d.nome === newDish);
     const cap = recipientCapacity[newRecipient];
-    const newRecord: ProductionRecord = {
-      id: `p${Date.now()}`,
-      dishName: newDish,
-      fichaTecnicaId: dish?.id || '',
-      recipient: newRecipient,
-      weightKg: cap.capacityKg,
-      sentAt: new Date().toISOString(),
-      returnedAt: null,
-      status: 'no_buffet',
-      leftoverKg: null,
-      leftoverAction: null,
-      aproveitamentoNote: null,
-      registeredBy: 'Gerente',
-    };
-    addRecord(newRecord);
+    await addRegisto({
+      dish_name: newDish,
+      ficha_tecnica_id: dish?.id,
+      buffet_item_id: dish?.id,
+      recipiente: newRecipient,
+      peso_kg: cap.capacityKg,
+      registado_por: user?.name || 'Gerente',
+    });
     setShowNewDialog(false);
     setNewDish('');
     setNewRecipient('tabuleiro_grande');
   }
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
-    checkoutRecord(checkoutTarget.id, kg, leftoverAction, leftoverAction === 'aproveitamento' ? aprovNote : null);
+    await recolherRegisto(checkoutTarget.id, kg, leftoverAction, leftoverAction === 'aproveitamento' ? aprovNote : null);
     setCheckoutTarget(null);
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
@@ -103,6 +80,14 @@ export default function Producao() {
     return new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
   }
 
+  // Production alerts computed from waste data
+  const waste = wasteSummary();
+  const alerts = waste.filter(w => w.wastePercentage > 15).map(w => ({
+    id: w.dishName,
+    message: `${w.dishName} tem ${w.wastePercentage.toFixed(0)}% de desperdício. Considerar recipiente mais pequeno.`,
+    priority: w.wastePercentage > 20 ? 'alta' as const : 'media' as const,
+  }));
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -110,116 +95,71 @@ export default function Producao() {
           <h1 className="text-3xl text-foreground">Produção Buffet</h1>
           <p className="mt-1 text-muted-foreground">Registo de tabuleiros e ciclo de vida</p>
         </div>
-        <Button onClick={() => setShowNewDialog(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Enviar Tabuleiro
-        </Button>
+        <Button onClick={() => setShowNewDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> Enviar Tabuleiro</Button>
       </div>
 
-      {/* Production Alerts */}
-      {mockProductionAlerts.length > 0 && (
+      {alerts.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-          <h2 className="font-display text-lg text-foreground flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-warning" /> Alertas de Produção
-          </h2>
-          {mockProductionAlerts.map(alert => (
-            <div
-              key={alert.id}
-              className={cn(
-                'rounded-lg border p-4',
-                alert.priority === 'alta' ? 'border-destructive/30 bg-destructive/5' : 'border-warning/30 bg-warning/5'
-              )}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{alert.message}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Baseado em: {alert.basedOn}</p>
-                </div>
-                <Badge variant="outline" className={alert.priority === 'alta' ? 'border-destructive text-destructive' : 'border-warning text-warning'}>
-                  {alert.priority}
-                </Badge>
-              </div>
+          <h2 className="font-display text-lg text-foreground flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warning" /> Alertas de Produção</h2>
+          {alerts.map(alert => (
+            <div key={alert.id} className={cn('rounded-lg border p-4', alert.priority === 'alta' ? 'border-destructive/30 bg-destructive/5' : 'border-warning/30 bg-warning/5')}>
+              <p className="text-sm font-medium text-foreground">{alert.message}</p>
             </div>
           ))}
         </motion.div>
       )}
 
-      {/* Active Trays */}
       <div>
         <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2">
-          <ChefHat className="h-5 w-5 text-primary" />
-          Tabuleiros no Buffet ({activeTrays.length})
+          <ChefHat className="h-5 w-5 text-primary" /> Tabuleiros no Buffet ({activeTrays.length})
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
             {activeTrays.map(record => {
-              const cap = recipientCapacity[record.recipient];
+              const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
               return (
-                <motion.div
-                  key={record.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="rounded-xl border border-primary/20 bg-card p-5 shadow-sm"
-                >
+                <motion.div key={record.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold text-foreground">{record.dishName}</h3>
-                      <p className="text-sm text-muted-foreground">{cap.label} — {record.weightKg}kg</p>
+                      <h3 className="font-semibold text-foreground">{record.dish_name}</h3>
+                      <p className="text-sm text-muted-foreground">{cap.label} — {record.peso_kg}kg</p>
                     </div>
-                    <Badge className={statusConfig.no_buffet.color}>
-                      <Clock className="mr-1 h-3 w-3" /> No Buffet
-                    </Badge>
+                    <Badge className={statusConfig.no_buffet.color}><Clock className="mr-1 h-3 w-3" /> No Buffet</Badge>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Saída: {formatTime(record.sentAt)} · {record.registeredBy}
-                    </p>
-                    <Button size="sm" variant="outline" onClick={() => setCheckoutTarget(record)}>
-                      Recolher
-                    </Button>
+                    <p className="text-xs text-muted-foreground">Saída: {formatTime(record.enviado_at)} · {record.registado_por}</p>
+                    <Button size="sm" variant="outline" onClick={() => setCheckoutTarget(record)}>Recolher</Button>
                   </div>
                 </motion.div>
               );
             })}
           </AnimatePresence>
         </div>
-        {activeTrays.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">Nenhum tabuleiro no buffet</p>
-        )}
+        {activeTrays.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum tabuleiro no buffet</p>}
       </div>
 
-      {/* Completed today */}
       <div>
         <h2 className="font-display text-xl text-foreground mb-4">Registos do Dia</h2>
         <div className="space-y-3">
           {completedTrays.map(record => {
-            const cfg = statusConfig[record.status];
-            const cap = recipientCapacity[record.recipient];
+            const cfg = statusConfig[record.estado] || statusConfig.no_buffet;
+            const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
+            const Icon = cfg.icon;
             return (
-              <motion.div
-                key={record.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center gap-4 rounded-lg border border-border bg-card p-4"
-              >
+              <motion.div key={record.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 rounded-lg border border-border bg-card p-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{record.dishName}</span>
-                    <Badge className={cfg.color} variant="secondary">
-                      <cfg.icon className="mr-1 h-3 w-3" /> {cfg.label}
-                    </Badge>
+                    <span className="font-medium text-foreground">{record.dish_name}</span>
+                    <Badge className={cfg.color} variant="secondary"><Icon className="mr-1 h-3 w-3" /> {cfg.label}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {cap.label} · {record.weightKg}kg enviado · {formatTime(record.sentAt)} → {record.returnedAt ? formatTime(record.returnedAt) : '—'}
+                    {cap.label} · {record.peso_kg}kg enviado · {formatTime(record.enviado_at)} → {record.recolhido_at ? formatTime(record.recolhido_at) : '—'}
                   </p>
                 </div>
-                {record.leftoverKg !== null && (
+                {record.sobra_kg !== null && (
                   <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">{record.leftoverKg}kg sobra</p>
-                    {record.aproveitamentoNote && (
-                      <p className="text-xs text-success">{record.aproveitamentoNote}</p>
-                    )}
+                    <p className="text-sm font-medium text-foreground">{record.sobra_kg}kg sobra</p>
+                    {record.aproveitamento_nota && <p className="text-xs text-success">{record.aproveitamento_nota}</p>}
                   </div>
                 )}
               </motion.div>
@@ -228,7 +168,6 @@ export default function Producao() {
         </div>
       </div>
 
-      {/* New Tray Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent>
           <DialogHeader>
@@ -238,42 +177,13 @@ export default function Producao() {
           <div className="space-y-4">
             <div>
               <Label>Prato</Label>
-              <Select value={newDish} onValueChange={(v) => {
-                setNewDish(v);
-                const dish = allEmentaDishes.find(d => d.nome === v);
-                if (dish && recipientCapacity[dish.recipiente]) {
-                  setNewRecipient(dish.recipiente);
-                }
-              }}>
+              <Select value={newDish} onValueChange={(v) => { setNewDish(v); const dish = allEmentaDishes.find(d => d.nome === v); if (dish && recipientCapacity[dish.recipiente]) setNewRecipient(dish.recipiente); }}>
                 <SelectTrigger><SelectValue placeholder="Selecionar prato da ementa" /></SelectTrigger>
                 <SelectContent>
-                  {ementaByZone.entradas.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>Entradas</SelectLabel>
-                      {ementaByZone.entradas.map(d => (
-                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                  {ementaByZone.pratos_principais.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>Pratos Quentes</SelectLabel>
-                      {ementaByZone.pratos_principais.map(d => (
-                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                  {ementaByZone.sobremesas.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>Sobremesas</SelectLabel>
-                      {ementaByZone.sobremesas.map(d => (
-                        <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                  {allEmentaDishes.length === 0 && (
-                    <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>
-                  )}
+                  {ementaByZone.entradas.length > 0 && <SelectGroup><SelectLabel>Entradas</SelectLabel>{ementaByZone.entradas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                  {ementaByZone.pratos_principais.length > 0 && <SelectGroup><SelectLabel>Pratos Quentes</SelectLabel>{ementaByZone.pratos_principais.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                  {ementaByZone.sobremesas.length > 0 && <SelectGroup><SelectLabel>Sobremesas</SelectLabel>{ementaByZone.sobremesas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                  {allEmentaDishes.length === 0 && <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
@@ -281,11 +191,7 @@ export default function Producao() {
               <Label>Recipiente</Label>
               <Select value={newRecipient} onValueChange={v => setNewRecipient(v as RecipientSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(recipientCapacity).map(([key, val]) => (
-                    <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{Object.entries(recipientCapacity).map(([key, val]) => <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
@@ -296,61 +202,29 @@ export default function Producao() {
         </DialogContent>
       </Dialog>
 
-      {/* Checkout Dialog */}
       <Dialog open={!!checkoutTarget} onOpenChange={() => setCheckoutTarget(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Recolher Tabuleiro</DialogTitle>
-            <DialogDescription>
-              {checkoutTarget?.dishName} — {checkoutTarget && recipientCapacity[checkoutTarget.recipient].label}
-            </DialogDescription>
+            <DialogDescription>{checkoutTarget?.dish_name} — {checkoutTarget && (recipientCapacity[checkoutTarget.recipiente as RecipientSize]?.label || checkoutTarget.recipiente)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Peso da sobra (kg)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                placeholder="Ex: 1.2"
-                value={leftoverKg}
-                onChange={e => setLeftoverKg(e.target.value)}
-              />
-            </div>
+            <div><Label>Peso da sobra (kg)</Label><Input type="number" step="0.1" min="0" placeholder="Ex: 1.2" value={leftoverKg} onChange={e => setLeftoverKg(e.target.value)} /></div>
             <div>
               <Label className="mb-3 block">O que fazer com a sobra?</Label>
               <RadioGroup value={leftoverAction} onValueChange={v => setLeftoverAction(v as 'aproveitamento' | 'desperdicio')}>
                 <div className="flex items-start gap-3 rounded-lg border border-border p-3">
                   <RadioGroupItem value="aproveitamento" id="aprov" className="mt-0.5" />
-                  <Label htmlFor="aprov" className="cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Recycle className="h-4 w-4 text-success" />
-                      <span className="font-medium">Aproveitamento</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Arrefecer e reutilizar noutra preparação</p>
-                  </Label>
+                  <Label htmlFor="aprov" className="cursor-pointer"><div className="flex items-center gap-2"><Recycle className="h-4 w-4 text-success" /><span className="font-medium">Aproveitamento</span></div><p className="text-xs text-muted-foreground mt-1">Arrefecer e reutilizar noutra preparação</p></Label>
                 </div>
                 <div className="flex items-start gap-3 rounded-lg border border-border p-3">
                   <RadioGroupItem value="desperdicio" id="desp" className="mt-0.5" />
-                  <Label htmlFor="desp" className="cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="font-medium">Desperdício</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Comida exposta que deve ser descartada</p>
-                  </Label>
+                  <Label htmlFor="desp" className="cursor-pointer"><div className="flex items-center gap-2"><Trash2 className="h-4 w-4 text-destructive" /><span className="font-medium">Desperdício</span></div><p className="text-xs text-muted-foreground mt-1">Comida exposta que deve ser descartada</p></Label>
                 </div>
               </RadioGroup>
             </div>
             {leftoverAction === 'aproveitamento' && (
-              <div>
-                <Label>Para que preparação?</Label>
-                <Input
-                  placeholder="Ex: Recheio de rissóis, Sopa..."
-                  value={aprovNote}
-                  onChange={e => setAprovNote(e.target.value)}
-                />
-              </div>
+              <div><Label>Para que preparação?</Label><Input placeholder="Ex: Recheio de rissóis, Sopa..." value={aprovNote} onChange={e => setAprovNote(e.target.value)} /></div>
             )}
           </div>
           <DialogFooter>

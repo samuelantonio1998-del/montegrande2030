@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
@@ -73,6 +73,11 @@ export default function DashboardGerencia() {
     message: `${w.dishName} tem ${w.wastePercentage.toFixed(0)}% de desperdício.`,
     basedOn: 'Dados de produção de hoje',
   }));
+
+  const deleteLog = async (id: string) => {
+    await supabase.from('activity_logs').delete().eq('id', id);
+    setLogs(prev => prev.filter(l => l.id !== id));
+  };
 
   const today = new Date();
   const dayLabel = format(today, "EEEE, d 'de' MMMM yyyy", { locale: pt });
@@ -212,7 +217,7 @@ export default function DashboardGerencia() {
             const moduleColor = moduleColors[entry.module] || 'bg-muted text-muted-foreground';
 
             return (
-              <div key={entry.id} className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
+              <div key={entry.id} className="group flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-muted/30 transition-colors">
                 <div className="flex flex-col items-center shrink-0 pt-0.5">
                   <span className="text-[10px] text-muted-foreground">{isToday ? timeStr : dateStr}</span>
                   {!isToday && <span className="text-[10px] text-muted-foreground">{timeStr}</span>}
@@ -225,6 +230,9 @@ export default function DashboardGerencia() {
                   {entry.details && <p className="text-xs text-muted-foreground truncate">{entry.details}</p>}
                   <p className="text-[10px] text-muted-foreground/70">{entry.user_name}{entry.user_role ? ` · ${entry.user_role}` : ''}</p>
                 </div>
+                <button onClick={() => deleteLog(entry.id)} className="shrink-0 rounded-full p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all" title="Eliminar">
+                  <X className="h-3.5 w-3.5 text-destructive" />
+                </button>
               </div>
             );
           })}

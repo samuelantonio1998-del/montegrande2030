@@ -74,6 +74,11 @@ export default function DashboardGerencia() {
     basedOn: 'Dados de produção de hoje',
   }));
 
+  const deleteLog = async (id: string) => {
+    await supabase.from('activity_logs').delete().eq('id', id);
+    setLogs(prev => prev.filter(l => l.id !== id));
+  };
+
   const today = new Date();
   const dayLabel = format(today, "EEEE, d 'de' MMMM yyyy", { locale: pt });
 

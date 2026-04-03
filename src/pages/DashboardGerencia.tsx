@@ -127,9 +127,14 @@ export default function DashboardGerencia() {
         }
         case 'mesa_aberta': {
           // Close mesa back to livre
-          await supabase.from('mesas').update({
-            status: 'livre', adults: 0, children2to6: 0, children7to12: 0, waiter: '', opened_at: null, beverages: '[]',
+          const { error: undoMesaErr } = await supabase.from('mesas').update({
+            status: 'livre', adults: 0, children2to6: 0, children7to12: 0, waiter: '', opened_at: null, beverages: [],
           }).eq('id', meta.mesa_id as string);
+          if (undoMesaErr) {
+            console.error('Erro undo mesa_aberta:', undoMesaErr);
+            toast.error('Erro ao reverter abertura da mesa');
+            return;
+          }
           toast.success(`Mesa ${meta.mesa_number} fechada (undo)`);
           break;
         }

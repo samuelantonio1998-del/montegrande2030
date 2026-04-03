@@ -7,6 +7,7 @@ import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
 import { useVendasHistorico, calcularPrevisao } from '@/hooks/useVendasHistorico';
 import { useEmentaDiaria, useBuffetItems, useBulkAddEmenta } from '@/hooks/useEmentaDiaria';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ export default function DashboardCozinha() {
   const [showSetup, setShowSetup] = useState(false);
   const [activeZone, setActiveZone] = useState<string>('entradas');
   const [showRecolha, setShowRecolha] = useState(false);
+  const { log } = useActivityLog();
 
   const existingItemIds = useMemo(() => new Set(ementaItems.map(e => e.buffet_item_id)), [ementaItems]);
 
@@ -87,13 +89,16 @@ export default function DashboardCozinha() {
 
   const handleReplenish = useCallback((itemId: string, recipient: RecipientSize, weightKg: number) => {
     ctxReplenish(itemId, recipient, weightKg, user?.name || '');
-  }, [ctxReplenish, user?.name]);
+    const item = activeItems.find(i => i.id === itemId);
+    log('Reposição buffet', 'Cozinha', `${item?.name || itemId}: ${weightKg}kg (${recipient})`, { itemId, recipient, weightKg });
+  }, [ctxReplenish, user?.name, activeItems, log]);
 
   const handleCollect = useCallback((itemId: string, leftoverKg: number, action: 'aproveitamento' | 'desperdicio', note: string | null) => {
     const item = activeItems.find(i => i.id === itemId);
     if (!item) return;
     ctxCollect(itemId, item.name, item.zone, leftoverKg, action, note, user?.name || '');
-  }, [activeItems, ctxCollect, user?.name]);
+    log('Recolha tabuleiro', 'Cozinha', `${item.name}: ${leftoverKg}kg → ${action}`, { itemId, leftoverKg, action });
+  }, [activeItems, ctxCollect, user?.name, log]);
 
   const handleBulkAdd = (items: { buffet_item_id: string; quantidade_prevista: number; recipiente_sugerido: string }[], dates: Date[]) => {
     const rows = dates.flatMap(d =>

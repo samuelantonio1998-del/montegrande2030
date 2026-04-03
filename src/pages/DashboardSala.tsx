@@ -2,6 +2,7 @@ import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardChe
 import { useTarefas, type Tarefa } from '@/hooks/useTarefas';
 import { useMesas } from '@/hooks/useMesas';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ export default function DashboardSala() {
   const { tarefas, completeTarefa } = useTarefas();
   const { mesas } = useMesas();
   const [filter, setFilter] = useState<string>('all');
+  const { log } = useActivityLog();
 
   const totalInRoom = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
@@ -28,6 +30,7 @@ export default function DashboardSala() {
   const toggleItem = async (task: Tarefa) => {
     if (!task.concluida) {
       await completeTarefa(task.id, task.periodicidade);
+      log('Tarefa concluída', 'Tarefas', task.titulo, { tarefa_id: task.id, categoria: task.categoria });
     }
   };
 

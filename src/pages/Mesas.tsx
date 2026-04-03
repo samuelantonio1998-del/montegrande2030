@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, XCircle, CalendarCheck } from 'lucide-react';
 import { type Mesa } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,7 @@ import { printReceipt } from '@/components/mesas/ReceiptPrint';
 import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
 import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal } from '@/hooks/usePrecario';
+import { useActivityLog } from '@/hooks/useActivityLog';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },
@@ -77,13 +79,14 @@ function OpenMesaDialog({ mesa, onOpen, mealPrices }: { mesa: Mesa; onOpen: (adu
 }
 
 /* ── Mesa Detail (occupied/conta) ── */
-function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, mealPrices }: {
+function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, mealPrices, onLog }: {
   mesa: Mesa;
   onUpdate: (m: Mesa) => void;
   onCancel: () => void;
   beverageMenu: { category: string; items: { id: string; name: string; price: number }[] }[];
   beverageMenuFlat: { id: string; name: string; price: number }[];
   mealPrices: { adultWeekdayLunch: number; adultPremium: number; child2to6: number; child7to12: number };
+  onLog: (action: string, details: string, metadata?: Record<string, unknown>) => void;
 }) {
   const [pinAction, setPinAction] = useState<'cancel' | null>(null);
   const { coverTotal, beverageTotal, total } = calcMesaTotal(mesa, mealPrices);
@@ -290,6 +293,7 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                 console.error('Erro ao descontar stock:', e);
                 toast.error('Erro ao descontar stock de bebidas');
               }
+              onLog('Conta fechada', `Mesa ${mesa.number}: ${mesa.adults + mesa.children2to6 + mesa.children7to12} pax, €${total.toFixed(2)}`, { mesa_number: mesa.number, pax: mesa.adults + mesa.children2to6 + mesa.children7to12, total });
               onUpdate({ ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' });
             }}>
               <CreditCard className="h-4 w-4" /> Fechar Conta — €{total.toFixed(2)}
@@ -311,6 +315,7 @@ export default function Mesas() {
   const { beverageMenu, beverageMenuFlat, mealPrices } = usePrecario();
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [openingMesa, setOpeningMesa] = useState<Mesa | null>(null);
+  const { log } = useActivityLog();
 
   const totalClients = mesas.reduce((sum, m) => sum + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
@@ -357,6 +362,7 @@ export default function Mesas() {
           total: dailyTotals.total,
         });
       }
+      log('Dia fechado', 'Mesas', `${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total}`, { almoco: dailyTotals.almoco, jantar: dailyTotals.jantar, total: dailyTotals.total });
       toast.success(`Dia fechado: ${dailyTotals.almoco} almoço + ${dailyTotals.jantar} jantar = ${dailyTotals.total} refeições`);
       setShowCloseDay(false);
     } catch (e) {
@@ -380,6 +386,7 @@ export default function Mesas() {
     const reset: Mesa = { ...mesa, status: 'livre', adults: 0, children: 0, children2to6: 0, children7to12: 0, beverages: [], openedAt: null, waiter: '' };
     await updateMesa(reset);
     setSelectedMesa(null);
+    log('Mesa cancelada', 'Mesas', `Mesa ${mesa.number} cancelada`, { mesa_number: mesa.number });
     toast.success(`Mesa ${mesa.number} cancelada`);
   };
 
@@ -388,6 +395,7 @@ export default function Mesas() {
     await updateMesa(opened);
     setOpeningMesa(null);
     setSelectedMesa(opened);
+    log('Mesa aberta', 'Mesas', `Mesa ${mesa.number}: ${adults} adultos, ${c2to6 + c7to12} crianças`, { mesa_number: mesa.number, adults, children2to6: c2to6, children7to12: c7to12 });
   };
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar mesas...</div>;
@@ -464,7 +472,7 @@ export default function Mesas() {
               {selectedMesa && <Badge variant="outline" className={cn('text-xs', statusConfig[selectedMesa.status].color)}>{statusConfig[selectedMesa.status].label}</Badge>}
             </DialogTitle>
           </DialogHeader>
-          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} />}
+          {selectedMesa && <MesaDetail mesa={selectedMesa} onUpdate={handleUpdate} onCancel={() => handleCancelMesa(selectedMesa)} beverageMenu={beverageMenu} beverageMenuFlat={beverageMenuFlat} mealPrices={mealPrices} onLog={(action, details, metadata) => log(action, 'Mesas', details, metadata)} />}
         </DialogContent>
       </Dialog>
 

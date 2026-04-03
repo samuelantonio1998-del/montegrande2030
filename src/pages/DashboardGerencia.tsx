@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';

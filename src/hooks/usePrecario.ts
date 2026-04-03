@@ -21,6 +21,7 @@ export type MealPrices = {
   adultPremium: number;
   child2to6: number;
   child7to12: number;
+  sobremesa: number;
 };
 
 const MEAL_KEY_MAP: Record<string, keyof MealPrices> = {
@@ -28,6 +29,7 @@ const MEAL_KEY_MAP: Record<string, keyof MealPrices> = {
   almoco_premium: 'adultPremium',
   crianca_2_6: 'child2to6',
   crianca_7_12: 'child7to12',
+  sobremesa: 'sobremesa',
 };
 
 const MEAL_DEFAULTS: MealPrices = {
@@ -35,6 +37,7 @@ const MEAL_DEFAULTS: MealPrices = {
   adultPremium: 18.95,
   child2to6: 6.50,
   child7to12: 10.00,
+  sobremesa: 3.50,
 };
 
 export function usePrecario() {

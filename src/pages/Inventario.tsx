@@ -351,6 +351,19 @@ export default function Inventario() {
         }
       }
     }
+    // Save invoice hash to prevent future duplicates
+    const hashParts = [invoiceMeta.numero_fatura, invoiceMeta.data_fatura, invoiceMeta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
+    const hashStr = hashParts.join('|');
+    if (hashStr) {
+      await supabase.from('faturas_processadas' as any).insert({
+        numero_fatura: invoiceMeta.numero_fatura,
+        data_fatura: invoiceMeta.data_fatura,
+        fornecedor: invoiceMeta.fornecedor_nome,
+        hash_identificador: hashStr,
+        total_itens: selected.length,
+      });
+    }
+
     toast({ title: `${selected.length} itens registados com sucesso` });
     for (const item of selected) {
       await log('Entrada stock (OCR)', 'Inventário', `${item.nome} +${item.quantidade} ${item.unidade}`, { produto_id: item.produto_id, quantidade: item.quantidade, custo_unitario: item.custo_unitario });

@@ -33,7 +33,7 @@ export default function DashboardCozinha() {
   const { data: permanentItems = [] } = usePermanentEmentaItems();
   const bulkAdd = useBulkAddEmenta();
   const { mesas: realMesas } = useMesas();
-  const { wasteSummary, activeTrays: prodActiveTrays, addRegisto, recolherRegisto } = useRegistosProducao();
+  const { wasteSummary, activeTrays: prodActiveTrays, addRegisto, recolherRegisto, derivedTrayStates } = useRegistosProducao();
   const { data: vendasData = [] } = useVendasHistorico();
 
   const [showSetup, setShowSetup] = useState(false);

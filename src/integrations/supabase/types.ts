@@ -243,6 +243,36 @@ export type Database = {
           },
         ]
       }
+      faturas_processadas: {
+        Row: {
+          created_at: string
+          data_fatura: string | null
+          fornecedor: string | null
+          hash_identificador: string
+          id: string
+          numero_fatura: string | null
+          total_itens: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_fatura?: string | null
+          fornecedor?: string | null
+          hash_identificador: string
+          id?: string
+          numero_fatura?: string | null
+          total_itens?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_fatura?: string | null
+          fornecedor?: string | null
+          hash_identificador?: string
+          id?: string
+          numero_fatura?: string | null
+          total_itens?: number | null
+        }
+        Relationships: []
+      }
       fecho_mesas: {
         Row: {
           adults: number

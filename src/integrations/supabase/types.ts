@@ -210,6 +210,45 @@ export type Database = {
           },
         ]
       }
+      fecho_mesas: {
+        Row: {
+          adults: number
+          children2to6: number
+          children7to12: number
+          created_at: string
+          data: string
+          funcionario: string | null
+          id: string
+          mesa_number: number
+          periodo: string
+          total_pax: number
+        }
+        Insert: {
+          adults?: number
+          children2to6?: number
+          children7to12?: number
+          created_at?: string
+          data?: string
+          funcionario?: string | null
+          id?: string
+          mesa_number: number
+          periodo?: string
+          total_pax?: number
+        }
+        Update: {
+          adults?: number
+          children2to6?: number
+          children7to12?: number
+          created_at?: string
+          data?: string
+          funcionario?: string | null
+          id?: string
+          mesa_number?: number
+          periodo?: string
+          total_pax?: number
+        }
+        Relationships: []
+      }
       ficha_ingredientes: {
         Row: {
           ficha_id: string

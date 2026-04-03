@@ -10,10 +10,14 @@ export type FichaTecnicaDB = {
   preco_venda: number;
   tempo_preparacao: number | null;
   foto_url: string | null;
+  notas_preparacao: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
 };
+
+/** Custo de mão-de-obra por hora (sem IVA) */
+export const LABOR_COST_PER_HOUR = 11;
 
 export type IngredienteDB = {
   id: string;

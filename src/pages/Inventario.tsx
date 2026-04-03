@@ -326,6 +326,9 @@ export default function Inventario() {
       }
     }
     toast({ title: `${selected.length} itens registados com sucesso` });
+    for (const item of selected) {
+      await log('Entrada stock (OCR)', 'Inventário', `${item.nome} +${item.quantidade} ${item.unidade}`, { produto_id: item.produto_id, quantidade: item.quantidade, custo_unitario: item.custo_unitario });
+    }
     setConfirmingEntry(false);
     resetScanner();
     fetchData();

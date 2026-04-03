@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
+import { useActivityLog } from '@/hooks/useActivityLog';
 
 type Produto = {
   id: string;

@@ -56,7 +56,7 @@ export async function logActivity(
       action,
       module,
       details: details || '',
-      metadata: metadata || {},
+      metadata: (metadata || {}) as Json,
     }]);
   } catch (e) {
     console.error('Erro ao registar log:', e);

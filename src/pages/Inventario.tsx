@@ -107,6 +107,8 @@ export default function Inventario() {
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [confirmingEntry, setConfirmingEntry] = useState(false);
+  const [invoiceMeta, setInvoiceMeta] = useState<InvoiceMeta>({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
+  const [duplicateWarning, setDuplicateWarning] = useState<{ found: boolean; created_at?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Manual entry state

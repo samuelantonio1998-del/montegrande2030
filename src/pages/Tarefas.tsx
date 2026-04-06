@@ -100,6 +100,7 @@ export default function Tarefas() {
           <p className="mt-1 text-muted-foreground">{activeTasks.length} pendente(s) · {doneCount} concluída(s)</p>
         </div>
         <div className="flex items-center gap-2">
+          <AIprepTasksDialog onTasksAdded={() => {}} />
           <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5">
             <RefreshCw className="h-4 w-4" /> Reiniciar recorrentes
           </Button>

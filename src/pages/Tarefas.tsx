@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, CheckCircle2, Circle, AlertTriangle, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
+import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
 import { useTarefas, type Tarefa, type TaskPeriodicity } from '@/hooks/useTarefas';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';

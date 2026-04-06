@@ -104,16 +104,16 @@ export default function DashboardSala() {
           {filtered.map((item, i) => (
             <motion.div key={item.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
               onClick={() => toggleItem(item)}
-              className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all active:scale-[0.98]',
+              className={cn('flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all active:scale-[0.98]',
                 item.concluida ? 'border-success/20 bg-success/5' : item.critica ? 'border-warning/30 bg-warning/5' : 'border-border bg-card')}>
-              {item.concluida ? <CheckCircle2 className="h-5 w-5 shrink-0 text-success" /> : <Circle className="h-5 w-5 shrink-0 text-muted-foreground" />}
+              {item.concluida ? <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-success" /> : <Circle className="h-5 w-5 shrink-0 mt-0.5 text-muted-foreground" />}
               <div className="flex-1 min-w-0">
-                <p className={cn('text-sm font-medium truncate', item.concluida ? 'text-muted-foreground line-through' : 'text-foreground')}>{item.titulo}</p>
-                <p className="text-xs text-muted-foreground">{item.responsavel}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {item.critica && !item.concluida && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">{item.categoria === 'manutencao' ? 'Manutenção' : item.categoria}</span>
+                <p className={cn('text-sm font-medium', item.concluida ? 'text-muted-foreground line-through' : 'text-foreground')}>{item.titulo}</p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs text-muted-foreground">{item.responsavel}</span>
+                  {item.critica && !item.concluida && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">{item.categoria === 'manutencao' ? 'Manutenção' : item.categoria}</span>
+                </div>
               </div>
             </motion.div>
           ))}

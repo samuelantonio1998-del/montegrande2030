@@ -58,21 +58,21 @@ export default function DashboardSala() {
         <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-card border border-border p-4 text-center">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl bg-card border border-border p-3 text-center">
           <Users className="mx-auto h-5 w-5 text-primary mb-1" />
-          <p className="text-2xl font-bold text-foreground">{totalInRoom}</p>
-          <p className="text-xs text-muted-foreground">Em sala</p>
+          <p className="text-xl font-bold text-foreground">{totalInRoom}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">Em sala</p>
         </div>
-        <div className="rounded-xl bg-card border border-border p-4 text-center">
+        <div className="rounded-xl bg-card border border-border p-3 text-center">
           <Clock className="mx-auto h-5 w-5 text-warning mb-1" />
-          <p className="text-2xl font-bold text-foreground">{occupiedCount}/{mesas.length}</p>
-          <p className="text-xs text-muted-foreground">Mesas ocupadas</p>
+          <p className="text-xl font-bold text-foreground">{occupiedCount}/{mesas.length}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">Mesas ocupadas</p>
         </div>
-        <div className="rounded-xl bg-card border border-border p-4 text-center">
+        <div className="rounded-xl bg-card border border-border p-3 text-center">
           <ClipboardCheck className="mx-auto h-5 w-5 text-success mb-1" />
-          <p className="text-2xl font-bold text-foreground">{doneCount}/{tarefas.length}</p>
-          <p className="text-xs text-muted-foreground">Tarefas feitas</p>
+          <p className="text-xl font-bold text-foreground">{doneCount}/{tarefas.length}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">Tarefas feitas</p>
         </div>
       </div>
 
@@ -87,11 +87,11 @@ export default function DashboardSala() {
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col gap-2 mb-3">
           <h2 className="text-lg font-semibold text-foreground">Tarefas do dia</h2>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
             {categories.map(cat => (
-              <button key={cat.key} onClick={() => setFilter(cat.key)} className={cn('rounded-lg px-3 py-1.5 text-xs font-medium transition-colors', filter === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+              <button key={cat.key} onClick={() => setFilter(cat.key)} className={cn('rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0', filter === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
                 {cat.label}
               </button>
             ))}

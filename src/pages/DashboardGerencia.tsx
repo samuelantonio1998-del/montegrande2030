@@ -400,6 +400,11 @@ export default function DashboardGerencia() {
                     {entry.details && <p className="text-xs text-muted-foreground truncate">{entry.details}</p>}
                     <p className="text-[10px] text-muted-foreground/70">{entry.user_name}{entry.user_role ? ` · ${entry.user_role}` : ''}</p>
                   </div>
+                  {entry.module === 'Inventário' && (
+                    <button onClick={() => setEditingEntry(entry)} className="shrink-0 rounded-full p-1.5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all" title="Editar entrada">
+                      <Edit3 className="h-3.5 w-3.5 text-primary" />
+                    </button>
+                  )}
                   <button onClick={() => undoAction(entry)} className="shrink-0 rounded-full p-1.5 opacity-0 group-hover:opacity-100 hover:bg-warning/10 transition-all" title="Desfazer ação">
                     <Undo2 className="h-3.5 w-3.5 text-warning" />
                   </button>

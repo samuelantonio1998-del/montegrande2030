@@ -692,7 +692,85 @@ export default function Inventario() {
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
+                    {/* Mobile card layout */}
+                    <div className="md:hidden space-y-2 px-2">
+                      {scannedItems.map((item, i) => (
+                        <div key={i} className={cn(
+                          "rounded-lg border border-border p-3 transition-colors",
+                          !item.selected && "opacity-40 bg-muted/20",
+                          item.selected && "bg-card"
+                        )}>
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="checkbox"
+                              checked={item.selected}
+                              onChange={() => updateScannedItem(i, 'selected', !item.selected)}
+                              className="accent-primary h-4 w-4 mt-2 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <Input
+                                value={item.nome}
+                                onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1"
+                              />
+                              <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Qtd.</span>
+                                  <Input
+                                    type="number"
+                                    value={item.quantidade}
+                                    onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                    className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
+                                    step="0.01"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Un.</span>
+                                  <Input
+                                    value={item.unidade}
+                                    onChange={(e) => updateScannedItem(i, 'unidade', e.target.value)}
+                                    className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Preço/Un</span>
+                                  <Input
+                                    type="number"
+                                    value={item.custo_unitario}
+                                    onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                    className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
+                                    step="0.01"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-semibold text-foreground">
+                                  Total: €{(item.quantidade * item.custo_unitario).toFixed(2)}
+                                </span>
+                                {item.sku && <span className="text-[10px] text-muted-foreground font-mono">Ref: {item.sku}</span>}
+                              </div>
+                              <Select
+                                value={item.produto_id || 'new'}
+                                onValueChange={(v) => updateScannedItem(i, 'produto_id', v === 'new' ? undefined : v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs border-muted bg-muted/40">
+                                  <SelectValue placeholder="Novo produto" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">⚡ Criar novo...</SelectItem>
+                                  {produtos.map(p => (
+                                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop table layout */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-border bg-muted/50">

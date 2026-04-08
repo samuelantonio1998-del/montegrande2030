@@ -414,6 +414,18 @@ export default function DashboardGerencia() {
           })()}
         </div>
       </motion.div>
+
+      <EditInventoryEntryDialog
+        entry={editingEntry}
+        open={!!editingEntry}
+        onOpenChange={(open) => { if (!open) setEditingEntry(null); }}
+        onSaved={() => {
+          // Refresh logs
+          supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, metadata, created_at')
+            .order('created_at', { ascending: false }).limit(50)
+            .then(({ data }) => { if (data) setLogs(data as unknown as ActivityLog[]); });
+        }}
+      />
     </div>
   );
 }

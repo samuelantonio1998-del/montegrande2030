@@ -219,6 +219,15 @@ export default function Inventario() {
         setDuplicateWarning(null);
       }
 
+      // Fetch aliases for matching
+      const { data: aliases } = await supabase.from('produto_aliases' as any).select('alias_nome, produto_id');
+      const aliasMap = new Map<string, string>();
+      if (aliases) {
+        for (const a of aliases as any[]) {
+          aliasMap.set((a.alias_nome as string).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim(), a.produto_id as string);
+        }
+      }
+
       const items: ScannedItem[] = (data.items || []).map((item: any) => {
         const matchBySku = item.sku ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) : null;
         const matchByName = produtos.find(p => p.nome.toLowerCase() === item.nome?.toLowerCase());
@@ -230,8 +239,12 @@ export default function Inventario() {
               return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
             })
           : null;
+        // Check aliases
+        const normalizedItemName = item.nome?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() || '';
+        const aliasProductId = aliasMap.get(normalizedItemName);
+        const matchByAlias = aliasProductId ? produtos.find(p => p.id === aliasProductId) : null;
         let matchByFuzzy: Produto | null = null;
-        if (!matchBySku && !matchByNameAndSupplier && !matchByName && item.nome) {
+        if (!matchBySku && !matchByNameAndSupplier && !matchByName && !matchByAlias && item.nome) {
           let bestScore = 0;
           for (const p of produtos) {
             const score = similarity(item.nome, p.nome);
@@ -241,7 +254,7 @@ export default function Inventario() {
             }
           }
         }
-        const match = matchBySku || matchByNameAndSupplier || matchByName || matchByFuzzy;
+        const match = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || matchByFuzzy;
         return { ...item, selected: true, produto_id: match?.id };
       });
 

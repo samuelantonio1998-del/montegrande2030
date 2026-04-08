@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2, Edit3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';
 
 type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };
@@ -26,6 +27,7 @@ export default function DashboardGerencia() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [logModuleFilter, setLogModuleFilter] = useState<string>('all');
   const [logPeriodFilter, setLogPeriodFilter] = useState<string>('hoje');
+  const [editingEntry, setEditingEntry] = useState<ActivityLog | null>(null);
 
   useEffect(() => {
     supabase.from('produtos').select('id, nome, stock_atual, stock_minimo, stock_maximo, custo_medio, unidade, fornecedor_id')
@@ -398,6 +400,11 @@ export default function DashboardGerencia() {
                     {entry.details && <p className="text-xs text-muted-foreground truncate">{entry.details}</p>}
                     <p className="text-[10px] text-muted-foreground/70">{entry.user_name}{entry.user_role ? ` · ${entry.user_role}` : ''}</p>
                   </div>
+                  {entry.module === 'Inventário' && (
+                    <button onClick={() => setEditingEntry(entry)} className="shrink-0 rounded-full p-1.5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all" title="Editar entrada">
+                      <Edit3 className="h-3.5 w-3.5 text-primary" />
+                    </button>
+                  )}
                   <button onClick={() => undoAction(entry)} className="shrink-0 rounded-full p-1.5 opacity-0 group-hover:opacity-100 hover:bg-warning/10 transition-all" title="Desfazer ação">
                     <Undo2 className="h-3.5 w-3.5 text-warning" />
                   </button>
@@ -407,6 +414,18 @@ export default function DashboardGerencia() {
           })()}
         </div>
       </motion.div>
+
+      <EditInventoryEntryDialog
+        entry={editingEntry}
+        open={!!editingEntry}
+        onOpenChange={(open) => { if (!open) setEditingEntry(null); }}
+        onSaved={() => {
+          // Refresh logs
+          supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, metadata, created_at')
+            .order('created_at', { ascending: false }).limit(50)
+            .then(({ data }) => { if (data) setLogs(data as unknown as ActivityLog[]); });
+        }}
+      />
     </div>
   );
 }

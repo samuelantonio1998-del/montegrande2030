@@ -1,0 +1,1 @@
+CREATE POLICY "Anyone can update activity_logs" ON public.activity_logs FOR UPDATE TO public USING (true);

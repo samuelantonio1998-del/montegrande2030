@@ -558,6 +558,48 @@ export type Database = {
         }
         Relationships: []
       }
+      produto_aliases: {
+        Row: {
+          alias_nome: string
+          alias_sku: string | null
+          created_at: string
+          fornecedor_id: string | null
+          id: string
+          produto_id: string
+        }
+        Insert: {
+          alias_nome: string
+          alias_sku?: string | null
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          produto_id: string
+        }
+        Update: {
+          alias_nome?: string
+          alias_sku?: string | null
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          produto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_aliases_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_aliases_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           ativo: boolean

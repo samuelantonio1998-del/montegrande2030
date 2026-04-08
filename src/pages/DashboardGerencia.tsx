@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';
 
 type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };
@@ -26,6 +27,7 @@ export default function DashboardGerencia() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [logModuleFilter, setLogModuleFilter] = useState<string>('all');
   const [logPeriodFilter, setLogPeriodFilter] = useState<string>('hoje');
+  const [editingEntry, setEditingEntry] = useState<ActivityLog | null>(null);
 
   useEffect(() => {
     supabase.from('produtos').select('id, nome, stock_atual, stock_minimo, stock_maximo, custo_medio, unidade, fornecedor_id')

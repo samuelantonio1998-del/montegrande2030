@@ -125,9 +125,10 @@ export function EditInventoryEntryDialog({ entry, open, onOpenChange, onSaved }:
         const { data: prod } = await supabase.from('produtos').select('stock_atual, custo_medio').eq('id', mov.produto_id).single();
         if (prod) {
           const newStock = Math.max(0, prod.stock_atual + diff);
-          const updatePayload: Record<string, any> = { stock_atual: newStock };
-          if (!isNaN(newCost)) updatePayload.custo_medio = newCost;
-          await supabase.from('produtos').update(updatePayload).eq('id', mov.produto_id);
+          await supabase.from('produtos').update({
+            stock_atual: newStock,
+            ...(isNaN(newCost) ? {} : { custo_medio: newCost }),
+          }).eq('id', mov.produto_id);
         }
       } else if (!isNaN(newCost)) {
         await supabase.from('produtos').update({ custo_medio: newCost }).eq('id', mov.produto_id);

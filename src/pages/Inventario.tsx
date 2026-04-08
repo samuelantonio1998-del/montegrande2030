@@ -323,6 +323,14 @@ export default function Inventario() {
           existingProd = produtos.find(p => p.nome.toLowerCase() === item.nome.toLowerCase() && p.fornecedor_id === fornecedorId);
         }
         if (!existingProd) {
+          // Check aliases
+          const { data: aliasMatch } = await supabase.from('produto_aliases' as any).select('produto_id')
+            .ilike('alias_nome', item.nome).limit(1);
+          if (aliasMatch?.[0]) {
+            existingProd = produtos.find(p => p.id === (aliasMatch[0] as any).produto_id) || null;
+          }
+        }
+        if (!existingProd) {
           // Fuzzy match as last resort before creating
           let bestScore = 0;
           for (const p of produtos) {

@@ -572,6 +572,7 @@ export type Database = {
           nome: string
           ordem: number
           preco: number
+          produto_id: string | null
           tipo_servico: string
           updated_at: string
         }
@@ -585,6 +586,7 @@ export type Database = {
           nome: string
           ordem?: number
           preco?: number
+          produto_id?: string | null
           tipo_servico?: string
           updated_at?: string
         }
@@ -598,10 +600,19 @@ export type Database = {
           nome?: string
           ordem?: number
           preco?: number
+          produto_id?: string | null
           tipo_servico?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "precario_bebidas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produto_aliases: {
         Row: {

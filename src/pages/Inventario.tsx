@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
 import { useActivityLog } from '@/hooks/useActivityLog';
+import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
 
 type Produto = {
   id: string;
@@ -136,6 +137,9 @@ export default function Inventario() {
   // Confirmation dialogs
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmInvoice, setConfirmInvoice] = useState(false);
+  const [orderFornecedor, setOrderFornecedor] = useState<{ id: string; nome: string; email: string | null } | null>(null);
+  const [orderProducts, setOrderProducts] = useState<Produto[]>([]);
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);

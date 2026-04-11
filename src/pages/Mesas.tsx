@@ -267,15 +267,25 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                 });
 
                 const { data: produtos } = await supabase.from('produtos').select('id, nome, stock_atual');
+                // Load dose info for beverages
+                const { data: precarioItems } = await supabase.from('precario_bebidas').select('nome, tipo_servico, dose_ml, garrafa_ml').eq('ativo', true);
+                const doseMap = new Map<string, { tipo: string; dose: number; garrafa: number }>();
+                if (precarioItems) {
+                  (precarioItems as unknown as { nome: string; tipo_servico: string; dose_ml: number | null; garrafa_ml: number | null }[]).forEach(p => {
+                    if (p.tipo_servico === 'dose' && p.dose_ml && p.garrafa_ml) {
+                      doseMap.set(p.nome.toLowerCase(), { tipo: 'dose', dose: p.dose_ml, garrafa: p.garrafa_ml });
+                    }
+                  });
+                }
+
                 if (produtos && mesa.beverages.length > 0) {
                   for (const bev of mesa.beverages) {
                     const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
                     const bevNorm = normalize(bev.name);
 
-                    // Coffee special logic: even qty = 11g, odd qty = 7g per serving
+                    // Coffee special logic
                     const isCoffee = /^(café|cafè|expresso|descafeinado|carioca|abatanado)/i.test(bev.name.trim());
                     if (isCoffee) {
-                      // Find coffee product in stock (stored in kg)
                       const coffeeMatch = produtos.find(p => {
                         const pNorm = normalize(p.nome);
                         return pNorm.includes('cafe') || pNorm.includes('café') || pNorm === 'cafe em grao' || pNorm.includes('cafe grao');
@@ -290,6 +300,15 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                       continue;
                     }
 
+                    // Calculate quantity to deduct: doses = qty * (dose_ml / garrafa_ml), units = qty
+                    const doseInfo = doseMap.get(bev.name.toLowerCase());
+                    const qtyToDeduct = doseInfo
+                      ? parseFloat((bev.quantity * (doseInfo.dose / doseInfo.garrafa)).toFixed(4))
+                      : bev.quantity;
+                    const motivo = doseInfo
+                      ? `Mesa ${mesa.number} — ${bev.quantity}x ${bev.name} (${doseInfo.dose}ml/dose)`
+                      : `Mesa ${mesa.number} — ${bev.name}`;
+
                     let bestMatch: typeof produtos[0] | null = null;
                     let bestScore = 0;
                     for (const p of produtos) {
@@ -302,8 +321,9 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                       if (score > bestScore && score >= 0.5) { bestScore = score; bestMatch = p; }
                     }
                     if (bestMatch) {
-                      await supabase.from('produtos').update({ stock_atual: Math.max(0, bestMatch.stock_atual - bev.quantity) }).eq('id', bestMatch.id);
-                      await supabase.from('movimentacoes').insert({ produto_id: bestMatch.id, tipo: 'saida', quantidade: bev.quantity, motivo: `Mesa ${mesa.number} — ${bev.name}`, funcionario: mesa.waiter || null });
+                      const newStock = parseFloat(Math.max(0, bestMatch.stock_atual - qtyToDeduct).toFixed(2));
+                      await supabase.from('produtos').update({ stock_atual: newStock }).eq('id', bestMatch.id);
+                      await supabase.from('movimentacoes').insert({ produto_id: bestMatch.id, tipo: 'saida', quantidade: qtyToDeduct, motivo, funcionario: mesa.waiter || null });
                     }
                   }
                   toast.success('Stock de bebidas atualizado');

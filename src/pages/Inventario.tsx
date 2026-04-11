@@ -115,6 +115,11 @@ export default function Inventario() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualForm, setManualForm] = useState({ produto_id: '', quantidade: '', custo_unitario: '', tipo: 'entrada' as string });
 
+  // New product inline form
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
+  const [creatingProduct, setCreatingProduct] = useState(false);
+
   // Exit state
   const [showExit, setShowExit] = useState(false);
 

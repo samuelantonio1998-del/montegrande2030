@@ -84,11 +84,17 @@ export function useRegistosProducao() {
   }, []);
 
   const fetchRegistos = useCallback(async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    // Load current week (Mon–Sun) for waste map + today's active trays
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMon = day === 0 ? 6 : day - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - diffToMon);
+    const weekStartStr = weekStart.toISOString().slice(0, 10);
     const { data, error } = await supabase
       .from('registos_producao')
       .select('*')
-      .gte('enviado_at', `${today}T00:00:00`)
+      .gte('enviado_at', `${weekStartStr}T00:00:00`)
       .order('enviado_at', { ascending: false });
     if (error) {
       console.error('Erro registos:', error);
@@ -161,8 +167,10 @@ export function useRegistosProducao() {
     }
   }, []);
 
-  const activeTrays = registos.filter(r => r.estado === 'no_buffet');
-  const completedTrays = registos.filter(r => r.estado !== 'no_buffet');
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRegistos = registos.filter(r => r.enviado_at.slice(0, 10) === today);
+  const activeTrays = todayRegistos.filter(r => r.estado === 'no_buffet');
+  const completedTrays = todayRegistos.filter(r => r.estado !== 'no_buffet');
 
   // Derive tray states from DB registos (persisted across refresh)
   const derivedTrayStates = useMemo(() => {

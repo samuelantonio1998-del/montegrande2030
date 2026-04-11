@@ -83,8 +83,8 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
   mesa: Mesa;
   onUpdate: (m: Mesa) => void;
   onCancel: () => void;
-  beverageMenu: { category: string; items: { id: string; name: string; price: number }[] }[];
-  beverageMenuFlat: { id: string; name: string; price: number }[];
+  beverageMenu: BeverageCategory[];
+  beverageMenuFlat: BeverageItem[];
   mealPrices: MealPrices;
   onLog: (action: string, details: string, metadata?: Record<string, unknown>) => void;
 }) {

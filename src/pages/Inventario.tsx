@@ -148,7 +148,7 @@ export default function Inventario() {
       supabase.from('fornecedores').select('*').order('nome'),
       supabase.from('movimentacoes').select('*, produtos(nome, unidade)').order('created_at', { ascending: false }).gte('created_at', weekAgoStr).limit(200),
     ]);
-    if (prodRes.data) setProdutos(prodRes.data);
+    if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     if (movRes.data) setMovimentacoes(movRes.data as unknown as Movimentacao[]);
     setLoading(false);

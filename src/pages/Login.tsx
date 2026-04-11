@@ -68,6 +68,7 @@ export default function Login() {
               <button
                 key="del"
                 onClick={handleDelete}
+                aria-label="Apagar dígito"
                 className="flex h-16 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-muted/80 active:scale-95"
               >
                 <Delete className="h-6 w-6" />

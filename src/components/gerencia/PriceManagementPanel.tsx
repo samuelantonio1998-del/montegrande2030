@@ -342,6 +342,58 @@ export default function PriceManagementPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Link to inventory dialog */}
+      <Dialog open={!!linkItem} onOpenChange={open => { if (!open) setLinkItem(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5 text-primary" /> Ligar ao Inventário
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Artigo: <strong>{linkItem?.name}</strong>
+            {linkItem?.produtoId && <Badge variant="outline" className="ml-2 text-xs text-success">Ligado</Badge>}
+          </p>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={linkSearch}
+                onChange={e => setLinkSearch(e.target.value)}
+                placeholder="Pesquisar produto..."
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-[250px] overflow-y-auto space-y-1 rounded-lg border border-border p-2">
+              {filteredProdutos.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">Nenhum produto encontrado</p>
+              )}
+              {filteredProdutos.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => linkItem && linkToProduto(linkItem.id, p.id)}
+                  className={cn(
+                    'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm text-left transition-colors',
+                    linkItem?.produtoId === p.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                  )}
+                >
+                  <span className="font-medium">{p.nome}</span>
+                  <span className="text-xs text-muted-foreground">{p.categoria} · {p.unidade}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            {linkItem?.produtoId && (
+              <Button variant="outline" className="gap-1.5 text-destructive" onClick={() => linkItem && linkToProduto(linkItem.id, null)}>
+                <Unlink className="h-4 w-4" /> Remover ligação
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setLinkItem(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

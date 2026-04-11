@@ -1,15 +1,25 @@
 import { useTheme } from "next-themes";
-import { Toaster as Sonner } from "sonner";
-import { toast as sonnerToast } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast } from "sonner";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+  const [hasToasts, setHasToasts] = useState(false);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const toasts = document.querySelectorAll('[data-sonner-toast]');
+      setHasToasts(toasts.length > 1);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="relative">
+    <>
       <Sonner
         theme={theme as ToasterProps["theme"]}
         className="toaster group"
@@ -29,26 +39,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
         }}
         {...props}
       />
-      <ClearAllButton />
-    </div>
+      {hasToasts && (
+        <button
+          onClick={() => sonnerToast.dismiss()}
+          className="fixed top-2 right-2 z-[99999] rounded-full bg-muted/90 backdrop-blur-sm border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors shadow-sm"
+          title="Limpar todas as notificações"
+        >
+          <span className="flex items-center gap-1">
+            <X className="h-3 w-3" />
+            Limpar tudo
+          </span>
+        </button>
+      )}
+    </>
   );
 };
-
-function ClearAllButton() {
-  // We use a MutationObserver approach via CSS to show/hide
-  // But simpler: always render, sonner hides the container when empty
-  return (
-    <button
-      onClick={() => sonnerToast.dismiss()}
-      className="fixed top-2 right-2 z-[99999] hidden group-[.toaster]:block opacity-0 group-has-[.toast]:opacity-100 transition-opacity rounded-full bg-muted/80 backdrop-blur-sm border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground shadow-sm"
-      title="Limpar todas as notificações"
-    >
-      <span className="flex items-center gap-1">
-        <X className="h-3 w-3" />
-        Limpar tudo
-      </span>
-    </button>
-  );
-}
 
 export { Toaster };

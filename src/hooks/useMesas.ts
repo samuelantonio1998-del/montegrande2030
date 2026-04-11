@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { type Mesa, PRICING, getAdultPrice } from '@/lib/mock-data';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast-with-sound';
 
 type DbMesa = {
   id: string;

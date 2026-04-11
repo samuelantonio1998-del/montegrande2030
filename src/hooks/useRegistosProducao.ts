@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast-with-sound';
 import type { RecipientSize } from '@/lib/buffet-data';
 import { LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
 

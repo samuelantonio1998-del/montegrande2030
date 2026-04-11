@@ -87,6 +87,6 @@ export default function Login() {
         </div>
 
       </motion.div>
-    </div>
+    </main>
   );
 }

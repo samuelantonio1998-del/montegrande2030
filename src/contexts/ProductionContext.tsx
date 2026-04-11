@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { mockProductionRecords, type ProductionRecord, type RecipientSize, type TrayStatus, recipientCapacity } from '@/lib/buffet-data';
+import { type ProductionRecord, type RecipientSize, type TrayStatus, recipientCapacity } from '@/lib/buffet-data';
 import type { BuffetTrayState, ReplenishmentLog, LeftoverRecord } from '@/lib/buffet-zones';
 
 interface ProductionContextType {

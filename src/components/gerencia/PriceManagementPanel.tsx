@@ -201,7 +201,34 @@ export default function PriceManagementPanel() {
                 <div className="border-t border-border p-3 space-y-2 bg-muted/20">
                    {cat.items.map((item, ii) => (
                     <div key={item.id || item.name + ii} className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-foreground truncate flex-1">{item.name}</span>
+                      {editingItemId === item.id ? (
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <Input
+                            value={editItemName}
+                            onChange={e => setEditItemName(e.target.value)}
+                            className="h-7 text-sm flex-1"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && item.id) renameItem(item.id, editItemName);
+                              if (e.key === 'Escape') setEditingItemId(null);
+                            }}
+                          />
+                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => item.id && renameItem(item.id, editItemName)}>
+                            <Check className="h-3.5 w-3.5 text-success" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setEditingItemId(null)}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          className="group flex items-center gap-1.5 text-sm text-foreground truncate flex-1 text-left hover:text-primary transition-colors"
+                          onClick={() => { setEditingItemId(item.id || null); setEditItemName(item.name); }}
+                        >
+                          {item.name}
+                          <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
+                        </button>
+                      )}
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => toggleServico(item)}

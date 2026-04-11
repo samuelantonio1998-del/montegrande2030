@@ -301,7 +301,7 @@ export function EditInventoryEntryDialog({ entry, open, onOpenChange, onSaved }:
                         )}
                       >
                         <span>{p.nome}</span>
-                        <span className="text-[10px] text-muted-foreground ml-2">({p.stock_atual} {p.unidade})</span>
+                        <span className="text-[10px] text-muted-foreground ml-2">({parseFloat(p.stock_atual.toFixed(2))} {p.unidade})</span>
                         {p.id === mov.produto_id && <span className="text-[10px] text-muted-foreground ml-1">· atual</span>}
                       </button>
                     ))}

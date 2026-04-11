@@ -53,6 +53,28 @@ export default function PriceManagementPanel() {
   const [deleteTarget, setDeleteTarget] = useState<{ catIdx: number; itemIdx?: number } | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItemName, setEditItemName] = useState('');
+  const [linkItem, setLinkItem] = useState<BeverageItem | null>(null);
+  const [produtos, setProdutos] = useState<{ id: string; nome: string; unidade: string; categoria: string }[]>([]);
+  const [linkSearch, setLinkSearch] = useState('');
+
+  useEffect(() => {
+    if (linkItem) {
+      supabase.from('produtos').select('id, nome, unidade, categoria').eq('ativo', true).order('nome')
+        .then(({ data }) => { if (data) setProdutos(data); });
+      setLinkSearch(linkItem.name);
+    }
+  }, [linkItem]);
+
+  const filteredProdutos = produtos.filter(p =>
+    p.nome.toLowerCase().includes(linkSearch.toLowerCase())
+  ).slice(0, 15);
+
+  const linkToProduto = async (bevId: string, produtoId: string | null) => {
+    await supabase.from('precario_bebidas').update({ produto_id: produtoId }).eq('id', bevId);
+    await fetchAll();
+    setLinkItem(null);
+    toast.success(produtoId ? 'Artigo ligado ao inventário' : 'Ligação removida');
+  };
 
   const updateMeal = (key: keyof MealPrices, val: string) => {
     const num = parseFloat(val);

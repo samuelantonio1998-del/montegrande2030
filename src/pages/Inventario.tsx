@@ -1085,7 +1085,7 @@ export default function Inventario() {
                     'text-sm font-medium',
                     mov.tipo === 'entrada' ? 'text-success' : 'text-destructive'
                   )}>
-                    {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}{(mov.produtos as any)?.unidade || ''}
+                    {mov.tipo === 'entrada' ? '+' : '-'}{parseFloat(mov.quantidade.toFixed(2))}{(mov.produtos as any)?.unidade || ''}
                   </span>
                 </div>
               ))}

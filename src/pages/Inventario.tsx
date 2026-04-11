@@ -68,7 +68,7 @@ type InvoiceMeta = {
 
 type ScannerStep = 'idle' | 'preview' | 'processing' | 'review';
 
-// Fuzzy string similarity (bigram-based Dice coefficient)
+// Fuzzy string similarity (bigram Dice + substring bonus)
 function normalizeStr(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, '').trim();
 }
@@ -81,16 +81,43 @@ function bigrams(s: string): Set<string> {
 }
 
 function similarity(a: string, b: string): number {
+  const na = normalizeStr(a);
+  const nb = normalizeStr(b);
+  if (na === nb) return 1;
+
+  // Bigram Dice coefficient
   const bg1 = bigrams(a);
   const bg2 = bigrams(b);
-  if (bg1.size === 0 && bg2.size === 0) return 1;
-  if (bg1.size === 0 || bg2.size === 0) return 0;
-  let intersection = 0;
-  bg1.forEach(b => { if (bg2.has(b)) intersection++; });
-  return (2 * intersection) / (bg1.size + bg2.size);
+  let dice = 0;
+  if (bg1.size > 0 && bg2.size > 0) {
+    let intersection = 0;
+    bg1.forEach(b => { if (bg2.has(b)) intersection++; });
+    dice = (2 * intersection) / (bg1.size + bg2.size);
+  }
+
+  // Substring bonus: if the shorter string is fully contained in the longer one
+  const shorter = na.length <= nb.length ? na : nb;
+  const longer = na.length <= nb.length ? nb : na;
+  let substringBonus = 0;
+  if (shorter.length >= 3 && longer.includes(shorter)) {
+    // Boost proportional to how much of the longer string the shorter covers
+    substringBonus = 0.3 * (shorter.length / longer.length);
+  } else {
+    // Check if all words of the shorter string appear in the longer one
+    const shortWords = shorter.split(/\s+/).filter(w => w.length >= 2);
+    if (shortWords.length > 0) {
+      const matched = shortWords.filter(w => longer.includes(w)).length;
+      const ratio = matched / shortWords.length;
+      if (ratio >= 0.8) {
+        substringBonus = 0.25 * ratio * (shorter.length / longer.length);
+      }
+    }
+  }
+
+  return Math.min(1, dice + substringBonus);
 }
 
-const FUZZY_THRESHOLD = 0.55;
+const FUZZY_THRESHOLD = 0.45;
 
 export default function Inventario() {
   const { toast } = useToast();

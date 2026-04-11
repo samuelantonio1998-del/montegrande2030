@@ -416,6 +416,11 @@ export default function DashboardGerencia() {
         </div>
       </motion.div>
 
+      {/* Feedback Inbox */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="rounded-xl border border-border bg-card p-6">
+        <FeedbackInbox />
+      </motion.div>
+
       <EditInventoryEntryDialog
         entry={editingEntry}
         open={!!editingEntry}

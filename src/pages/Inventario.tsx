@@ -115,6 +115,11 @@ export default function Inventario() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualForm, setManualForm] = useState({ produto_id: '', quantidade: '', custo_unitario: '', tipo: 'entrada' as string });
 
+  // New product inline form
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
+  const [creatingProduct, setCreatingProduct] = useState(false);
+
   // Exit state
   const [showExit, setShowExit] = useState(false);
 
@@ -409,6 +414,41 @@ export default function Inventario() {
     const copy = [...scannedItems];
     (copy[index] as any)[field] = value;
     setScannedItems(copy);
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProductForm.nome.trim()) {
+      toast({ title: 'Nome do produto é obrigatório', variant: 'destructive' });
+      return;
+    }
+    setCreatingProduct(true);
+    try {
+      const { data, error } = await supabase.from('produtos').insert({
+        nome: newProductForm.nome.trim(),
+        unidade: newProductForm.unidade,
+        categoria: newProductForm.categoria,
+        stock_minimo: parseFloat(newProductForm.stock_minimo) || 0,
+        stock_maximo: parseFloat(newProductForm.stock_maximo) || 100,
+        stock_atual: 0,
+        custo_medio: 0,
+      }).select('id').single();
+
+      if (error) throw error;
+
+      toast({ title: `Produto "${newProductForm.nome}" criado` });
+      await log('Criar produto', 'Inventário', `Novo produto: ${newProductForm.nome}`);
+      setNewProductForm({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
+      setShowNewProduct(false);
+      await fetchData();
+      if (data?.id) {
+        setManualForm(f => ({ ...f, produto_id: data.id }));
+      }
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Erro ao criar produto', variant: 'destructive' });
+    } finally {
+      setCreatingProduct(false);
+    }
   };
 
   const handleManualEntry = async () => {
@@ -932,20 +972,90 @@ export default function Inventario() {
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Entrada Manual</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setShowManualEntry(false)}>
+                  <Button variant="ghost" size="sm" onClick={() => { setShowManualEntry(false); setShowNewProduct(false); }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Select value={manualForm.produto_id} onValueChange={(v) => setManualForm(f => ({ ...f, produto_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Produto" /></SelectTrigger>
-                    <SelectContent>
-                      {produtos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome} ({p.unidade})</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-1.5">
+                    <Select value={manualForm.produto_id} onValueChange={(v) => { if (v === '__new__') { setShowNewProduct(true); } else { setManualForm(f => ({ ...f, produto_id: v })); } }}>
+                      <SelectTrigger><SelectValue placeholder="Produto" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__new__" className="text-primary font-medium">
+                          <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" /> Criar novo produto</span>
+                        </SelectItem>
+                        {produtos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome} ({p.unidade})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Input type="number" placeholder="Quantidade" value={manualForm.quantidade} onChange={e => setManualForm(f => ({ ...f, quantidade: e.target.value }))} />
                   <Input type="number" placeholder="Custo/Un (€)" step="0.01" value={manualForm.custo_unitario} onChange={e => setManualForm(f => ({ ...f, custo_unitario: e.target.value }))} />
                 </div>
+
+                {/* Inline new product form */}
+                <AnimatePresence>
+                  {showNewProduct && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3 overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <Package className="h-3.5 w-3.5 text-primary" />
+                          Novo Produto
+                        </h4>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowNewProduct(false)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Input
+                          placeholder="Nome do produto *"
+                          value={newProductForm.nome}
+                          onChange={e => setNewProductForm(f => ({ ...f, nome: e.target.value }))}
+                          className="text-sm"
+                          autoFocus
+                        />
+                        <Select value={newProductForm.unidade} onValueChange={v => setNewProductForm(f => ({ ...f, unidade: v }))}>
+                          <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kg">kg</SelectItem>
+                            <SelectItem value="un">un</SelectItem>
+                            <SelectItem value="lt">lt</SelectItem>
+                            <SelectItem value="cx">cx</SelectItem>
+                            <SelectItem value="pack">pack</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <Select value={newProductForm.categoria} onValueChange={v => setNewProductForm(f => ({ ...f, categoria: v }))}>
+                          <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="geral">Geral</SelectItem>
+                            <SelectItem value="carnes">Carnes</SelectItem>
+                            <SelectItem value="peixes">Peixes</SelectItem>
+                            <SelectItem value="legumes">Legumes</SelectItem>
+                            <SelectItem value="frutas">Frutas</SelectItem>
+                            <SelectItem value="laticínios">Laticínios</SelectItem>
+                            <SelectItem value="bebidas">Bebidas</SelectItem>
+                            <SelectItem value="mercearia">Mercearia</SelectItem>
+                            <SelectItem value="congelados">Congelados</SelectItem>
+                            <SelectItem value="limpeza">Limpeza</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input type="number" placeholder="Stock mínimo" value={newProductForm.stock_minimo} onChange={e => setNewProductForm(f => ({ ...f, stock_minimo: e.target.value }))} className="text-sm" />
+                        <Input type="number" placeholder="Stock máximo" value={newProductForm.stock_maximo} onChange={e => setNewProductForm(f => ({ ...f, stock_maximo: e.target.value }))} className="text-sm" />
+                      </div>
+                      <Button size="sm" onClick={handleCreateProduct} disabled={!newProductForm.nome.trim() || creatingProduct}>
+                        {creatingProduct && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                        Criar Produto
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <Button onClick={handleManualEntry} disabled={!manualForm.produto_id || !manualForm.quantidade}>
                   Registar Entrada
                 </Button>

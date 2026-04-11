@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
 import FeedbackDialog from '@/components/feedback/FeedbackDialog';
+import TableAvailabilityPanel from '@/components/sala/TableAvailabilityPanel';
 
 const categories = [
   { key: 'all', label: 'Todas' },
@@ -85,6 +86,9 @@ export default function DashboardSala() {
           <p className="text-[10px] text-muted-foreground leading-tight">Tarefas feitas</p>
         </div>
       </div>
+
+      {/* Table availability predictions */}
+      <TableAvailabilityPanel mesas={mesas} />
 
       {myTasks.length > 0 && (
         <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth, mockUsers } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { UtensilsCrossed, ChefHat, BarChart3, Delete } from 'lucide-react';
@@ -91,26 +91,6 @@ export default function Login() {
           })}
         </div>
 
-        {/* Demo PINs */}
-        <div className="space-y-2">
-          <p className="text-center text-xs text-muted-foreground">PINs de demonstração:</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {mockUsers.map(u => {
-              const info = roleInfo[u.role];
-              return (
-                <button
-                  key={u.pin}
-                  onClick={() => { setPin(''); setTimeout(() => { setPin(u.pin); login(u.pin); }, 100); }}
-                  className="flex items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-1.5 text-xs transition-colors hover:bg-muted"
-                >
-                  <info.icon className={cn('h-3.5 w-3.5', info.color)} />
-                  <span className="text-foreground font-medium">{u.name}</span>
-                  <span className="text-muted-foreground">({u.pin})</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </motion.div>
     </div>
   );

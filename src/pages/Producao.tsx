@@ -126,6 +126,7 @@ export default function Producao() {
               <AnimatePresence>
                 {Array.from(grouped.entries()).map(([dishName, trays]) => {
                   const totalKg = trays.reduce((s, t) => s + t.peso_kg, 0);
+                  const latestTray = trays[0]; // sorted desc by enviado_at
                   return (
                     <motion.div key={dishName} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
                       <div className="flex items-start justify-between">
@@ -135,16 +136,23 @@ export default function Producao() {
                         </div>
                         <Badge className={statusConfig.no_buffet.color}><Clock className="mr-1 h-3 w-3" /> No Buffet</Badge>
                       </div>
-                      <div className="mt-3 space-y-2 border-t border-border pt-3">
-                        {trays.map(record => {
-                          const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
-                          return (
-                            <div key={record.id} className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">{cap.label} · {record.peso_kg}kg · {formatTime(record.enviado_at)}</span>
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCheckoutTarget(record)}>Recolher</Button>
-                            </div>
-                          );
-                        })}
+                      {trays.length > 1 && (
+                        <div className="mt-3 space-y-1 border-t border-border pt-2">
+                          {trays.slice(1).map(record => {
+                            const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
+                            return (
+                              <p key={record.id} className="text-xs text-muted-foreground">
+                                {cap.label} · {record.peso_kg}kg · {formatTime(record.enviado_at)}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                        <p className="text-xs text-muted-foreground">
+                          Último: {recipientCapacity[latestTray.recipiente as RecipientSize]?.label || latestTray.recipiente} · {latestTray.peso_kg}kg · {formatTime(latestTray.enviado_at)}
+                        </p>
+                        <Button size="sm" variant="outline" onClick={() => setCheckoutTarget(latestTray)}>Recolher</Button>
                       </div>
                     </motion.div>
                   );

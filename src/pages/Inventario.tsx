@@ -355,6 +355,19 @@ export default function Inventario() {
             custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
             fornecedor_id: fornecedorId,
           });
+
+          // Save alias when item name differs from product name (manual association)
+          if (item.nome && normalizeStr(item.nome) !== normalizeStr(produto.nome)) {
+            const { data: existingAlias } = await supabase.from('produto_aliases').select('id')
+              .ilike('alias_nome', item.nome).eq('produto_id', item.produto_id).limit(1);
+            if (!existingAlias?.length) {
+              await supabase.from('produto_aliases').insert({
+                produto_id: item.produto_id,
+                alias_nome: item.nome,
+                fornecedor_id: fornecedorId,
+              });
+            }
+          }
         }
       } else {
         let existingProd = item.sku

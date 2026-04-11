@@ -167,8 +167,10 @@ export function useRegistosProducao() {
     }
   }, []);
 
-  const activeTrays = registos.filter(r => r.estado === 'no_buffet');
-  const completedTrays = registos.filter(r => r.estado !== 'no_buffet');
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRegistos = registos.filter(r => r.enviado_at.slice(0, 10) === today);
+  const activeTrays = todayRegistos.filter(r => r.estado === 'no_buffet');
+  const completedTrays = todayRegistos.filter(r => r.estado !== 'no_buffet');
 
   // Derive tray states from DB registos (persisted across refresh)
   const derivedTrayStates = useMemo(() => {

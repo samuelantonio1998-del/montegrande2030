@@ -14,7 +14,7 @@ export type BebidaItem = {
   garrafa_ml: number | null;
 };
 
-export type BeverageItem = { id: string; name: string; price: number; tipoServico: 'unidade' | 'dose'; doseMl: number | null; garrafaMl: number | null };
+export type BeverageItem = { id: string; name: string; price: number; tipoServico: 'unidade' | 'dose'; doseMl: number | null; garrafaMl: number | null; produtoId: string | null };
 
 export type BeverageCategory = {
   category: string;

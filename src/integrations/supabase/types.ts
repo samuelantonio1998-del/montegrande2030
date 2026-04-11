@@ -312,6 +312,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          estado: string
+          id: string
+          mensagem: string
+          resposta: string | null
+          tipo: string
+          updated_at: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          id?: string
+          mensagem: string
+          resposta?: string | null
+          tipo?: string
+          updated_at?: string
+          user_name?: string
+          user_role?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          id?: string
+          mensagem?: string
+          resposta?: string | null
+          tipo?: string
+          updated_at?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: []
+      }
       ficha_ingredientes: {
         Row: {
           ficha_id: string

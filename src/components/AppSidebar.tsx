@@ -42,8 +42,12 @@ export function AppSidebar() {
   const filteredNav = navItems.filter(item => item.roles.includes(user.role));
   const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.role);
 
-  // Mobile: bottom tab bar (first 4 items) + "more" menu
-  if (isMobile) {
+  // Mobile/tablet: Sala uses bottom tabs, Cozinha uses lateral sidebar
+  const isSalaOnMobile = isMobile && user.role === 'sala';
+  const isCozinhaOnMobile = isMobile && user.role === 'cozinha';
+
+  // Sala mobile: bottom tab bar
+  if (isSalaOnMobile) {
     const bottomTabs = filteredNav.slice(0, 4);
     const moreItems = filteredNav.slice(4);
 
@@ -131,6 +135,108 @@ export function AppSidebar() {
                 >
                   <LogOut className="h-5 w-5" />
                   Terminar Sessão
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </>
+    );
+  }
+
+  // Cozinha mobile/tablet: compact lateral sidebar
+  if (isCozinhaOnMobile) {
+    return (
+      <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+        <div className="flex h-14 items-center justify-center border-b border-sidebar-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
+            <span className="text-xs font-bold text-sidebar-primary-foreground">R</span>
+          </div>
+        </div>
+        <nav className="flex-1 flex flex-col items-center gap-1 py-3 overflow-y-auto">
+          {filteredNav.map((item) => {
+            const isActive = location.pathname === item.to;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  'flex items-center justify-center rounded-lg p-2.5 transition-colors',
+                  isActive ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50'
+                )}
+                title={item.label}
+              >
+                <item.icon className="h-5 w-5" />
+              </NavLink>
+            );
+          })}
+        </nav>
+        <div className="border-t border-sidebar-border p-2 flex flex-col items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-accent text-[10px] font-semibold text-sidebar-accent-foreground">
+            {user.name[0]}
+          </div>
+          <button onClick={logout} className="rounded-lg p-1.5 text-sidebar-foreground/50 hover:bg-sidebar-accent transition-colors">
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
+  // Gerência mobile: also bottom tabs
+  if (isMobile) {
+    const bottomTabs = filteredNav.slice(0, 4);
+    const moreItems = filteredNav.slice(4);
+    return (
+      <>
+        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t border-sidebar-border bg-sidebar safe-bottom">
+          {bottomTabs.map((item) => {
+            const isActive = location.pathname === item.to;
+            return (
+              <NavLink key={item.to} to={item.to}
+                className={cn('flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+                  isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/60')}>
+                <item.icon className="h-5 w-5" />
+                <span className="truncate max-w-[64px]">{item.label}</span>
+              </NavLink>
+            );
+          })}
+          <button onClick={() => setMobileOpen(true)}
+            className={cn('flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+              mobileOpen ? 'text-sidebar-primary' : 'text-sidebar-foreground/60')}>
+            <Menu className="h-5 w-5" /><span>Mais</span>
+          </button>
+        </nav>
+        {mobileOpen && (
+          <>
+            <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setMobileOpen(false)} />
+            <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-sidebar text-sidebar-foreground animate-in slide-in-from-bottom duration-200 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">{user.name[0]}</div>
+                  <div>
+                    <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
+                    <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                  </div>
+                </div>
+                <button onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-sidebar-foreground/50"><X className="h-5 w-5" /></button>
+              </div>
+              <nav className="px-3 py-3 space-y-1">
+                {moreItems.map((item) => {
+                  const isActive = location.pathname === item.to;
+                  return (
+                    <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                      className={cn('flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                        isActive ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50')}>
+                      <item.icon className="h-5 w-5" />{item.label}
+                    </NavLink>
+                  );
+                })}
+              </nav>
+              <div className="border-t border-sidebar-border px-3 py-3">
+                <button onClick={() => { setMobileOpen(false); logout(); }}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors">
+                  <LogOut className="h-5 w-5" />Terminar Sessão
                 </button>
               </div>
             </div>

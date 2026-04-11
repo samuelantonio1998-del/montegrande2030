@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'sala' | 'cozinha' | 'gerencia';
 
@@ -8,34 +9,9 @@ export type AppUser = {
   pin: string;
 };
 
-const STORAGE_KEY = 'mg_employees';
-
-const defaultUsers: AppUser[] = [
-  { name: 'João', role: 'sala', pin: '1111' },
-  { name: 'Maria', role: 'sala', pin: '2222' },
-  { name: 'Pedro', role: 'cozinha', pin: '3333' },
-  { name: 'Ana', role: 'cozinha', pin: '4444' },
-  { name: 'Carlos', role: 'gerencia', pin: '5555' },
-];
-
-export function getEmployees(): AppUser[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return [...defaultUsers];
-}
-
-export function setEmployees(list: AppUser[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-// Employees list used for PIN authentication
-const allUsers = getEmployees();
-
 type AuthContextType = {
   user: AppUser | null;
-  login: (pin: string) => boolean;
+  login: (pin: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -44,14 +20,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
 
-  const login = (pin: string) => {
-    const employees = getEmployees();
-    const found = employees.find(u => u.pin === pin);
-    if (found) {
-      setUser(found);
-      return true;
-    }
-    return false;
+  const login = async (pin: string): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('funcionarios')
+      .select('nome, role, pin')
+      .eq('pin', pin)
+      .eq('ativo', true)
+      .maybeSingle();
+    if (error || !data) return false;
+    setUser({ name: data.nome, role: data.role as UserRole, pin: data.pin });
+    return true;
   };
 
   const logout = () => setUser(null);

@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { ShieldAlert, Delete } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { getEmployees } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import type { UserRole } from '@/contexts/AuthContext';
 
 type PinDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  /** If set, only these roles can authorize */
   allowedRoles?: ('sala' | 'cozinha' | 'gerencia')[];
   onAuthorized: (userName: string) => void;
 };
@@ -18,18 +18,22 @@ export function PinDialog({ open, onOpenChange, title, description, allowedRoles
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
 
-  const handleDigit = (d: string) => {
+  const handleDigit = async (d: string) => {
     if (pin.length >= 4) return;
     const next = pin + d;
     setPin(next);
     setError(false);
     if (next.length === 4) {
-      const employees = getEmployees();
-      const found = employees.find(u => u.pin === next);
-      if (found && (!allowedRoles || allowedRoles.includes(found.role))) {
+      const { data } = await supabase
+        .from('funcionarios')
+        .select('nome, role')
+        .eq('pin', next)
+        .eq('ativo', true)
+        .maybeSingle();
+      if (data && (!allowedRoles || allowedRoles.includes(data.role as UserRole))) {
         setPin('');
         onOpenChange(false);
-        onAuthorized(found.name);
+        onAuthorized(data.nome);
       } else {
         setError(true);
         setTimeout(() => { setPin(''); setError(false); }, 800);
@@ -58,7 +62,6 @@ export function PinDialog({ open, onOpenChange, title, description, allowedRoles
         </DialogHeader>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
 
-        {/* PIN dots */}
         <div className="flex justify-center gap-4 py-3">
           {[0, 1, 2, 3].map(i => (
             <div
@@ -75,7 +78,6 @@ export function PinDialog({ open, onOpenChange, title, description, allowedRoles
 
         {error && <p className="text-center text-xs text-destructive">PIN inválido ou sem permissão</p>}
 
-        {/* Keypad */}
         <div className="grid grid-cols-3 gap-2">
           {['1','2','3','4','5','6','7','8','9','','0','del'].map(k => {
             if (k === '') return <div key="empty" />;

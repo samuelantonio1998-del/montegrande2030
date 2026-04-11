@@ -52,7 +52,7 @@ export default function Fornecedores() {
   const [editMode, setEditMode] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', dia_encomenda: '', prazo_entrega_dias: '', notas: '' });
-  const [orderOpen, setOrderOpen] = useState(false);
+  
 
   const fetchData = useCallback(async () => {
     setLoading(true);

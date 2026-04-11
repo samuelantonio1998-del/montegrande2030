@@ -25,13 +25,15 @@ const roleBadgeClass: Record<UserRole, string> = {
 };
 
 export default function Funcionarios() {
-  const { employees, addEmployee, removeEmployee, updateRole } = useEmployees();
+  const { employees, addEmployee, removeEmployee, updateRole, updateName } = useEmployees();
 
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPin, setNewPin] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('sala');
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
+  const [editingPin, setEditingPin] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
 
   const handleAdd = () => {
     if (!newName.trim() || !newPin.trim()) {

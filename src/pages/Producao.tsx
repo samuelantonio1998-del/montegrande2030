@@ -113,28 +113,46 @@ export default function Producao() {
         <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2">
           <ChefHat className="h-5 w-5 text-primary" /> Tabuleiros no Buffet ({activeTrays.length})
         </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence>
-            {activeTrays.map(record => {
-              const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
-              return (
-                <motion.div key={record.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{record.dish_name}</h3>
-                      <p className="text-sm text-muted-foreground">{cap.label} — {record.peso_kg}kg</p>
-                    </div>
-                    <Badge className={statusConfig.no_buffet.color}><Clock className="mr-1 h-3 w-3" /> No Buffet</Badge>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Saída: {formatTime(record.enviado_at)} · {record.registado_por}</p>
-                    <Button size="sm" variant="outline" onClick={() => setCheckoutTarget(record)}>Recolher</Button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+        {(() => {
+          // Group active trays by dish name
+          const grouped = new Map<string, RegistoProducao[]>();
+          activeTrays.forEach(r => {
+            const list = grouped.get(r.dish_name) || [];
+            list.push(r);
+            grouped.set(r.dish_name, list);
+          });
+          return (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <AnimatePresence>
+                {Array.from(grouped.entries()).map(([dishName, trays]) => {
+                  const totalKg = trays.reduce((s, t) => s + t.peso_kg, 0);
+                  return (
+                    <motion.div key={dishName} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="rounded-xl border border-primary/20 bg-card p-5 shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-foreground">{dishName}</h3>
+                          <p className="text-sm text-muted-foreground">{trays.length} reposição{trays.length > 1 ? 'ões' : ''} · {totalKg}kg total</p>
+                        </div>
+                        <Badge className={statusConfig.no_buffet.color}><Clock className="mr-1 h-3 w-3" /> No Buffet</Badge>
+                      </div>
+                      <div className="mt-3 space-y-2 border-t border-border pt-3">
+                        {trays.map(record => {
+                          const cap = recipientCapacity[record.recipiente as RecipientSize] || { label: record.recipiente, capacityKg: record.peso_kg };
+                          return (
+                            <div key={record.id} className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">{cap.label} · {record.peso_kg}kg · {formatTime(record.enviado_at)}</span>
+                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCheckoutTarget(record)}>Recolher</Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          );
+        })()}
         {activeTrays.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhum tabuleiro no buffet</p>}
       </div>
 

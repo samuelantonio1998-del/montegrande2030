@@ -30,7 +30,8 @@ export function setEmployees(list: AppUser[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-export const mockUsers = getEmployees();
+// Employees list used for PIN authentication
+const allUsers = getEmployees();
 
 type AuthContextType = {
   user: AppUser | null;

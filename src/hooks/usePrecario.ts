@@ -74,12 +74,12 @@ export function usePrecario() {
     const map = new Map<string, BeverageCategory>();
     bebidas.forEach(b => {
       if (!map.has(b.categoria)) map.set(b.categoria, { category: b.categoria, items: [] });
-      map.get(b.categoria)!.items.push({ id: b.id, name: b.nome, price: b.preco });
+      map.get(b.categoria)!.items.push({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml });
     });
     return Array.from(map.values());
   }, [bebidas]);
 
-  const beverageMenuFlat = useMemo(() => bebidas.map(b => ({ id: b.id, name: b.nome, price: b.preco })), [bebidas]);
+  const beverageMenuFlat = useMemo(() => bebidas.map(b => ({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml })), [bebidas]);
 
   // CRUD
   const updateBebidaPrice = useCallback(async (id: string, preco: number) => {

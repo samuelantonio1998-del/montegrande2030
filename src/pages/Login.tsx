@@ -9,13 +9,14 @@ export default function Login() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
 
-  const handleDigit = (d: string) => {
+  const handleDigit = async (d: string) => {
     if (pin.length >= 4) return;
     const next = pin + d;
     setPin(next);
     setError(false);
     if (next.length === 4) {
-      if (!login(next)) {
+      const success = await login(next);
+      if (!success) {
         setError(true);
         setTimeout(() => { setPin(''); setError(false); }, 800);
       }
@@ -34,7 +35,6 @@ export default function Login() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-sm space-y-8"
       >
-        {/* Logo */}
         <div className="text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
             <span className="text-2xl font-bold text-primary-foreground">R</span>
@@ -43,7 +43,6 @@ export default function Login() {
           <p className="mt-1 text-muted-foreground">Introduza o seu PIN</p>
         </div>
 
-        {/* PIN dots */}
         <div className="flex justify-center gap-4">
           {[0, 1, 2, 3].map(i => (
             <motion.div
@@ -60,7 +59,6 @@ export default function Login() {
           ))}
         </div>
 
-        {/* Keypad */}
         <div className="grid grid-cols-3 gap-3">
           {['1','2','3','4','5','6','7','8','9','','0','del'].map((key) => {
             if (key === '') return <div key="empty" />;

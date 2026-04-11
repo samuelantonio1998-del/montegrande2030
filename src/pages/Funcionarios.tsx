@@ -36,7 +36,7 @@ export default function Funcionarios() {
   const [editName, setEditName] = useState('');
   const [visiblePin, setVisiblePin] = useState<string | null>(null);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName.trim() || !newPin.trim()) {
       toast.error('Preencha nome e PIN');
       return;
@@ -45,7 +45,7 @@ export default function Funcionarios() {
       toast.error('O PIN deve ter pelo menos 4 dígitos');
       return;
     }
-    const success = addEmployee({ name: newName.trim(), pin: newPin.trim(), role: newRole });
+    const success = await addEmployee({ name: newName.trim(), pin: newPin.trim(), role: newRole });
     if (success) {
       setShowAdd(false);
       setNewName('');

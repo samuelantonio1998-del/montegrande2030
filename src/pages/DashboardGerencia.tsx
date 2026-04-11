@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2, Edit3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import FeedbackInbox from '@/components/feedback/FeedbackInbox';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
 import { useTarefas } from '@/hooks/useTarefas';
@@ -413,6 +414,11 @@ export default function DashboardGerencia() {
             });
           })()}
         </div>
+      </motion.div>
+
+      {/* Feedback Inbox */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="rounded-xl border border-border bg-card p-6">
+        <FeedbackInbox />
       </motion.div>
 
       <EditInventoryEntryDialog

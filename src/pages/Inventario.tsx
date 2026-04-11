@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -129,12 +130,23 @@ export default function Inventario() {
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
   const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
 
+  // Movimentações "ver mais"
+  const [movLimit, setMovLimit] = useState(10);
+
+  // Confirmation dialogs
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [confirmInvoice, setConfirmInvoice] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // Fetch movimentações from this week
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString();
     const [prodRes, fornRes, movRes] = await Promise.all([
       supabase.from('produtos').select('*').eq('ativo', true).order('nome'),
       supabase.from('fornecedores').select('*').order('nome'),
-      supabase.from('movimentacoes').select('*, produtos(nome, unidade)').order('created_at', { ascending: false }).limit(50),
+      supabase.from('movimentacoes').select('*, produtos(nome, unidade)').order('created_at', { ascending: false }).gte('created_at', weekAgoStr).limit(200),
     ]);
     if (prodRes.data) setProdutos(prodRes.data);
     if (fornRes.data) setFornecedores(fornRes.data);
@@ -175,7 +187,6 @@ export default function Inventario() {
     setScannerStep('processing');
     setProcessingProgress(0);
 
-    // Simulate progress
     const progressInterval = setInterval(() => {
       setProcessingProgress(prev => {
         if (prev >= 90) { clearInterval(progressInterval); return 90; }
@@ -202,7 +213,6 @@ export default function Inventario() {
 
       if (error) throw error;
 
-      // Extract invoice metadata
       const meta: InvoiceMeta = {
         numero_fatura: data.numero_fatura || null,
         data_fatura: data.data_fatura || null,
@@ -210,7 +220,6 @@ export default function Inventario() {
       };
       setInvoiceMeta(meta);
 
-      // Build hash and check for duplicate
       const hashParts = [meta.numero_fatura, meta.data_fatura, meta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
       const hashStr = hashParts.join('|');
       if (hashStr) {
@@ -224,7 +233,6 @@ export default function Inventario() {
         setDuplicateWarning(null);
       }
 
-      // Fetch aliases for matching
       const { data: aliases } = await supabase.from('produto_aliases' as any).select('alias_nome, produto_id');
       const aliasMap = new Map<string, string>();
       if (aliases) {
@@ -244,7 +252,6 @@ export default function Inventario() {
               return forn?.nome.toLowerCase() === item.fornecedor?.toLowerCase();
             })
           : null;
-        // Check aliases
         const normalizedItemName = item.nome?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() || '';
         const aliasProductId = aliasMap.get(normalizedItemName);
         const matchByAlias = aliasProductId ? produtos.find(p => p.id === aliasProductId) : null;
@@ -275,23 +282,20 @@ export default function Inventario() {
     }
   };
 
-  // Step 3: Confirm scanned items
+  // Step 3: Confirm scanned items (with confirmation popup)
   const confirmScannedItems = async () => {
     setConfirmingEntry(true);
     const selected = scannedItems.filter(i => i.selected);
 
-    // Auto-create/find suppliers from scanned items
     const supplierCache: Record<string, string> = {};
     for (const item of selected) {
       if (item.fornecedor && item.fornecedor.trim()) {
         const fornNome = item.fornecedor.trim();
         if (!supplierCache[fornNome.toLowerCase()]) {
-          // Check if supplier exists
           const existing = fornecedores.find(f => f.nome.toLowerCase() === fornNome.toLowerCase());
           if (existing) {
             supplierCache[fornNome.toLowerCase()] = existing.id;
           } else {
-            // Create new supplier
             const { data: newForn } = await supabase.from('fornecedores').insert({ nome: fornNome }).select().single();
             if (newForn) {
               supplierCache[fornNome.toLowerCase()] = newForn.id;
@@ -320,7 +324,6 @@ export default function Inventario() {
           });
         }
       } else {
-        // Double-check: try to find existing product by SKU, name+supplier, or fuzzy name before creating
         let existingProd = item.sku
           ? produtos.find(p => p.sku && p.sku.toLowerCase() === item.sku.toLowerCase())
           : null;
@@ -328,7 +331,6 @@ export default function Inventario() {
           existingProd = produtos.find(p => p.nome.toLowerCase() === item.nome.toLowerCase() && p.fornecedor_id === fornecedorId);
         }
         if (!existingProd) {
-          // Check aliases
           const { data: aliasMatch } = await supabase.from('produto_aliases' as any).select('produto_id')
             .ilike('alias_nome', item.nome).limit(1);
           if (aliasMatch?.[0]) {
@@ -336,7 +338,6 @@ export default function Inventario() {
           }
         }
         if (!existingProd) {
-          // Fuzzy match as last resort before creating
           let bestScore = 0;
           for (const p of produtos) {
             const score = similarity(item.nome, p.nome);
@@ -348,7 +349,6 @@ export default function Inventario() {
         }
 
         if (existingProd) {
-          // Found a match - update instead of creating duplicate
           const newStock = existingProd.stock_atual + item.quantidade;
           const totalCost = existingProd.custo_medio * existingProd.stock_atual + item.custo_unitario * item.quantidade;
           const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
@@ -362,22 +362,21 @@ export default function Inventario() {
             fornecedor_id: fornecedorId,
           });
         } else {
-        const { data: newProd } = await supabase.from('produtos').insert({
-          nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
-          custo_medio: item.custo_unitario, sku: item.sku,
-          fornecedor_id: fornecedorId,
-        }).select().single();
-        if (newProd) {
-          await supabase.from('movimentacoes').insert({
-            produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
+          const { data: newProd } = await supabase.from('produtos').insert({
+            nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
+            custo_medio: item.custo_unitario, sku: item.sku,
             fornecedor_id: fornecedorId,
-          });
-        }
+          }).select().single();
+          if (newProd) {
+            await supabase.from('movimentacoes').insert({
+              produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
+              custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
+              fornecedor_id: fornecedorId,
+            });
+          }
         }
       }
     }
-    // Save invoice hash to prevent future duplicates
     const hashParts = [invoiceMeta.numero_fatura, invoiceMeta.data_fatura, invoiceMeta.fornecedor_nome].filter(Boolean).map(s => s!.trim().toLowerCase());
     const hashStr = hashParts.join('|');
     if (hashStr) {
@@ -419,6 +418,12 @@ export default function Inventario() {
   const handleCreateProduct = async () => {
     if (!newProductForm.nome.trim()) {
       toast({ title: 'Nome do produto é obrigatório', variant: 'destructive' });
+      return;
+    }
+    // Check for duplicate name
+    const duplicate = produtos.find(p => p.nome.toLowerCase().trim() === newProductForm.nome.toLowerCase().trim());
+    if (duplicate) {
+      toast({ title: 'Já existe um produto com este nome', description: `"${duplicate.nome}" já está registado no inventário.`, variant: 'destructive' });
       return;
     }
     setCreatingProduct(true);
@@ -487,6 +492,7 @@ export default function Inventario() {
     await log(exitForm.tipo === 'quebra' ? 'Quebra stock' : 'Saída stock', 'Inventário', `${produto.nome} -${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, motivo: exitForm.motivo });
     setShowExit(false);
     setExitForm({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' });
+    setConfirmExit(false);
     fetchData();
   };
 
@@ -506,7 +512,6 @@ export default function Inventario() {
       return { nome: p.nome, quantidade: Math.max(0, Math.round(qty * 100) / 100), unidade: p.unidade };
     }).filter(i => i.quantidade > 0);
 
-    // Build clipboard text
     const clipboardText = [
       `ENCOMENDA — ${forn?.nome || 'Fornecedor'}`,
       `Data: ${new Date().toLocaleDateString('pt-PT')}`,
@@ -516,7 +521,6 @@ export default function Inventario() {
       'Quinta Monte Grande',
     ].join('\n');
 
-    // Copy to clipboard
     try {
       await navigator.clipboard.writeText(clipboardText);
       toast({ title: 'Encomenda copiada', description: 'Texto copiado para a área de transferência' });
@@ -524,7 +528,6 @@ export default function Inventario() {
       toast({ title: 'Encomenda gerada', description: clipboardText });
     }
 
-    // Send email if supplier has email
     const fornEmail = fornFull?.data?.email;
     if (fornEmail) {
       const orderId = crypto.randomUUID();
@@ -545,6 +548,9 @@ export default function Inventario() {
     }
   };
 
+  // Get selected exit product for showing stock info
+  const exitProduct = produtos.find(p => p.id === exitForm.produto_id);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -563,6 +569,15 @@ export default function Inventario() {
         <p className="mt-1 text-muted-foreground">
           {produtos.length} produtos · {lowStock.length} abaixo do mínimo
         </p>
+      </div>
+
+      {/* Nota informativa sobre unidades */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2.5">
+        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="text-xs text-muted-foreground">
+          <p className="font-medium text-foreground mb-0.5">⚠️ Regra de unidades</p>
+          <p>Como deu entrada, tem que dar saída. Se o produto entrou em <strong>kg</strong>, tem que sair em <strong>kg</strong>. Se entrou por <strong>unidade</strong>, sai por <strong>unidade</strong>. Se entrou <strong>congelado</strong>, tem que sair como <strong>congelado</strong>. Verifique sempre as quantidades ao dar entrada e saída.</p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -586,7 +601,6 @@ export default function Inventario() {
           
           {/* Scanner Flow */}
           <AnimatePresence mode="wait">
-            {/* STEP: IDLE - Show action buttons */}
             {scannerStep === 'idle' && (
               <motion.div
                 key="idle"
@@ -621,7 +635,6 @@ export default function Inventario() {
               </motion.div>
             )}
 
-            {/* STEP: PREVIEW - Show photo preview */}
             {scannerStep === 'preview' && previewUrl && (
               <motion.div
                 key="preview"
@@ -661,7 +674,6 @@ export default function Inventario() {
               </motion.div>
             )}
 
-            {/* STEP: PROCESSING - Loading animation */}
             {scannerStep === 'processing' && (
               <motion.div
                 key="processing"
@@ -695,7 +707,6 @@ export default function Inventario() {
               </motion.div>
             )}
 
-            {/* STEP: REVIEW - Editable verification table */}
             {scannerStep === 'review' && (
               <motion.div
                 key="review"
@@ -716,7 +727,6 @@ export default function Inventario() {
                   </Button>
                 </div>
 
-                {/* Duplicate warning banner */}
                 {duplicateWarning?.found && (
                   <div className="px-4 py-3 bg-warning/15 border-b border-warning/30 flex items-center gap-3">
                     <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
@@ -732,7 +742,6 @@ export default function Inventario() {
                   </div>
                 )}
 
-                {/* Invoice metadata display */}
                 {(invoiceMeta.numero_fatura || invoiceMeta.data_fatura || invoiceMeta.fornecedor_nome) && (
                   <div className="px-4 py-2 border-b border-border bg-muted/30 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     {invoiceMeta.numero_fatura && <span>📄 <strong>Nº:</strong> {invoiceMeta.numero_fatura}</span>}
@@ -794,7 +803,7 @@ export default function Inventario() {
                                   />
                                 </div>
                                 <div>
-                                  <span className="text-[10px] uppercase text-muted-foreground">Preço/Un</span>
+                                  <span className="text-[10px] uppercase text-muted-foreground">€/Un</span>
                                   <Input
                                     type="number"
                                     value={item.custo_unitario}
@@ -804,17 +813,31 @@ export default function Inventario() {
                                   />
                                 </div>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-semibold text-foreground">
-                                  Total: €{(item.quantidade * item.custo_unitario).toFixed(2)}
-                                </span>
-                                {item.sku && <span className="text-[10px] text-muted-foreground font-mono">Ref: {item.sku}</span>}
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">SKU</span>
+                                  <Input
+                                    value={item.sku || ''}
+                                    onChange={(e) => updateScannedItem(i, 'sku', e.target.value)}
+                                    className="h-7 text-xs border-transparent bg-muted/40 hover:border-input focus:border-input"
+                                    placeholder="—"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Fornecedor</span>
+                                  <Input
+                                    value={item.fornecedor || ''}
+                                    onChange={(e) => updateScannedItem(i, 'fornecedor', e.target.value)}
+                                    className="h-7 text-xs border-transparent bg-muted/40 hover:border-input focus:border-input"
+                                    placeholder="—"
+                                  />
+                                </div>
                               </div>
                               <Select
                                 value={item.produto_id || 'new'}
                                 onValueChange={(v) => updateScannedItem(i, 'produto_id', v === 'new' ? undefined : v)}
                               >
-                                <SelectTrigger className="h-7 text-xs border-muted bg-muted/40">
+                                <SelectTrigger className="h-7 text-xs">
                                   <SelectValue placeholder="Novo produto" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -824,36 +847,47 @@ export default function Inventario() {
                                   ))}
                                 </SelectContent>
                               </Select>
+                              {item.produto_id && (() => {
+                                const prod = produtos.find(p => p.id === item.produto_id);
+                                return prod ? (
+                                  <p className="text-[10px] text-muted-foreground">Stock atual: <strong>{prod.stock_atual}{prod.unidade}</strong></p>
+                                ) : null;
+                              })()}
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">Total: €{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
+                                {!item.produto_id && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/30">Novo</Badge>}
+                              </div>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* Desktop table layout */}
+                    {/* Desktop table */}
                     <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full text-left">
                         <thead>
-                          <tr className="border-b border-border bg-muted/50">
-                            <th className="w-10 px-3 py-2.5"></th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artigo</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-24">Qtd.</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-20">Un.</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-28">Preço/Un <span className="normal-case font-normal">(s/IVA)</span></th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-28">Total</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-24">Ref.</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-32">Fornecedor</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-44">Produto</th>
+                          <tr className="border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground">
+                            <th className="px-3 py-2 w-8"></th>
+                            <th className="px-3 py-2">Artigo</th>
+                            <th className="px-3 py-2 w-20">Qtd.</th>
+                            <th className="px-3 py-2 w-16">Un.</th>
+                            <th className="px-3 py-2 w-24">€/Un (s/IVA)</th>
+                            <th className="px-3 py-2 w-20">Total</th>
+                            <th className="px-3 py-2 w-24">SKU</th>
+                            <th className="px-3 py-2 w-28">Fornecedor</th>
+                            <th className="px-3 py-2 w-36">Associar a</th>
                           </tr>
                         </thead>
                         <tbody>
                           {scannedItems.map((item, i) => (
                             <tr key={i} className={cn(
-                              "border-b border-border transition-colors",
-                              !item.selected && "opacity-40 bg-muted/20",
-                              item.selected && "hover:bg-muted/30"
+                              'border-b border-border transition-colors',
+                              !item.selected && 'opacity-40 bg-muted/10',
+                              item.selected && 'hover:bg-muted/20',
+                              !item.produto_id && item.selected && 'bg-primary/5'
                             )}>
-                              <td className="px-3 py-2.5 text-center">
+                              <td className="px-3 py-2.5">
                                 <input
                                   type="checkbox"
                                   checked={item.selected}
@@ -873,7 +907,7 @@ export default function Inventario() {
                                   type="number"
                                   value={item.quantidade}
                                   onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
-                                  className="h-8 text-sm w-20 border-transparent bg-transparent hover:border-input focus:border-input"
+                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
                                   step="0.01"
                                 />
                               </td>
@@ -881,7 +915,7 @@ export default function Inventario() {
                                 <Input
                                   value={item.unidade}
                                   onChange={(e) => updateScannedItem(i, 'unidade', e.target.value)}
-                                  className="h-8 text-sm w-16 border-transparent bg-transparent hover:border-input focus:border-input"
+                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
@@ -889,14 +923,12 @@ export default function Inventario() {
                                   type="number"
                                   value={item.custo_unitario}
                                   onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
-                                  className="h-8 text-sm w-24 border-transparent bg-transparent hover:border-input focus:border-input"
+                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
                                   step="0.01"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
-                                <span className="text-sm font-medium text-foreground">
-                                  €{(item.quantidade * item.custo_unitario).toFixed(2)}
-                                </span>
+                                <span className="text-sm font-medium text-foreground">€{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
                               </td>
                               <td className="px-3 py-2.5">
                                 <span className="text-xs text-muted-foreground font-mono">
@@ -930,7 +962,7 @@ export default function Inventario() {
                       </table>
                     </div>
 
-                    {/* Summary & Confirm */}
+                    {/* Summary & Confirm with confirmation popup */}
                     <div className="px-4 py-3 border-t border-border bg-muted/30 flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">
                         <span className="font-medium text-foreground">{selectedCount}</span> itens selecionados
@@ -943,7 +975,7 @@ export default function Inventario() {
                         </Button>
                         <Button
                           size="sm"
-                          onClick={confirmScannedItems}
+                          onClick={() => setConfirmInvoice(true)}
                           disabled={selectedCount === 0 || confirmingEntry}
                         >
                           {confirmingEntry ? (
@@ -1063,13 +1095,14 @@ export default function Inventario() {
             )}
           </AnimatePresence>
 
-          {/* Recent movements */}
+          {/* Recent movements with "ver mais" */}
           <div className="rounded-xl border border-border bg-card shadow-sm">
-            <div className="px-4 py-3 border-b border-border">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Movimentações Recentes</h3>
+              <span className="text-[10px] text-muted-foreground">Últimos 7 dias</span>
             </div>
             <div className="divide-y divide-border">
-              {movimentacoes.slice(0, 10).map(mov => (
+              {movimentacoes.slice(0, movLimit).map(mov => (
                 <div key={mov.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className={cn(
@@ -1099,6 +1132,14 @@ export default function Inventario() {
                 <p className="px-4 py-8 text-center text-sm text-muted-foreground">Sem movimentações registadas</p>
               )}
             </div>
+            {movimentacoes.length > movLimit && (
+              <div className="px-4 py-2 border-t border-border">
+                <Button variant="ghost" size="sm" className="w-full gap-1.5 text-xs" onClick={() => setMovLimit(prev => prev + 20)}>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                  Ver mais ({movimentacoes.length - movLimit} restantes)
+                </Button>
+              </div>
+            )}
           </div>
         </TabsContent>
 
@@ -1150,11 +1191,20 @@ export default function Inventario() {
                       {produtos.map(p => <SelectItem key={p.id} value={p.id}>{p.nome} ({p.stock_atual}{p.unidade})</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Input type="number" placeholder={`Quantidade (${produtos.find(p => p.id === exitForm.produto_id)?.unidade || 'un'})`} value={exitForm.quantidade} onChange={e => setExitForm(f => ({ ...f, quantidade: e.target.value }))} />
+                  <Input type="number" placeholder={`Quantidade (${exitProduct?.unidade || 'un'})`} value={exitForm.quantidade} onChange={e => setExitForm(f => ({ ...f, quantidade: e.target.value }))} />
                   <Input placeholder="Motivo (opcional)" value={exitForm.motivo} onChange={e => setExitForm(f => ({ ...f, motivo: e.target.value }))} />
                 </div>
+                {/* Show current stock when product selected */}
+                {exitProduct && (
+                  <div className="rounded-lg bg-muted/50 p-2.5 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Existências atuais:</span>
+                    <span className={cn('text-sm font-bold', exitProduct.stock_atual <= exitProduct.stock_minimo ? 'text-destructive' : 'text-foreground')}>
+                      {exitProduct.stock_atual} {exitProduct.unidade}
+                    </span>
+                  </div>
+                )}
                 <Button
-                  onClick={handleExit}
+                  onClick={() => setConfirmExit(true)}
                   disabled={!exitForm.produto_id || !exitForm.quantidade}
                   variant={exitForm.tipo === 'quebra' ? 'destructive' : 'default'}
                 >
@@ -1326,6 +1376,50 @@ export default function Inventario() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation: Exit/Quebra */}
+      <AlertDialog open={confirmExit} onOpenChange={setConfirmExit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar {exitForm.tipo === 'quebra' ? 'quebra' : 'saída'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {exitProduct && (
+                <span>
+                  Vai registar a saída de <strong>{exitForm.quantidade} {exitProduct.unidade}</strong> de <strong>{exitProduct.nome}</strong>.
+                  <br />Existências atuais: <strong>{exitProduct.stock_atual} {exitProduct.unidade}</strong>
+                  <br />Existências após: <strong>{Math.max(0, exitProduct.stock_atual - parseFloat(exitForm.quantidade || '0'))} {exitProduct.unidade}</strong>
+                  <br /><br />⚠️ Verifique se o peso/quantidade está correto antes de confirmar.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExit} className={exitForm.tipo === 'quebra' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation: Invoice submission */}
+      <AlertDialog open={confirmInvoice} onOpenChange={setConfirmInvoice}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar entrada de fatura</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vai registar a entrada de <strong>{selectedCount} itens</strong> no valor total de <strong>€{totalValue.toFixed(2)}</strong>.
+              <br /><br />⚠️ Verifique se as quantidades e preços estão corretos. As existências serão atualizadas automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Rever</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmInvoice(false); confirmScannedItems(); }}>
+              Confirmar Entrada
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

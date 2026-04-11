@@ -1,4 +1,4 @@
-import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardCheck } from 'lucide-react';
+import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardCheck, Sparkles, MessageSquarePlus } from 'lucide-react';
 import { useTarefas, type Tarefa } from '@/hooks/useTarefas';
 import { useMesas } from '@/hooks/useMesas';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
+import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
+import FeedbackDialog from '@/components/feedback/FeedbackDialog';
 
 const categories = [
   { key: 'all', label: 'Todas' },
@@ -26,6 +28,11 @@ export default function DashboardSala() {
 
   const totalInRoom = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
   const occupiedCount = mesas.filter(m => m.status === 'ocupada' || m.status === 'conta').length;
+
+  // Prep AI: before 12h = today's tasks, after 12h = tomorrow's prep
+  const now = new Date();
+  const isAfternoon = now.getHours() >= 12;
+  const prepLabel = isAfternoon ? 'Preparação para amanhã' : 'Tarefas do dia';
 
   const toggleItem = async (task: Tarefa) => {
     if (!task.concluida) {
@@ -55,7 +62,10 @@ export default function DashboardSala() {
           <h1 className="text-2xl font-display text-foreground">Olá, {user?.name}</h1>
           <p className="text-sm text-muted-foreground">Sala · {totalInRoom} pessoas em sala</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
+        <div className="flex items-center gap-2">
+          <FeedbackDialog />
+          <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -88,7 +98,18 @@ export default function DashboardSala() {
 
       <div>
         <div className="flex flex-col gap-2 mb-3">
-          <h2 className="text-lg font-semibold text-foreground">Tarefas do dia</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">{prepLabel}</h2>
+            {isAfternoon && (
+              <AIprepTasksDialog onTasksAdded={() => {}} />
+            )}
+          </div>
+          {isAfternoon && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary" />
+              Após as 12h, use o Prep IA para gerar tarefas de preparação para amanhã
+            </p>
+          )}
           <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
             {categories.map(cat => (
               <button key={cat.key} onClick={() => setFilter(cat.key)} className={cn('rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0', filter === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>

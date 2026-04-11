@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2, Edit3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import FeedbackInbox from '@/components/feedback/FeedbackInbox';
 import { useMesas } from '@/hooks/useMesas';
 import { useRegistosProducao } from '@/hooks/useRegistosProducao';
 import { useTarefas } from '@/hooks/useTarefas';

@@ -260,7 +260,11 @@ export default function Fornecedores() {
             </div>
           ) : selected && (
             <div className="space-y-5">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setDetailOpen(false); setOrderOpen(true); }}>
+                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                  Encomendar
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
                   <Edit3 className="h-3.5 w-3.5 mr-1.5" />
                   Editar

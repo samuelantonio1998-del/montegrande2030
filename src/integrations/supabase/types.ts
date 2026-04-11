@@ -566,30 +566,39 @@ export type Database = {
           ativo: boolean
           categoria: string
           created_at: string
+          dose_ml: number | null
+          garrafa_ml: number | null
           id: string
           nome: string
           ordem: number
           preco: number
+          tipo_servico: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          dose_ml?: number | null
+          garrafa_ml?: number | null
           id?: string
           nome: string
           ordem?: number
           preco?: number
+          tipo_servico?: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          dose_ml?: number | null
+          garrafa_ml?: number | null
           id?: string
           nome?: string
           ordem?: number
           preco?: number
+          tipo_servico?: string
           updated_at?: string
         }
         Relationships: []

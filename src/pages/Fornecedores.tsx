@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck, Search, ShoppingCart } from 'lucide-react';
-import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
+import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

@@ -1333,9 +1333,13 @@ export default function Inventario() {
                         {forn?.email && <p className="text-xs text-muted-foreground">{forn.email}</p>}
                         {forn?.dia_encomenda && <p className="text-xs text-muted-foreground">Encomenda: {forn.dia_encomenda}</p>}
                       </div>
-                      <Button size="sm" onClick={() => handleOrder(fId, items)}>
+                      <Button size="sm" onClick={() => {
+                        setOrderFornecedor({ id: fId, nome: forn?.nome || 'Sem Fornecedor', email: forn?.email || null });
+                        setOrderProducts(items);
+                        setOrderDialogOpen(true);
+                      }}>
                         <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                        Gerar Encomenda
+                        Encomendar
                       </Button>
                     </div>
                     <div className="divide-y divide-border">

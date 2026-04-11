@@ -250,8 +250,17 @@ export default function PriceManagementPanel() {
                           {item.name}
                           <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
                         </button>
-                      )}
+                       )}
                       <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn('h-7 w-7 shrink-0', item.produtoId ? 'text-success' : 'text-muted-foreground')}
+                          onClick={() => setLinkItem(item)}
+                          title={item.produtoId ? 'Ligado ao inventário (clique para alterar)' : 'Sem ligação ao inventário (clique para ligar)'}
+                        >
+                          {item.produtoId ? <Link className="h-3.5 w-3.5" /> : <Unlink className="h-3.5 w-3.5" />}
+                        </Button>
                         <button
                           onClick={() => toggleServico(item)}
                           className={cn(

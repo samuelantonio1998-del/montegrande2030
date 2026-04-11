@@ -108,6 +108,14 @@ export default function PriceManagementPanel() {
     toast.success(isDose ? `${item.name}: servido à unidade` : `${item.name}: servido à dose (50ml)`);
   };
 
+  const renameItem = async (itemId: string, newName: string) => {
+    if (!newName.trim()) return;
+    await supabase.from('precario_bebidas').update({ nome: newName.trim() }).eq('id', itemId);
+    await fetchAll();
+    setEditingItemId(null);
+    toast.success('Nome atualizado');
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     if (deleteTarget.itemIdx !== undefined) {

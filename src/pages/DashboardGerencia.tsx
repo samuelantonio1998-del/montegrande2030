@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';
+import ClosureDaysPanel from '@/components/gerencia/ClosureDaysPanel';
+import ReceiptHistoryPanel from '@/components/gerencia/ReceiptHistoryPanel';
 
 type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };
@@ -322,6 +324,16 @@ export default function DashboardGerencia() {
             ))}
             {purchaseAlerts.length === 0 && <div className="text-center py-6 text-sm text-muted-foreground sm:col-span-2">Stock dentro dos limites ✓</div>}
           </div>
+        </motion.div>
+      </div>
+
+      {/* Closure Days & Receipt History */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="rounded-xl border border-border bg-card p-6">
+          <ClosureDaysPanel />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
+          <ReceiptHistoryPanel />
         </motion.div>
       </div>
 

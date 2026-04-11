@@ -271,6 +271,25 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                   for (const bev of mesa.beverages) {
                     const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
                     const bevNorm = normalize(bev.name);
+
+                    // Coffee special logic: even qty = 11g, odd qty = 7g per serving
+                    const isCoffee = /^(café|cafè|expresso|descafeinado|carioca|abatanado)/i.test(bev.name.trim());
+                    if (isCoffee) {
+                      // Find coffee product in stock (stored in kg)
+                      const coffeeMatch = produtos.find(p => {
+                        const pNorm = normalize(p.nome);
+                        return pNorm.includes('cafe') || pNorm.includes('café') || pNorm === 'cafe em grao' || pNorm.includes('cafe grao');
+                      });
+                      if (coffeeMatch) {
+                        const gramsPerServing = bev.quantity % 2 === 0 ? 11 : 7;
+                        const totalGrams = gramsPerServing * bev.quantity;
+                        const totalKg = totalGrams / 1000;
+                        await supabase.from('produtos').update({ stock_atual: Math.max(0, coffeeMatch.stock_atual - totalKg) }).eq('id', coffeeMatch.id);
+                        await supabase.from('movimentacoes').insert({ produto_id: coffeeMatch.id, tipo: 'saida', quantidade: totalKg, motivo: `Mesa ${mesa.number} — ${bev.quantity}x ${bev.name} (${gramsPerServing}g/un)`, funcionario: mesa.waiter || null });
+                      }
+                      continue;
+                    }
+
                     let bestMatch: typeof produtos[0] | null = null;
                     let bestScore = 0;
                     for (const p of produtos) {

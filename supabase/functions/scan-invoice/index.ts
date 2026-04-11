@@ -42,21 +42,29 @@ INVOICE METADATA - CRITICAL: Always extract these from the invoice header/footer
 
 PRODUCT ITEMS - Extract with these fields:
 - nome: product name (string)
-- quantidade: TOTAL quantity of individual units (number). CRITICAL RULE FOR PACKS/BUNDLES: If the product is sold in packs or bundles, you MUST multiply the number of packs by the units per pack to get the total individual units. Look for patterns like:
-  * "X6", "x6", "X12", "x24" in the product name → multiply ordered quantity by that number
-  * "1,5LTX6" means pack of 6 bottles of 1.5L → if 4 ordered, quantidade = 4 * 6 = 24
-  * "24X33C" or "24x33cl" means pack of 24 units of 33cl → if 2 ordered, quantidade = 2 * 24 = 48
-  * "Pack", "Pk", "Cx" followed by a number → multiply accordingly
-  * "6x1L", "12x0.5L" → the first number is units per pack
-  Always calculate: quantidade = packs_ordered × units_per_pack. If no pack indicator, use the quantity as-is.
+- quantidade: TOTAL quantity of individual units (number). 
+  
+  CRITICAL QUANTITY RULES:
+  1. READ CAREFULLY: Look at the "Qtd", "Qty", "Quantidade" column. The number there is the base quantity ordered.
+  2. CHECK FOR DECIMAL QUANTITIES: Some products are sold by weight (e.g., "2.500" means 2.5 kg, NOT 2500 units). If the unit is KG and the quantity has decimals, keep it as a decimal number.
+  3. PACKS/BUNDLES: If the product name contains pack indicators, multiply:
+     * "X6", "x6", "X12", "x24" in the product name → multiply ordered quantity by that number
+     * "1,5LTX6" means pack of 6 bottles of 1.5L → if 4 ordered, quantidade = 4 * 6 = 24
+     * "24X33C" or "24x33cl" means pack of 24 units of 33cl → if 2 ordered, quantidade = 2 * 24 = 48
+     * "Pack", "Pk", "Cx" followed by a number → multiply accordingly
+     Always calculate: quantidade = packs_ordered × units_per_pack
+  4. DO NOT confuse product codes/references with quantities. SKUs and article codes are NOT quantities.
+  5. Verify each quantity makes sense for the product type (e.g., a restaurant won't order 44038 units of a single item).
+
 - unidade: unit of measure - un, garrafa, kg, L, caixa, etc. (string). For packed items, use the individual unit (e.g., "un" for bottles, "garrafa" for wine bottles).
 - custo_unitario: NET unit cost in euros WITHOUT VAT/IVA PER INDIVIDUAL UNIT (number). CRITICAL: If the invoice price is per pack, divide by the number of units in the pack to get the per-unit cost. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
-- fornecedor: supplier name if visible on the invoice header/footer (string or null). IMPORTANT: Always extract the supplier/company name from the invoice header, logo, or footer.
-- sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available - look for codes like "REF:", "Art.", "Cod.", numbers at the start of each line, or any alphanumeric identifier associated with each product.
+- fornecedor: supplier name if visible on the invoice header/footer (string or null).
+- sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available.
 
 Only return the JSON via the tool call, no other text. If you cannot read the invoice, return empty items array.
-Always use Portuguese product names when possible. Pay special attention to product codes/references and supplier identification as they are crucial for inventory matching.
-REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units and divide cost to get per-unit cost.`,
+Always use Portuguese product names when possible.
+REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units and divide cost to get per-unit cost.
+DOUBLE-CHECK all quantities before returning - they should be realistic for a restaurant order.`,
           },
           {
             role: "user",

@@ -34,6 +34,7 @@ export default function Funcionarios() {
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
   const [editingPin, setEditingPin] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [visiblePin, setVisiblePin] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!newName.trim() || !newPin.trim()) {

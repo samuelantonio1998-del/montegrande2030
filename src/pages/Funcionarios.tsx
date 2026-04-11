@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Users, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Users, Pencil, Check, X, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -135,7 +135,19 @@ export default function Funcionarios() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-foreground">{emp.pin}</code>
+                  <div className="flex items-center gap-1">
+                    <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-foreground">
+                      {visiblePin === emp.pin ? emp.pin : '••••'}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setVisiblePin(visiblePin === emp.pin ? null : emp.pin)}
+                    >
+                      {visiblePin === emp.pin ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Select

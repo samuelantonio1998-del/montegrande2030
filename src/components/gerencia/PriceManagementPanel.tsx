@@ -190,10 +190,26 @@ export default function PriceManagementPanel() {
               </button>
               {expandedCat === cat.category && (
                 <div className="border-t border-border p-3 space-y-2 bg-muted/20">
-                  {cat.items.map((item, ii) => (
-                    <div key={item.id || item.name + ii} className="flex items-center justify-between gap-3">
+                   {cat.items.map((item, ii) => (
+                    <div key={item.id || item.name + ii} className="flex items-center justify-between gap-2">
                       <span className="text-sm text-foreground truncate flex-1">{item.name}</span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => toggleServico(item)}
+                          className={cn(
+                            'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors shrink-0',
+                            item.tipoServico === 'dose'
+                              ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          )}
+                          title={item.tipoServico === 'dose' ? `Dose: ${item.doseMl}ml (garrafa ${item.garrafaMl}ml)` : 'Unidade inteira'}
+                        >
+                          {item.tipoServico === 'dose' ? (
+                            <><Droplets className="h-3 w-3" /> {item.doseMl}ml</>
+                          ) : (
+                            <><GlassWater className="h-3 w-3" /> Un.</>
+                          )}
+                        </button>
                         <span className="text-xs text-muted-foreground">€</span>
                         <Input type="number" step="0.05" min="0" value={item.price} onChange={e => updateBev(ci, ii, e.target.value)} className="w-24 h-8 text-right text-sm" />
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ catIdx: ci, itemIdx: ii })}>

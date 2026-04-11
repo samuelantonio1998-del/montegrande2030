@@ -91,7 +91,47 @@ export default function Funcionarios() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
                       {emp.name[0]}
                     </div>
-                    <span className="font-medium text-foreground">{emp.name}</span>
+                    {editingPin === emp.pin ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          className="h-7 w-32 text-sm"
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && editName.trim()) {
+                              updateName(emp.pin, editName.trim());
+                              setEditingPin(null);
+                              toast.success('Nome atualizado');
+                            }
+                            if (e.key === 'Escape') setEditingPin(null);
+                          }}
+                        />
+                        <Button
+                          variant="ghost" size="icon" className="h-6 w-6"
+                          onClick={() => {
+                            if (editName.trim()) {
+                              updateName(emp.pin, editName.trim());
+                              setEditingPin(null);
+                              toast.success('Nome atualizado');
+                            }
+                          }}
+                        >
+                          <Check className="h-3.5 w-3.5 text-success" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingPin(null)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        className="group flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
+                        onClick={() => { setEditingPin(emp.pin); setEditName(emp.name); }}
+                      >
+                        {emp.name}
+                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+                      </button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>

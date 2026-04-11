@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { printReceipt } from '@/components/mesas/ReceiptPrint';
 import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
-import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal, type MealPrices } from '@/hooks/usePrecario';
+import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal, type MealPrices, type BeverageCategory, type BeverageItem } from '@/hooks/usePrecario';
 import { useActivityLog } from '@/hooks/useActivityLog';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {

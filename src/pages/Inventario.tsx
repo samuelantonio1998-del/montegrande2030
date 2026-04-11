@@ -416,6 +416,41 @@ export default function Inventario() {
     setScannedItems(copy);
   };
 
+  const handleCreateProduct = async () => {
+    if (!newProductForm.nome.trim()) {
+      toast({ title: 'Nome do produto é obrigatório', variant: 'destructive' });
+      return;
+    }
+    setCreatingProduct(true);
+    try {
+      const { data, error } = await supabase.from('produtos').insert({
+        nome: newProductForm.nome.trim(),
+        unidade: newProductForm.unidade,
+        categoria: newProductForm.categoria,
+        stock_minimo: parseFloat(newProductForm.stock_minimo) || 0,
+        stock_maximo: parseFloat(newProductForm.stock_maximo) || 100,
+        stock_atual: 0,
+        custo_medio: 0,
+      }).select('id').single();
+
+      if (error) throw error;
+
+      toast({ title: `Produto "${newProductForm.nome}" criado` });
+      await log('Criar produto', 'Inventário', `Novo produto: ${newProductForm.nome}`);
+      setNewProductForm({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
+      setShowNewProduct(false);
+      await fetchData();
+      if (data?.id) {
+        setManualForm(f => ({ ...f, produto_id: data.id }));
+      }
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Erro ao criar produto', variant: 'destructive' });
+    } finally {
+      setCreatingProduct(false);
+    }
+  };
+
   const handleManualEntry = async () => {
     if (!manualForm.produto_id || !manualForm.quantidade) return;
     const qty = parseFloat(manualForm.quantidade);

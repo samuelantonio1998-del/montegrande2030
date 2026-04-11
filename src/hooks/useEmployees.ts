@@ -29,5 +29,11 @@ export function useEmployees() {
     setLocal(updated);
   }, []);
 
-  return { employees, addEmployee, removeEmployee, updateRole };
+  const updateName = useCallback((pin: string, name: string) => {
+    const updated = getEmployees().map(e => e.pin === pin ? { ...e, name } : e);
+    setEmployees(updated);
+    setLocal(updated);
+  }, []);
+
+  return { employees, addEmployee, removeEmployee, updateRole, updateName };
 }

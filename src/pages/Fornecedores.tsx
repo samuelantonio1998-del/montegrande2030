@@ -339,7 +339,7 @@ export default function Fornecedores() {
           open={orderOpen}
           onOpenChange={setOrderOpen}
           fornecedor={selected}
-          produtos={getProductsForSupplier(selected.id).map(p => ({ ...p, stock_maximo: (p as any).stock_maximo ?? p.stock_minimo * 3 }))}
+          produtos={getProductsForSupplier(selected.id)}
         />
       )}
     </div>

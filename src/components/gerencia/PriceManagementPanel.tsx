@@ -92,6 +92,21 @@ export default function PriceManagementPanel() {
     setNewCatName('');
   };
 
+  const toggleServico = async (item: BeverageItem) => {
+    if (!item.id) return;
+    const isDose = item.tipoServico === 'dose';
+    const newTipo = isDose ? 'unidade' : 'dose';
+    const newDose = isDose ? null : 50;
+    const newGarrafa = isDose ? null : 750;
+    await supabase.from('precario_bebidas').update({
+      tipo_servico: newTipo,
+      dose_ml: newDose,
+      garrafa_ml: newGarrafa,
+    }).eq('id', item.id);
+    await fetchAll();
+    toast.success(isDose ? `${item.name}: servido à unidade` : `${item.name}: servido à dose (50ml)`);
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     if (deleteTarget.itemIdx !== undefined) {

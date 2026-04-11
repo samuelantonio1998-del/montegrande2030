@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X, Link, Unlink, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,28 @@ export default function PriceManagementPanel() {
   const [deleteTarget, setDeleteTarget] = useState<{ catIdx: number; itemIdx?: number } | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItemName, setEditItemName] = useState('');
+  const [linkItem, setLinkItem] = useState<BeverageItem | null>(null);
+  const [produtos, setProdutos] = useState<{ id: string; nome: string; unidade: string; categoria: string }[]>([]);
+  const [linkSearch, setLinkSearch] = useState('');
+
+  useEffect(() => {
+    if (linkItem) {
+      supabase.from('produtos').select('id, nome, unidade, categoria').eq('ativo', true).order('nome')
+        .then(({ data }) => { if (data) setProdutos(data); });
+      setLinkSearch(linkItem.name);
+    }
+  }, [linkItem]);
+
+  const filteredProdutos = produtos.filter(p =>
+    p.nome.toLowerCase().includes(linkSearch.toLowerCase())
+  ).slice(0, 15);
+
+  const linkToProduto = async (bevId: string, produtoId: string | null) => {
+    await supabase.from('precario_bebidas').update({ produto_id: produtoId }).eq('id', bevId);
+    await fetchAll();
+    setLinkItem(null);
+    toast.success(produtoId ? 'Artigo ligado ao inventário' : 'Ligação removida');
+  };
 
   const updateMeal = (key: keyof MealPrices, val: string) => {
     const num = parseFloat(val);
@@ -228,8 +250,17 @@ export default function PriceManagementPanel() {
                           {item.name}
                           <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
                         </button>
-                      )}
+                       )}
                       <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn('h-7 w-7 shrink-0', item.produtoId ? 'text-success' : 'text-muted-foreground')}
+                          onClick={() => setLinkItem(item)}
+                          title={item.produtoId ? 'Ligado ao inventário (clique para alterar)' : 'Sem ligação ao inventário (clique para ligar)'}
+                        >
+                          {item.produtoId ? <Link className="h-3.5 w-3.5" /> : <Unlink className="h-3.5 w-3.5" />}
+                        </Button>
                         <button
                           onClick={() => toggleServico(item)}
                           className={cn(
@@ -311,6 +342,58 @@ export default function PriceManagementPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Link to inventory dialog */}
+      <Dialog open={!!linkItem} onOpenChange={open => { if (!open) setLinkItem(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5 text-primary" /> Ligar ao Inventário
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Artigo: <strong>{linkItem?.name}</strong>
+            {linkItem?.produtoId && <Badge variant="outline" className="ml-2 text-xs text-success">Ligado</Badge>}
+          </p>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={linkSearch}
+                onChange={e => setLinkSearch(e.target.value)}
+                placeholder="Pesquisar produto..."
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-[250px] overflow-y-auto space-y-1 rounded-lg border border-border p-2">
+              {filteredProdutos.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">Nenhum produto encontrado</p>
+              )}
+              {filteredProdutos.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => linkItem && linkToProduto(linkItem.id, p.id)}
+                  className={cn(
+                    'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm text-left transition-colors',
+                    linkItem?.produtoId === p.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                  )}
+                >
+                  <span className="font-medium">{p.nome}</span>
+                  <span className="text-xs text-muted-foreground">{p.categoria} · {p.unidade}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            {linkItem?.produtoId && (
+              <Button variant="outline" className="gap-1.5 text-destructive" onClick={() => linkItem && linkToProduto(linkItem.id, null)}>
+                <Unlink className="h-4 w-4" /> Remover ligação
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setLinkItem(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

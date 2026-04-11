@@ -14,7 +14,7 @@ export type BebidaItem = {
   garrafa_ml: number | null;
 };
 
-export type BeverageItem = { id: string; name: string; price: number; tipoServico: 'unidade' | 'dose'; doseMl: number | null; garrafaMl: number | null };
+export type BeverageItem = { id: string; name: string; price: number; tipoServico: 'unidade' | 'dose'; doseMl: number | null; garrafaMl: number | null; produtoId: string | null };
 
 export type BeverageCategory = {
   category: string;
@@ -74,12 +74,12 @@ export function usePrecario() {
     const map = new Map<string, BeverageCategory>();
     bebidas.forEach(b => {
       if (!map.has(b.categoria)) map.set(b.categoria, { category: b.categoria, items: [] });
-      map.get(b.categoria)!.items.push({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml });
+      map.get(b.categoria)!.items.push({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml, produtoId: (b as any).produto_id || null });
     });
     return Array.from(map.values());
   }, [bebidas]);
 
-  const beverageMenuFlat = useMemo(() => bebidas.map(b => ({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml })), [bebidas]);
+  const beverageMenuFlat = useMemo(() => bebidas.map(b => ({ id: b.id, name: b.nome, price: b.preco, tipoServico: b.tipo_servico, doseMl: b.dose_ml, garrafaMl: b.garrafa_ml, produtoId: (b as any).produto_id || null })), [bebidas]);
 
   // CRUD
   const updateBebidaPrice = useCallback(async (id: string, preco: number) => {

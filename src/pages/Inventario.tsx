@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +130,8 @@ export default function Inventario() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [exitForm, setExitForm] = useState({ produto_id: '', quantidade: '', motivo: '', tipo: 'saida' as string });
   const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editProductName, setEditProductName] = useState('');
 
   // Movimentações "ver mais"
   const [movLimit, setMovLimit] = useState(10);
@@ -1200,11 +1202,50 @@ export default function Inventario() {
                 {filteredProdutos.map(p => {
                   const level = getStockLevel(p);
                   return (
-                     <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => { setSelectedProduto(p); setHistoryOpen(true); }}>
+                     <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => { if (editingProductId !== p.id) { setSelectedProduto(p); setHistoryOpen(true); } }}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                          <div className="flex-1 min-w-0">
+                            {editingProductId === p.id ? (
+                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                <Input
+                                  value={editProductName}
+                                  onChange={e => setEditProductName(e.target.value)}
+                                  className="h-7 text-sm flex-1"
+                                  autoFocus
+                                  onKeyDown={async e => {
+                                    if (e.key === 'Enter' && editProductName.trim()) {
+                                      await supabase.from('produtos').update({ nome: editProductName.trim() }).eq('id', p.id);
+                                      await fetchData();
+                                      setEditingProductId(null);
+                                      toast({ title: 'Nome atualizado' });
+                                    }
+                                    if (e.key === 'Escape') setEditingProductId(null);
+                                  }}
+                                />
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={async () => {
+                                  if (editProductName.trim()) {
+                                    await supabase.from('produtos').update({ nome: editProductName.trim() }).eq('id', p.id);
+                                    await fetchData();
+                                    setEditingProductId(null);
+                                    toast({ title: 'Nome atualizado' });
+                                  }
+                                }}>
+                                  <Check className="h-3.5 w-3.5 text-success" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setEditingProductId(null)}>
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <button
+                                className="group flex items-center gap-1.5 text-left"
+                                onClick={e => { e.stopPropagation(); setEditingProductId(p.id); setEditProductName(p.nome); }}
+                              >
+                                <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                                <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
+                              </button>
+                            )}
                             <p className="text-xs text-muted-foreground">{p.categoria} · {p.sku || 'Sem SKU'}</p>
                           </div>
                         </div>

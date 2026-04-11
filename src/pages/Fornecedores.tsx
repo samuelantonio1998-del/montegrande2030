@@ -327,16 +327,6 @@ export default function Fornecedores() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Quick Order Dialog */}
-      {selected && (
-        <QuickOrderDialog
-          open={orderOpen}
-          onOpenChange={setOrderOpen}
-          fornecedor={selected}
-          produtos={getProductsForSupplier(selected.id)}
-        />
-      )}
     </div>
   );
 }

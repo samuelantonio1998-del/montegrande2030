@@ -465,6 +465,36 @@ export type Database = {
         }
         Relationships: []
       }
+      funcionarios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          pin: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          pin: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          pin?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mesas: {
         Row: {
           adults: number

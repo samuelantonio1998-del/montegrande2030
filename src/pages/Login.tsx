@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { UtensilsCrossed, ChefHat, BarChart3, Delete } from 'lucide-react';
-
-const roleInfo = {
-  sala: { icon: UtensilsCrossed, label: 'Sala', color: 'text-primary' },
-  cozinha: { icon: ChefHat, label: 'Cozinha', color: 'text-success' },
-  gerencia: { icon: BarChart3, label: 'Gerência', color: 'text-warning' },
-};
+import { Delete } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();

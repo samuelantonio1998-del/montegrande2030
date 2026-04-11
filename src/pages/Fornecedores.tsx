@@ -332,6 +332,16 @@ export default function Fornecedores() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Quick Order Dialog */}
+      {selected && (
+        <QuickOrderDialog
+          open={orderOpen}
+          onOpenChange={setOrderOpen}
+          fornecedor={selected}
+          produtos={getProductsForSupplier(selected.id).map(p => ({ ...p, stock_maximo: (p as any).stock_maximo ?? p.stock_minimo * 3 }))}
+        />
+      )}
     </div>
   );
 }

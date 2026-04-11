@@ -311,9 +311,9 @@ export default function Inventario() {
       if (item.produto_id) {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
-          const newStock = produto.stock_atual + item.quantidade;
+          const newStock = parseFloat((produto.stock_atual + item.quantidade).toFixed(2));
           const totalCost = produto.custo_medio * produto.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (fornecedorId && !produto.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
           await supabase.from('produtos').update(updatePayload).eq('id', item.produto_id);
@@ -349,9 +349,9 @@ export default function Inventario() {
         }
 
         if (existingProd) {
-          const newStock = existingProd.stock_atual + item.quantidade;
+          const newStock = parseFloat((existingProd.stock_atual + item.quantidade).toFixed(2));
           const totalCost = existingProd.custo_medio * existingProd.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = newStock > 0 ? totalCost / newStock : item.custo_unitario;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (item.sku && !existingProd.sku) updatePayload.sku = item.sku;
           if (fornecedorId && !existingProd.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
@@ -462,9 +462,9 @@ export default function Inventario() {
     const cost = parseFloat(manualForm.custo_unitario) || 0;
     const produto = produtos.find(p => p.id === manualForm.produto_id);
     if (!produto) return;
-    const newStock = produto.stock_atual + qty;
+    const newStock = parseFloat((produto.stock_atual + qty).toFixed(2));
     const totalCost = produto.custo_medio * produto.stock_atual + cost * qty;
-    const newCustoMedio = newStock > 0 ? totalCost / newStock : cost;
+    const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : cost).toFixed(4));
     await supabase.from('produtos').update({ stock_atual: newStock, custo_medio: newCustoMedio }).eq('id', manualForm.produto_id);
     await supabase.from('movimentacoes').insert({
       produto_id: manualForm.produto_id, tipo: 'entrada', quantidade: qty,
@@ -482,7 +482,7 @@ export default function Inventario() {
     const qty = parseFloat(exitForm.quantidade);
     const produto = produtos.find(p => p.id === exitForm.produto_id);
     if (!produto) return;
-    const newStock = Math.max(0, produto.stock_atual - qty);
+    const newStock = parseFloat(Math.max(0, produto.stock_atual - qty).toFixed(2));
     await supabase.from('produtos').update({ stock_atual: newStock }).eq('id', exitForm.produto_id);
     await supabase.from('movimentacoes').insert({
       produto_id: exitForm.produto_id, tipo: exitForm.tipo, quantidade: qty,

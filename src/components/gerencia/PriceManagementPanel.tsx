@@ -50,8 +50,9 @@ export default function PriceManagementPanel() {
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCatName, setNewCatName] = useState('');
 
-  // Delete confirm
   const [deleteTarget, setDeleteTarget] = useState<{ catIdx: number; itemIdx?: number } | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editItemName, setEditItemName] = useState('');
 
   const updateMeal = (key: keyof MealPrices, val: string) => {
     const num = parseFloat(val);

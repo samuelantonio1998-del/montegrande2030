@@ -313,7 +313,10 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
                     let bestScore = 0;
                     for (const p of produtos) {
                       const pNorm = normalize(p.nome);
-                      if (pNorm === bevNorm || pNorm.includes(bevNorm) || bevNorm.includes(pNorm)) { bestMatch = p; bestScore = 1; break; }
+                      // Exact or substring match — but only if the shorter string is at least 60% of the longer one to avoid "agua" matching "aguardente"
+                      const lenRatio = Math.min(pNorm.length, bevNorm.length) / Math.max(pNorm.length, bevNorm.length);
+                      if (pNorm === bevNorm) { bestMatch = p; bestScore = 1; break; }
+                      if (lenRatio >= 0.6 && (pNorm.includes(bevNorm) || bevNorm.includes(pNorm))) { bestMatch = p; bestScore = 1; break; }
                       const bg = (s: string) => { const b: string[] = []; for (let i = 0; i < s.length - 1; i++) b.push(s.slice(i, i + 2)); return b; };
                       const a = bg(bevNorm), b2 = bg(pNorm);
                       const inter = a.filter(x => b2.includes(x)).length;

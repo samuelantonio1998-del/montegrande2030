@@ -1432,6 +1432,16 @@ export default function Inventario() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Quick Order Dialog */}
+      {orderFornecedor && (
+        <QuickOrderDialog
+          open={orderDialogOpen}
+          onOpenChange={setOrderDialogOpen}
+          fornecedor={orderFornecedor}
+          produtos={orderProducts}
+        />
+      )}
     </div>
   );
 }

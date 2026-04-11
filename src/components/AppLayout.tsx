@@ -1,4 +1,5 @@
 import { AppSidebar } from './AppSidebar';
+import FloatingActionButton from './FloatingActionButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +10,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebarCollapse();
   const { user } = useAuth();
 
-  // Cozinha on mobile uses compact lateral sidebar (w-16)
   const isCozinhaMobile = isMobile && user?.role === 'cozinha';
 
   return (
@@ -23,6 +23,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       )}>
         {children}
       </main>
+      <FloatingActionButton />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardCheck, Sparkles, MessageSquarePlus } from 'lucide-react';
+import { Users, CheckCircle2, Circle, AlertTriangle, Clock, LogOut, ClipboardCheck, Sparkles } from 'lucide-react';
 import { useTarefas, type Tarefa } from '@/hooks/useTarefas';
 import { useMesas } from '@/hooks/useMesas';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
-import FeedbackDialog from '@/components/feedback/FeedbackDialog';
+
 import TableAvailabilityPanel from '@/components/sala/TableAvailabilityPanel';
 
 const categories = [
@@ -64,7 +64,6 @@ export default function DashboardSala() {
           <p className="text-sm text-muted-foreground">Sala · {totalInRoom} pessoas em sala</p>
         </div>
         <div className="flex items-center gap-2">
-          <FeedbackDialog />
           <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
         </div>
       </div>

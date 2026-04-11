@@ -9,11 +9,16 @@ export type BebidaItem = {
   categoria: string;
   ordem: number;
   ativo: boolean;
+  tipo_servico: 'unidade' | 'dose';
+  dose_ml: number | null;
+  garrafa_ml: number | null;
 };
+
+export type BeverageItem = { id: string; name: string; price: number; tipoServico: 'unidade' | 'dose'; doseMl: number | null; garrafaMl: number | null };
 
 export type BeverageCategory = {
   category: string;
-  items: { id: string; name: string; price: number }[];
+  items: BeverageItem[];
 };
 
 export type MealPrices = {

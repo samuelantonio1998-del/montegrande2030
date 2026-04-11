@@ -3,7 +3,7 @@ import { Users, Baby, Wine, QrCode, Clock, CreditCard, Plus, Minus, CakeSlice, X
 import { type Mesa } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast-with-sound';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';

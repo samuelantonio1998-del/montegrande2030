@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { type AppUser, type UserRole, getEmployees, setEmployees } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast-with-sound';
 
 export function useEmployees() {
   const [employees, setLocal] = useState<AppUser[]>(() => getEmployees());

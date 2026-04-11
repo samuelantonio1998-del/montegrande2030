@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast-with-sound';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';

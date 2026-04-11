@@ -31,12 +31,13 @@ type Fornecedor = {
   notas: string | null;
 };
 
-type Produto = {
+  type Produto = {
   id: string;
   nome: string;
   unidade: string;
   stock_atual: number;
   stock_minimo: number;
+  stock_maximo: number;
   custo_medio: number;
   fornecedor_id: string | null;
 };

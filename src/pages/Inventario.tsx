@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
 import { useActivityLog } from '@/hooks/useActivityLog';
+import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
 
 type Produto = {
   id: string;
@@ -136,6 +137,9 @@ export default function Inventario() {
   // Confirmation dialogs
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmInvoice, setConfirmInvoice] = useState(false);
+  const [orderFornecedor, setOrderFornecedor] = useState<{ id: string; nome: string; email: string | null } | null>(null);
+  const [orderProducts, setOrderProducts] = useState<Produto[]>([]);
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -504,49 +508,6 @@ export default function Inventario() {
     fetchData();
   };
 
-  const handleOrder = async (fornecedorId: string, items: Produto[]) => {
-    const forn = fornecedores.find(f => f.id === fornecedorId);
-    const fornFull = forn ? await supabase.from('fornecedores').select('*').eq('id', forn.id).single() : null;
-    const orderItems = items.map(p => {
-      const qty = Math.min(p.stock_maximo, Math.max(p.stock_minimo, p.stock_maximo)) - p.stock_atual;
-      return { nome: p.nome, quantidade: Math.max(0, Math.round(qty * 100) / 100), unidade: p.unidade };
-    }).filter(i => i.quantidade > 0);
-
-    const clipboardText = [
-      `ENCOMENDA — ${forn?.nome || 'Fornecedor'}`,
-      `Data: ${new Date().toLocaleDateString('pt-PT')}`,
-      '',
-      ...orderItems.map(i => `• ${i.quantidade}${i.unidade} ${i.nome}`),
-      '',
-      'Quinta Monte Grande',
-    ].join('\n');
-
-    try {
-      await navigator.clipboard.writeText(clipboardText);
-      toast({ title: 'Encomenda copiada', description: 'Texto copiado para a área de transferência' });
-    } catch {
-      toast({ title: 'Encomenda gerada', description: clipboardText });
-    }
-
-    const fornEmail = fornFull?.data?.email;
-    if (fornEmail) {
-      const orderId = crypto.randomUUID();
-      await supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'supplier-order',
-          recipientEmail: fornEmail,
-          idempotencyKey: `order-${orderId}`,
-          templateData: {
-            fornecedorNome: forn?.nome,
-            items: orderItems,
-          },
-        },
-      });
-      toast({ title: 'Email enviado', description: `Encomenda enviada para ${fornEmail}` });
-    } else {
-      toast({ title: 'Sem email', description: 'Fornecedor sem email — use o texto copiado', variant: 'destructive' });
-    }
-  };
 
   // Get selected exit product for showing stock info
   const exitProduct = produtos.find(p => p.id === exitForm.produto_id);
@@ -1329,9 +1290,13 @@ export default function Inventario() {
                         {forn?.email && <p className="text-xs text-muted-foreground">{forn.email}</p>}
                         {forn?.dia_encomenda && <p className="text-xs text-muted-foreground">Encomenda: {forn.dia_encomenda}</p>}
                       </div>
-                      <Button size="sm" onClick={() => handleOrder(fId, items)}>
+                      <Button size="sm" onClick={() => {
+                        setOrderFornecedor({ id: fId, nome: forn?.nome || 'Sem Fornecedor', email: forn?.email || null });
+                        setOrderProducts(items);
+                        setOrderDialogOpen(true);
+                      }}>
                         <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                        Gerar Encomenda
+                        Encomendar
                       </Button>
                     </div>
                     <div className="divide-y divide-border">
@@ -1424,6 +1389,16 @@ export default function Inventario() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Quick Order Dialog */}
+      {orderFornecedor && (
+        <QuickOrderDialog
+          open={orderDialogOpen}
+          onOpenChange={setOrderDialogOpen}
+          fornecedor={orderFornecedor}
+          produtos={orderProducts}
+        />
+      )}
     </div>
   );
 }

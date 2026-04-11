@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck, Search, ShoppingCart } from 'lucide-react';
-import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
+import { Building2, Phone, Mail, Calendar, Clock, Package, Edit3, Plus, X, Truck, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -53,7 +52,7 @@ export default function Fornecedores() {
   const [editMode, setEditMode] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', dia_encomenda: '', prazo_entrega_dias: '', notas: '' });
-  const [orderOpen, setOrderOpen] = useState(false);
+  
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -260,11 +259,7 @@ export default function Fornecedores() {
             </div>
           ) : selected && (
             <div className="space-y-5">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setDetailOpen(false); setOrderOpen(true); }}>
-                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                  Encomendar
-                </Button>
+              <div className="flex justify-end">
                 <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
                   <Edit3 className="h-3.5 w-3.5 mr-1.5" />
                   Editar
@@ -332,16 +327,6 @@ export default function Fornecedores() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Quick Order Dialog */}
-      {selected && (
-        <QuickOrderDialog
-          open={orderOpen}
-          onOpenChange={setOrderOpen}
-          fornecedor={selected}
-          produtos={getProductsForSupplier(selected.id)}
-        />
-      )}
     </div>
   );
 }

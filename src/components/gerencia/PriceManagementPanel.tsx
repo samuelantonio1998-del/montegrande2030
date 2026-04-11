@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X, Link, Unlink, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

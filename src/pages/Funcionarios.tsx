@@ -93,7 +93,7 @@ export default function Funcionarios() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <code className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">{emp.pin}</code>
+                  <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-foreground">{emp.pin}</code>
                 </TableCell>
                 <TableCell>
                   <Select

@@ -93,20 +93,20 @@ export default function Tarefas() {
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl text-foreground">Tarefas</h1>
-          <p className="mt-1 text-muted-foreground">{activeTasks.length} pendente(s) · {doneCount} concluída(s)</p>
+          <h1 className="text-2xl sm:text-3xl text-foreground">Tarefas</h1>
+          <p className="text-sm text-muted-foreground">{activeTasks.length} pendente(s) · {doneCount} concluída(s)</p>
         </div>
         <div className="flex items-center gap-2">
           <AIprepTasksDialog onTasksAdded={() => {}} />
           <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5">
-            <RefreshCw className="h-4 w-4" /> Reiniciar recorrentes
+            <RefreshCw className="h-4 w-4" /> <span className="hidden sm:inline">Reiniciar recorrentes</span><span className="sm:hidden">Reiniciar</span>
           </Button>
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button className="gap-1.5"><Plus className="h-4 w-4" /> Nova Tarefa</Button>
+              <Button className="gap-1.5"><Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nova Tarefa</span><span className="sm:hidden">Nova</span></Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
@@ -162,9 +162,9 @@ export default function Tarefas() {
 
       <Progress value={progress} className="h-2" />
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {categories.map(cat => (
-          <button key={cat.key} onClick={() => setFilter(cat.key)} className={cn('rounded-lg px-4 py-2 text-sm font-medium transition-colors', filter === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+          <button key={cat.key} onClick={() => setFilter(cat.key)} className={cn('rounded-lg px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap shrink-0', filter === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
             {cat.label}
           </button>
         ))}
@@ -177,22 +177,21 @@ export default function Tarefas() {
             return (
               <motion.div key={task.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12, height: 0 }} transition={{ delay: i * 0.03 }}
                 onClick={() => handleComplete(task)}
-                className={cn('flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all hover:shadow-sm', task.critica ? 'border-warning/30 bg-warning/5' : 'border-border bg-card')}>
-                <Circle className="h-5 w-5 shrink-0 text-muted-foreground" />
+                className={cn('flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all hover:shadow-sm active:scale-[0.99]', task.critica ? 'border-warning/30 bg-warning/5' : 'border-border bg-card')}>
+                <Circle className="h-6 w-6 shrink-0 mt-0.5 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{task.titulo}</p>
-                  {task.descricao && <p className="text-xs text-muted-foreground truncate">{task.descricao}</p>}
-                  <p className="text-xs text-muted-foreground mt-0.5">{task.responsavel}</p>
+                  <p className="text-base font-medium text-foreground leading-snug">{task.titulo}</p>
+                  {task.descricao && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{task.descricao}</p>}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {task.responsavel && <span className="text-xs text-muted-foreground">{task.responsavel}</span>}
+                    {task.critica && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
+                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
+                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {task.critica && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
-                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
-                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
-                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', pri.color)}>{pri.label}</span>
-                  <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </motion.div>
             );
           })}
@@ -204,7 +203,7 @@ export default function Tarefas() {
           </div>
         )}
       </div>
-      <p className="text-xs text-muted-foreground text-center">Clique numa tarefa para a concluir</p>
+      <p className="text-sm text-muted-foreground text-center">Clique numa tarefa para a concluir</p>
     </div>
   );
 }

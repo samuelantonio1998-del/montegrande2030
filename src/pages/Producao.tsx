@@ -97,12 +97,23 @@ export default function Producao() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl text-foreground">Produção Buffet</h1>
           <p className="mt-1 text-muted-foreground">Registo de tabuleiros e ciclo de vida</p>
         </div>
-        <Button onClick={() => setShowNewDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> Enviar Tabuleiro</Button>
+        <div className="flex items-center gap-3">
+          {currentPax > 0 && (
+            <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2">
+              <Users className="h-4 w-4 text-primary" />
+              <div className="text-right">
+                <p className="text-lg font-bold text-primary leading-none">{currentPax}</p>
+                <p className="text-[10px] text-muted-foreground">{occupiedTables} mesa{occupiedTables !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          )}
+          <Button onClick={() => setShowNewDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> Enviar Tabuleiro</Button>
+        </div>
       </div>
 
       {alerts.length > 0 && (

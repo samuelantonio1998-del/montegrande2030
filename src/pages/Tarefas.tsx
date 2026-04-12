@@ -202,6 +202,7 @@ export default function Tarefas() {
                     {task.critica && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
+                    {task.departamento !== 'todos' && <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', task.departamento === 'sala' ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground')}>{task.departamento === 'sala' ? 'Sala' : 'Cozinha'}</span>}
                   </div>
                 </div>
                 <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">

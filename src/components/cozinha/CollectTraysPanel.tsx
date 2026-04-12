@@ -159,37 +159,53 @@ export default function CollectTraysPanel({ items, trayStates, onCollect, leftov
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">Destino da sobra</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setLeftoverAction('aproveitamento')}
-                  className={cn(
-                    'flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 transition-all',
-                    leftoverAction === 'aproveitamento' ? 'border-success bg-success/10' : 'border-border hover:border-success/50'
-                  )}
-                >
-                  <Recycle className={cn('h-6 w-6', leftoverAction === 'aproveitamento' ? 'text-success' : 'text-muted-foreground')} />
-                  <span className="text-sm font-medium text-foreground">Aproveitamento</span>
-                  <span className="text-[10px] text-muted-foreground">Reutilizar</span>
-                </button>
-                <button
-                  onClick={() => setLeftoverAction('desperdicio')}
-                  className={cn(
-                    'flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 transition-all',
-                    leftoverAction === 'desperdicio' ? 'border-destructive bg-destructive/10' : 'border-border hover:border-destructive/50'
-                  )}
-                >
-                  <Trash2 className={cn('h-6 w-6', leftoverAction === 'desperdicio' ? 'text-destructive' : 'text-muted-foreground')} />
-                  <span className="text-sm font-medium text-foreground">Desperdício</span>
-                  <span className="text-[10px] text-muted-foreground">Lixo</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setLeftoverAction('aproveitamento'); }}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 transition-all',
+                      leftoverAction === 'aproveitamento' ? 'border-success bg-success/10' : 'border-border hover:border-success/50'
+                    )}
+                  >
+                    <Recycle className={cn('h-6 w-6', leftoverAction === 'aproveitamento' ? 'text-success' : 'text-muted-foreground')} />
+                    <span className="text-sm font-medium text-foreground">Aproveitamento</span>
+                    <span className="text-[10px] text-muted-foreground">Reutilizar</span>
+                  </button>
+                  <button
+                    onClick={() => { setLeftoverAction('desperdicio'); setIsReporBuffet(false); }}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 transition-all',
+                      leftoverAction === 'desperdicio' ? 'border-destructive bg-destructive/10' : 'border-border hover:border-destructive/50'
+                    )}
+                  >
+                    <Trash2 className={cn('h-6 w-6', leftoverAction === 'desperdicio' ? 'text-destructive' : 'text-muted-foreground')} />
+                    <span className="text-sm font-medium text-foreground">Desperdício</span>
+                    <span className="text-[10px] text-muted-foreground">Lixo</span>
+                  </button>
+                </div>
               </div>
-            </div>
-            {leftoverAction === 'aproveitamento' && (
-              <div>
-                <label className="text-sm font-medium text-foreground">Nota de aproveitamento</label>
-                <Input value={aprovNote} onChange={e => setAprovNote(e.target.value)} placeholder="Ex: Recheio de rissóis amanhã" className="mt-1" />
-              </div>
-            )}
+              {leftoverAction === 'aproveitamento' && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsReporBuffet(!isReporBuffet)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg border-2 p-3 transition-all text-left',
+                      isReporBuffet ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    <RefreshCw className={cn('h-5 w-5', isReporBuffet ? 'text-primary' : 'text-muted-foreground')} />
+                    <div>
+                      <span className={cn('text-sm font-medium', isReporBuffet ? 'text-primary' : 'text-foreground')}>Repor no buffet</span>
+                      <p className="text-[10px] text-muted-foreground">Guardar e servir novamente amanhã</p>
+                    </div>
+                  </button>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">{isReporBuffet ? 'Nota adicional (opcional)' : 'Nota de aproveitamento'}</label>
+                    <Input value={aprovNote} onChange={e => setAprovNote(e.target.value)} placeholder={isReporBuffet ? 'Ex: Guardar no frio até amanhã' : 'Ex: Recheio de rissóis amanhã'} className="mt-1" />
+                  </div>
+                </div>
+              )}
             <Button className="w-full" onClick={handleCollect}>Confirmar Recolha</Button>
           </div>
         </DialogContent>

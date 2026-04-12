@@ -478,26 +478,31 @@ export default function Mesas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl text-foreground">Talão de Mesa</h1>
-          <p className="mt-1 text-muted-foreground">Gestão de sala em tempo real</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between sm:block">
+          <div>
+            <h1 className="text-2xl sm:text-3xl text-foreground whitespace-nowrap">Talão de Mesa</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Gestão de sala em tempo real</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 sm:hidden" onClick={() => setShowCloseDay(true)}>
+            <CalendarCheck className="h-4 w-4" /> Fechar Dia
+          </Button>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-card border border-border px-4 py-2 text-center">
-            <p className="text-xs text-muted-foreground">Em sala</p>
-            <p className="text-xl font-bold text-foreground">{totalClients}</p>
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
+          <div className="rounded-lg bg-card border border-border px-3 py-1.5 sm:px-4 sm:py-2 text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Em sala</p>
+            <p className="text-lg sm:text-xl font-bold text-foreground">{totalClients}</p>
           </div>
-          <div className="rounded-lg bg-card border border-border px-4 py-2 text-center">
-            <p className="text-xs text-muted-foreground">Mesas ocupadas</p>
-            <p className="text-xl font-bold text-primary">{occupiedCount}/{mesas.length}</p>
+          <div className="rounded-lg bg-card border border-border px-3 py-1.5 sm:px-4 sm:py-2 text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Mesas ocup.</p>
+            <p className="text-lg sm:text-xl font-bold text-primary">{occupiedCount}/{mesas.length}</p>
           </div>
-          <div className="rounded-lg bg-card border border-border px-4 py-2 text-center">
-            <p className="text-xs text-muted-foreground">Refeições hoje</p>
-            <p className="text-xl font-bold text-foreground">{dailyTotals.total}</p>
+          <div className="rounded-lg bg-card border border-border px-3 py-1.5 sm:px-4 sm:py-2 text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Refeições</p>
+            <p className="text-lg sm:text-xl font-bold text-foreground">{dailyTotals.total}</p>
             <p className="text-[10px] text-muted-foreground">{dailyTotals.almoco} alm · {dailyTotals.jantar} jant</p>
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowCloseDay(true)}>
+          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => setShowCloseDay(true)}>
             <CalendarCheck className="h-4 w-4" /> Fechar Dia
           </Button>
         </div>

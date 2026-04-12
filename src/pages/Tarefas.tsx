@@ -61,9 +61,12 @@ export default function Tarefas() {
     departamento: (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento,
   });
 
-  const activeTasks = tarefas.filter(t => !t.concluida);
+  const userRole = user?.role;
+  const myTarefas = tarefas.filter(t => t.departamento === 'todos' || t.departamento === userRole);
+  const activeTasks = myTarefas.filter(t => !t.concluida);
   const filtered = filter === 'all' ? activeTasks : activeTasks.filter(t => t.categoria === filter);
-  const doneCount = tarefas.filter(t => t.concluida).length;
+  const doneCount = myTarefas.filter(t => t.concluida).length;
+  const progress = myTarefas.length > 0 ? (doneCount / myTarefas.length) * 100 : 0;
   const progress = tarefas.length > 0 ? (doneCount / tarefas.length) * 100 : 0;
 
   const handleComplete = async (task: Tarefa) => {
@@ -153,6 +156,14 @@ export default function Tarefas() {
                     </SelectContent>
                   </Select>
                 </div>
+                <Select value={newTask.departamento} onValueChange={v => setNewTask(p => ({ ...p, departamento: v as TarefaDepartamento }))}>
+                  <SelectTrigger><SelectValue placeholder="Departamento" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="sala">Sala</SelectItem>
+                    <SelectItem value="cozinha">Cozinha</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="critical" checked={newTask.critica} onChange={e => setNewTask(p => ({ ...p, critica: e.target.checked }))} className="rounded" />
                   <label htmlFor="critical" className="text-sm text-foreground">Tarefa crítica</label>

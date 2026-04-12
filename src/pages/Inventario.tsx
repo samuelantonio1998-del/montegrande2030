@@ -452,6 +452,7 @@ export default function Inventario() {
     setPreviewUrl(null);
     setPreviewFile(null);
     setScannedItems([]);
+    setRawInputs({});
     setProcessingProgress(0);
     setInvoiceMeta({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
     setDuplicateWarning(null);

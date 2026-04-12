@@ -54,6 +54,7 @@ type ScannedItem = {
   quantidade: number;
   unidade: string;
   custo_unitario: number;
+  desconto: number;
   fornecedor: string | null;
   sku: string | null;
   selected: boolean;

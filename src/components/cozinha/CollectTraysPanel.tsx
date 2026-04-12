@@ -26,15 +26,19 @@ export default function CollectTraysPanel({ items, trayStates, onCollect, leftov
 
   const handleCollect = () => {
     if (!collectItem) return;
+    const note = leftoverAction === 'aproveitamento'
+      ? (isReporBuffet ? `Repor no buffet${aprovNote ? ' — ' + aprovNote : ''}` : aprovNote)
+      : null;
     onCollect(
       collectItem.id,
       parseFloat(leftoverKg) || 0,
       leftoverAction,
-      leftoverAction === 'aproveitamento' ? aprovNote : null
+      note
     );
     setCollectItem(null);
     setLeftoverKg('');
     setAprovNote('');
+    setIsReporBuffet(false);
     setLeftoverAction('desperdicio');
   };
 

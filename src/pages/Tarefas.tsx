@@ -67,7 +67,7 @@ export default function Tarefas() {
   const filtered = filter === 'all' ? activeTasks : activeTasks.filter(t => t.categoria === filter);
   const doneCount = myTarefas.filter(t => t.concluida).length;
   const progress = myTarefas.length > 0 ? (doneCount / myTarefas.length) * 100 : 0;
-  const progress = tarefas.length > 0 ? (doneCount / tarefas.length) * 100 : 0;
+  
 
   const handleComplete = async (task: Tarefa) => {
     await completeTarefa(task.id, task.periodicidade);

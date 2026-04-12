@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Json } from '@/integrations/supabase/types';
 
 export type LogEntry = {
   id: string;
@@ -24,14 +23,16 @@ export function useActivityLog() {
     metadata?: Record<string, unknown>
   ) => {
     try {
-      await supabase.from('activity_logs').insert([{
-        user_name: user?.name || 'Sistema',
-        user_role: user?.role || '',
-        action,
-        module,
-        details: details || '',
-        metadata: (metadata || {}) as Json,
-      }]);
+      await supabase.functions.invoke('log-activity', {
+        body: {
+          user_name: user?.name || 'Sistema',
+          user_role: user?.role || '',
+          action,
+          module,
+          details: details || '',
+          metadata: metadata || {},
+        },
+      });
     } catch (e) {
       console.error('Erro ao registar log:', e);
     }
@@ -50,14 +51,16 @@ export async function logActivity(
   metadata?: Record<string, unknown>
 ) {
   try {
-    await supabase.from('activity_logs').insert([{
-      user_name: userName,
-      user_role: userRole,
-      action,
-      module,
-      details: details || '',
-      metadata: (metadata || {}) as Json,
-    }]);
+    await supabase.functions.invoke('log-activity', {
+      body: {
+        user_name: userName,
+        user_role: userRole,
+        action,
+        module,
+        details: details || '',
+        metadata: metadata || {},
+      },
+    });
   } catch (e) {
     console.error('Erro ao registar log:', e);
   }

@@ -24,17 +24,19 @@ export function PinDialog({ open, onOpenChange, title, description, allowedRoles
     setPin(next);
     setError(false);
     if (next.length === 4) {
-      const { data } = await supabase
-        .from('funcionarios')
-        .select('nome, role')
-        .eq('pin', next)
-        .eq('ativo', true)
-        .maybeSingle();
-      if (data && (!allowedRoles || allowedRoles.includes(data.role as UserRole))) {
-        setPin('');
-        onOpenChange(false);
-        onAuthorized(data.nome);
-      } else {
+      try {
+        const { data } = await supabase.functions.invoke('verify-employee-role', {
+          body: { pin: next, allowedRoles },
+        });
+        if (data?.success) {
+          setPin('');
+          onOpenChange(false);
+          onAuthorized(data.nome);
+        } else {
+          setError(true);
+          setTimeout(() => { setPin(''); setError(false); }, 800);
+        }
+      } catch {
         setError(true);
         setTimeout(() => { setPin(''); setError(false); }, 800);
       }

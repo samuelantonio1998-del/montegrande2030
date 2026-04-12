@@ -13,6 +13,7 @@ import { recipientCapacity, type RecipientSize, type TrayStatus } from '@/lib/bu
 import { useRegistosProducao, type RegistoProducao } from '@/hooks/useRegistosProducao';
 import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },

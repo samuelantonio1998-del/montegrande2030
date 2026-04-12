@@ -1,68 +1,64 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { type AppUser, type UserRole } from '@/contexts/AuthContext';
+import { type UserRole } from '@/contexts/AuthContext';
 import { toast } from '@/lib/toast-with-sound';
 
+export type Employee = {
+  id: string;
+  name: string;
+  role: UserRole;
+};
+
 export function useEmployees() {
-  const [employees, setEmployees] = useState<AppUser[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   const fetchEmployees = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('funcionarios')
-      .select('*')
-      .eq('ativo', true)
-      .order('created_at');
-    if (!error && data) {
-      setEmployees(data.map(d => ({ name: d.nome, role: d.role as UserRole, pin: d.pin })));
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-employees', {
+        body: { action: 'list' },
+      });
+      if (!error && data?.data) {
+        setEmployees(data.data.map((d: any) => ({ id: d.id, name: d.nome, role: d.role as UserRole })));
+      }
+    } catch {
+      // silent
     }
   }, []);
 
   useEffect(() => {
     fetchEmployees();
-    const channel = supabase
-      .channel('funcionarios-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'funcionarios' }, () => {
-        fetchEmployees();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
   }, [fetchEmployees]);
 
-  const addEmployee = useCallback(async (emp: AppUser): Promise<boolean> => {
-    // Check duplicate PIN
-    const { data: existing } = await supabase
-      .from('funcionarios')
-      .select('id')
-      .eq('pin', emp.pin)
-      .eq('ativo', true)
-      .maybeSingle();
-    if (existing) {
-      toast.error('Já existe um funcionário com este PIN');
-      return false;
-    }
-    const { error } = await supabase
-      .from('funcionarios')
-      .insert({ nome: emp.name, role: emp.role, pin: emp.pin });
-    if (error) {
-      toast.error('Erro ao adicionar funcionário');
+  const addEmployee = useCallback(async (emp: { name: string; pin: string; role: UserRole }): Promise<boolean> => {
+    const { data, error } = await supabase.functions.invoke('manage-employees', {
+      body: { action: 'add', nome: emp.name, pin: emp.pin, role: emp.role },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || 'Erro ao adicionar funcionário');
       return false;
     }
     await fetchEmployees();
     return true;
   }, [fetchEmployees]);
 
-  const removeEmployee = useCallback(async (pin: string) => {
-    await supabase.from('funcionarios').delete().eq('pin', pin);
+  const removeEmployee = useCallback(async (id: string) => {
+    await supabase.functions.invoke('manage-employees', {
+      body: { action: 'remove', id },
+    });
     await fetchEmployees();
   }, [fetchEmployees]);
 
-  const updateRole = useCallback(async (pin: string, role: UserRole) => {
-    await supabase.from('funcionarios').update({ role }).eq('pin', pin);
+  const updateRole = useCallback(async (id: string, role: UserRole) => {
+    await supabase.functions.invoke('manage-employees', {
+      body: { action: 'update_role', id, role },
+    });
     await fetchEmployees();
   }, [fetchEmployees]);
 
-  const updateName = useCallback(async (pin: string, name: string) => {
-    await supabase.from('funcionarios').update({ nome: name }).eq('pin', pin);
+  const updateName = useCallback(async (id: string, name: string) => {
+    await supabase.functions.invoke('manage-employees', {
+      body: { action: 'update_name', id, nome: name },
+    });
     await fetchEmployees();
   }, [fetchEmployees]);
 

@@ -6,7 +6,6 @@ export type UserRole = 'sala' | 'cozinha' | 'gerencia';
 export type AppUser = {
   name: string;
   role: UserRole;
-  pin: string;
 };
 
 type AuthContextType = {
@@ -21,15 +20,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
 
   const login = async (pin: string): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from('funcionarios')
-      .select('nome, role, pin')
-      .eq('pin', pin)
-      .eq('ativo', true)
-      .maybeSingle();
-    if (error || !data) return false;
-    setUser({ name: data.nome, role: data.role as UserRole, pin: data.pin });
-    return true;
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-employee-pin', {
+        body: { pin },
+      });
+      if (error || !data?.success) return false;
+      setUser({ name: data.nome, role: data.role as UserRole });
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const logout = () => setUser(null);

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat } from 'lucide-react';
+import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +47,7 @@ export default function Producao() {
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('aproveitamento');
+  const [isReporBuffet, setIsReporBuffet] = useState(false);
   const [aprovNote, setAprovNote] = useState('');
 
   async function handleSendTray() {
@@ -69,10 +70,14 @@ export default function Producao() {
   async function handleCheckout() {
     if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
-    await recolherRegisto(checkoutTarget.id, kg, leftoverAction, leftoverAction === 'aproveitamento' ? aprovNote : null);
+    const note = leftoverAction === 'aproveitamento'
+      ? (isReporBuffet ? `Repor no buffet${aprovNote ? ' — ' + aprovNote : ''}` : aprovNote)
+      : null;
+    await recolherRegisto(checkoutTarget.id, kg, leftoverAction, note);
     setCheckoutTarget(null);
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
+    setIsReporBuffet(false);
     setAprovNote('');
   }
 
@@ -185,7 +190,11 @@ export default function Producao() {
                 {record.sobra_kg !== null && (
                   <div className="text-right">
                     <p className="text-sm font-medium text-foreground">{record.sobra_kg}kg sobra</p>
-                    {record.aproveitamento_nota && <p className="text-xs text-success">{record.aproveitamento_nota}</p>}
+                    {record.aproveitamento_nota?.startsWith('Repor no buffet') ? (
+                      <p className="text-xs text-primary flex items-center gap-1 justify-end"><RefreshCw className="h-3 w-3" /> {record.aproveitamento_nota}</p>
+                    ) : record.aproveitamento_nota ? (
+                      <p className="text-xs text-success">{record.aproveitamento_nota}</p>
+                    ) : null}
                   </div>
                 )}
               </motion.div>
@@ -238,7 +247,7 @@ export default function Producao() {
             <div><Label>Peso da sobra (kg)</Label><Input type="number" step="0.1" min="0" placeholder="Ex: 1.2" value={leftoverKg} onChange={e => setLeftoverKg(e.target.value)} /></div>
             <div>
               <Label className="mb-3 block">O que fazer com a sobra?</Label>
-              <RadioGroup value={leftoverAction} onValueChange={v => setLeftoverAction(v as 'aproveitamento' | 'desperdicio')}>
+              <RadioGroup value={leftoverAction} onValueChange={v => { setLeftoverAction(v as 'aproveitamento' | 'desperdicio'); if (v === 'desperdicio') setIsReporBuffet(false); }}>
                 <div className="flex items-start gap-3 rounded-lg border border-border p-3">
                   <RadioGroupItem value="aproveitamento" id="aprov" className="mt-0.5" />
                   <Label htmlFor="aprov" className="cursor-pointer"><div className="flex items-center gap-2"><Recycle className="h-4 w-4 text-success" /><span className="font-medium">Aproveitamento</span></div><p className="text-xs text-muted-foreground mt-1">Arrefecer e reutilizar noutra preparação</p></Label>
@@ -250,7 +259,26 @@ export default function Producao() {
               </RadioGroup>
             </div>
             {leftoverAction === 'aproveitamento' && (
-              <div><Label>Para que preparação?</Label><Input placeholder="Ex: Recheio de rissóis, Sopa..." value={aprovNote} onChange={e => setAprovNote(e.target.value)} /></div>
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setIsReporBuffet(!isReporBuffet)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-lg border-2 p-3 transition-all text-left',
+                    isReporBuffet ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <RefreshCw className={cn('h-5 w-5', isReporBuffet ? 'text-primary' : 'text-muted-foreground')} />
+                  <div>
+                    <span className={cn('text-sm font-medium', isReporBuffet ? 'text-primary' : 'text-foreground')}>Repor no buffet</span>
+                    <p className="text-[11px] text-muted-foreground">Guardar e servir novamente amanhã (ex: saladas, sobremesas)</p>
+                  </div>
+                </button>
+                <div>
+                  <Label>{isReporBuffet ? 'Nota adicional (opcional)' : 'Para que preparação?'}</Label>
+                  <Input placeholder={isReporBuffet ? 'Ex: Guardar no frio até amanhã' : 'Ex: Recheio de rissóis, Sopa...'} value={aprovNote} onChange={e => setAprovNote(e.target.value)} />
+                </div>
+              </div>
             )}
           </div>
           <DialogFooter>

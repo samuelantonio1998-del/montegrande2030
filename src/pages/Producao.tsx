@@ -190,7 +190,11 @@ export default function Producao() {
                 {record.sobra_kg !== null && (
                   <div className="text-right">
                     <p className="text-sm font-medium text-foreground">{record.sobra_kg}kg sobra</p>
-                    {record.aproveitamento_nota && <p className="text-xs text-success">{record.aproveitamento_nota}</p>}
+                    {record.aproveitamento_nota?.startsWith('Repor no buffet') ? (
+                      <p className="text-xs text-primary flex items-center gap-1 justify-end"><RefreshCw className="h-3 w-3" /> {record.aproveitamento_nota}</p>
+                    ) : record.aproveitamento_nota ? (
+                      <p className="text-xs text-success">{record.aproveitamento_nota}</p>
+                    ) : null}
                   </div>
                 )}
               </motion.div>

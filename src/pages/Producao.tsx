@@ -47,6 +47,7 @@ export default function Producao() {
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('aproveitamento');
+  const [isReporBuffet, setIsReporBuffet] = useState(false);
   const [aprovNote, setAprovNote] = useState('');
 
   async function handleSendTray() {

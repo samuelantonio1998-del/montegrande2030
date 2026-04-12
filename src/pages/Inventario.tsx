@@ -301,7 +301,7 @@ export default function Inventario() {
           }
         }
         const match = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || matchByFuzzy;
-        return { ...item, selected: true, produto_id: match?.id };
+        return { ...item, desconto: item.desconto || 0, selected: true, produto_id: match?.id };
       });
 
       setTimeout(() => {

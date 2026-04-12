@@ -46,6 +46,7 @@ export default function Ordens() {
       prioridade: newOrder.priority,
       critica: newOrder.priority === 'alta',
       periodicidade: 'unica',
+      departamento: 'todos',
     });
     setNewOrder({ title: '', description: '', assignee: staffNames[0] || '', priority: 'media' });
     setShowForm(false);

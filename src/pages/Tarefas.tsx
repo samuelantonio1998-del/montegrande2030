@@ -56,6 +56,7 @@ export default function Tarefas() {
     prioridade: 'media' as Tarefa['prioridade'],
     critica: false,
     periodicidade: 'unica' as TaskPeriodicity,
+    departamento: (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento,
   });
 
   const activeTasks = tarefas.filter(t => !t.concluida);

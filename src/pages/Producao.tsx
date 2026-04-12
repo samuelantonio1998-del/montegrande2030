@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat } from 'lucide-react';
+import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';

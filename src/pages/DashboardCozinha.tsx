@@ -158,13 +158,13 @@ export default function DashboardCozinha() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-display text-foreground">Cozinha</h1>
-            <div className="flex items-center gap-3 text-base text-muted-foreground">
-              <Users className="h-5 w-5" />
-              <span className="text-2xl font-bold text-foreground">{currentPax}</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span className="text-xl font-bold text-foreground">{currentPax}</span>
               <span>em sala</span>
               <span className="text-muted-foreground/50">·</span>
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -174,8 +174,8 @@ export default function DashboardCozinha() {
           <p className="text-sm text-muted-foreground capitalize">{dayLabel}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="lg" className="gap-2 text-sm font-semibold" onClick={() => setShowSetup(true)}>
-            <CalendarPlus className="h-5 w-5" /> Definir Ementa
+          <Button variant="outline" size="sm" className="gap-2 text-xs sm:text-sm sm:size-default font-semibold" onClick={() => setShowSetup(true)}>
+            <CalendarPlus className="h-4 w-4 sm:h-5 sm:w-5" /> Definir Ementa
           </Button>
           <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
         </div>

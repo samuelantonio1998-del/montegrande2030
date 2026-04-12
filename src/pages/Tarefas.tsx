@@ -88,7 +88,8 @@ export default function Tarefas() {
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
     await addTarefa({ ...newTask, descricao: newTask.descricao || null });
-    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica' });
+    const defaultDept = (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento;
+    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: defaultDept });
     setShowForm(false);
     toast({ title: 'Tarefa criada' });
   };

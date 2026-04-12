@@ -19,6 +19,7 @@ export type RegistoProducao = {
   aproveitamento_nota: string | null;
   registado_por: string;
   created_at: string;
+  canal: 'buffet' | 'take_away';
 };
 
 /** Cost per kg for a ficha técnica, computed from ingredients + labor */
@@ -137,6 +138,7 @@ export function useRegistosProducao() {
     recipiente: string;
     peso_kg: number;
     registado_por: string;
+    canal?: 'buffet' | 'take_away';
   }) => {
     const { error } = await supabase.from('registos_producao').insert({
       dish_name: r.dish_name,
@@ -146,6 +148,7 @@ export function useRegistosProducao() {
       peso_kg: r.peso_kg,
       registado_por: r.registado_por,
       estado: 'no_buffet',
+      canal: r.canal || 'buffet',
     });
     if (error) {
       toast.error('Erro ao registar produção');

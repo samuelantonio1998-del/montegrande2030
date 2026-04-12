@@ -19,6 +19,7 @@ export default function CollectTraysPanel({ items, trayStates, onCollect, leftov
   const [collectItem, setCollectItem] = useState<BuffetItem | null>(null);
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('desperdicio');
+  const [isReporBuffet, setIsReporBuffet] = useState(false);
   const [aprovNote, setAprovNote] = useState('');
 
   const activeOnBuffet = items.filter(i => trayStates[i.id]?.isOnBuffet);

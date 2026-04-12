@@ -841,6 +841,7 @@ export type Database = {
           concluida: boolean
           created_at: string
           critica: boolean
+          departamento: string
           descricao: string | null
           id: string
           periodicidade: string
@@ -854,6 +855,7 @@ export type Database = {
           concluida?: boolean
           created_at?: string
           critica?: boolean
+          departamento?: string
           descricao?: string | null
           id?: string
           periodicidade?: string
@@ -867,6 +869,7 @@ export type Database = {
           concluida?: boolean
           created_at?: string
           critica?: boolean
+          departamento?: string
           descricao?: string | null
           id?: string
           periodicidade?: string

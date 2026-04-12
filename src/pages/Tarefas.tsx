@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Plus, CheckCircle2, Circle, AlertTriangle, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
-import { useTarefas, type Tarefa, type TaskPeriodicity } from '@/hooks/useTarefas';
+import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento } from '@/hooks/useTarefas';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,6 +43,7 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 };
 
 export default function Tarefas() {
+  const { user } = useAuth();
   const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
   const { employees } = useEmployees();
   const staffNames = employees.map(e => e.name);
@@ -56,12 +58,16 @@ export default function Tarefas() {
     prioridade: 'media' as Tarefa['prioridade'],
     critica: false,
     periodicidade: 'unica' as TaskPeriodicity,
+    departamento: (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento,
   });
 
-  const activeTasks = tarefas.filter(t => !t.concluida);
+  const userRole = user?.role;
+  const myTarefas = tarefas.filter(t => t.departamento === 'todos' || t.departamento === userRole);
+  const activeTasks = myTarefas.filter(t => !t.concluida);
   const filtered = filter === 'all' ? activeTasks : activeTasks.filter(t => t.categoria === filter);
-  const doneCount = tarefas.filter(t => t.concluida).length;
-  const progress = tarefas.length > 0 ? (doneCount / tarefas.length) * 100 : 0;
+  const doneCount = myTarefas.filter(t => t.concluida).length;
+  const progress = myTarefas.length > 0 ? (doneCount / myTarefas.length) * 100 : 0;
+  
 
   const handleComplete = async (task: Tarefa) => {
     await completeTarefa(task.id, task.periodicidade);
@@ -85,7 +91,8 @@ export default function Tarefas() {
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
     await addTarefa({ ...newTask, descricao: newTask.descricao || null });
-    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica' });
+    const defaultDept = (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento;
+    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: defaultDept });
     setShowForm(false);
     toast({ title: 'Tarefa criada' });
   };
@@ -149,6 +156,14 @@ export default function Tarefas() {
                     </SelectContent>
                   </Select>
                 </div>
+                <Select value={newTask.departamento} onValueChange={v => setNewTask(p => ({ ...p, departamento: v as TarefaDepartamento }))}>
+                  <SelectTrigger><SelectValue placeholder="Departamento" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="sala">Sala</SelectItem>
+                    <SelectItem value="cozinha">Cozinha</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="critical" checked={newTask.critica} onChange={e => setNewTask(p => ({ ...p, critica: e.target.checked }))} className="rounded" />
                   <label htmlFor="critical" className="text-sm text-foreground">Tarefa crítica</label>
@@ -187,6 +202,7 @@ export default function Tarefas() {
                     {task.critica && <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"><AlertTriangle className="h-3 w-3" /></span>}
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
+                    {task.departamento !== 'todos' && <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', task.departamento === 'sala' ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground')}>{task.departamento === 'sala' ? 'Sala' : 'Cozinha'}</span>}
                   </div>
                 </div>
                 <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">

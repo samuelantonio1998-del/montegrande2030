@@ -4,6 +4,8 @@ import { toast } from '@/lib/toast-with-sound';
 
 export type TaskPeriodicity = 'unica' | 'diaria' | 'semanal' | 'mensal' | 'trimestral';
 
+export type TarefaDepartamento = 'sala' | 'cozinha' | 'todos';
+
 export type Tarefa = {
   id: string;
   titulo: string;
@@ -14,6 +16,7 @@ export type Tarefa = {
   critica: boolean;
   concluida: boolean;
   periodicidade: TaskPeriodicity;
+  departamento: TarefaDepartamento;
   created_at: string;
 };
 
@@ -52,6 +55,7 @@ export function useTarefas() {
       prioridade: t.prioridade,
       critica: t.critica,
       periodicidade: t.periodicidade,
+      departamento: t.departamento,
       concluida: false,
     });
     if (error) toast.error('Erro ao criar tarefa');

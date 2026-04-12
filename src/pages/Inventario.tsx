@@ -462,6 +462,44 @@ export default function Inventario() {
     setScannedItems(copy);
   };
 
+  // Helper: parse decimal input accepting both comma and dot
+  const parseDecimalInput = (val: string): number => {
+    const normalized = val.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Track raw string values for numeric inputs to allow editing with commas
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
+  const getRawKey = (idx: number, field: string) => `${idx}_${field}`;
+  const getRawValue = (idx: number, field: string, numericValue: number) => {
+    const key = getRawKey(idx, field);
+    return rawInputs[key] ?? String(numericValue);
+  };
+  const setRawValue = (idx: number, field: string, val: string) => {
+    setRawInputs(prev => ({ ...prev, [getRawKey(idx, field)]: val }));
+  };
+  const handleDecimalChange = (idx: number, field: keyof ScannedItem, val: string) => {
+    // Allow empty, commas, dots while typing
+    setRawValue(idx, field, val);
+    const normalized = val.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    if (!isNaN(parsed)) {
+      updateScannedItem(idx, field, parsed);
+    } else if (val === '' || val === '0' || val === '0,' || val === '0.') {
+      updateScannedItem(idx, field, 0);
+    }
+  };
+  const handleDecimalBlur = (idx: number, field: keyof ScannedItem) => {
+    const key = getRawKey(idx, field);
+    const raw = rawInputs[key];
+    if (raw !== undefined) {
+      const parsed = parseDecimalInput(raw);
+      updateScannedItem(idx, field, parsed);
+      setRawInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
+    }
+  };
+
   const handleCreateProduct = async () => {
     if (!newProductForm.nome.trim()) {
       toast({ title: 'Nome do produto é obrigatório', variant: 'destructive' });

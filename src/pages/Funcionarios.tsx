@@ -1,27 +1,20 @@
 import { useState } from 'react';
-import { Plus, Trash2, Users, Pencil, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Users, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/lib/toast-with-sound';
-import { type UserRole, type AppUser } from '@/contexts/AuthContext';
-import { useEmployees } from '@/hooks/useEmployees';
+import { type UserRole } from '@/contexts/AuthContext';
+import { useEmployees, type Employee } from '@/hooks/useEmployees';
 import { motion } from 'framer-motion';
 
 const roleLabels: Record<UserRole, string> = {
   sala: 'Sala',
   cozinha: 'Cozinha',
   gerencia: 'Gerência',
-};
-
-const roleBadgeClass: Record<UserRole, string> = {
-  sala: 'bg-primary/10 text-primary border-primary/20',
-  cozinha: 'bg-warning/10 text-warning border-warning/20',
-  gerencia: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 export default function Funcionarios() {
@@ -31,10 +24,9 @@ export default function Funcionarios() {
   const [newName, setNewName] = useState('');
   const [newPin, setNewPin] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('sala');
-  const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
-  const [editingPin, setEditingPin] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [visiblePin, setVisiblePin] = useState<string | null>(null);
 
   const handleAdd = async () => {
     if (!newName.trim() || !newPin.trim()) {
@@ -57,7 +49,7 @@ export default function Funcionarios() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    removeEmployee(deleteTarget.pin);
+    removeEmployee(deleteTarget.id);
     setDeleteTarget(null);
     toast.success('Funcionário removido');
   };
@@ -79,20 +71,19 @@ export default function Funcionarios() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>PIN</TableHead>
               <TableHead>Perfil</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {employees.map(emp => (
-              <TableRow key={emp.pin}>
+              <TableRow key={emp.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
                       {emp.name[0]}
                     </div>
-                    {editingPin === emp.pin ? (
+                    {editingId === emp.id ? (
                       <div className="flex items-center gap-1">
                         <Input
                           value={editName}
@@ -101,33 +92,33 @@ export default function Funcionarios() {
                           autoFocus
                           onKeyDown={e => {
                             if (e.key === 'Enter' && editName.trim()) {
-                              updateName(emp.pin, editName.trim());
-                              setEditingPin(null);
+                              updateName(emp.id, editName.trim());
+                              setEditingId(null);
                               toast.success('Nome atualizado');
                             }
-                            if (e.key === 'Escape') setEditingPin(null);
+                            if (e.key === 'Escape') setEditingId(null);
                           }}
                         />
                         <Button
                           variant="ghost" size="icon" className="h-6 w-6"
                           onClick={() => {
                             if (editName.trim()) {
-                              updateName(emp.pin, editName.trim());
-                              setEditingPin(null);
+                              updateName(emp.id, editName.trim());
+                              setEditingId(null);
                               toast.success('Nome atualizado');
                             }
                           }}
                         >
                           <Check className="h-3.5 w-3.5 text-success" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingPin(null)}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingId(null)}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     ) : (
                       <button
                         className="group flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
-                        onClick={() => { setEditingPin(emp.pin); setEditName(emp.name); }}
+                        onClick={() => { setEditingId(emp.id); setEditName(emp.name); }}
                       >
                         {emp.name}
                         <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
@@ -136,25 +127,10 @@ export default function Funcionarios() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-foreground">
-                      {visiblePin === emp.pin ? emp.pin : '••••'}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => setVisiblePin(visiblePin === emp.pin ? null : emp.pin)}
-                    >
-                      {visiblePin === emp.pin ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
                   <Select
                     value={emp.role}
                     onValueChange={(val: UserRole) => {
-                      updateRole(emp.pin, val);
+                      updateRole(emp.id, val);
                       toast.success(`Perfil de ${emp.name} alterado para ${roleLabels[val]}`);
                     }}
                   >
@@ -182,7 +158,7 @@ export default function Funcionarios() {
             ))}
             {employees.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                   Nenhum funcionário registado
                 </TableCell>
               </TableRow>
@@ -206,7 +182,7 @@ export default function Funcionarios() {
             </div>
             <div>
               <label className="text-sm text-muted-foreground">PIN de acesso</label>
-              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="Ex: 1234" maxLength={6} />
+              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="Ex: 1234" maxLength={6} type="password" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Perfil de acesso</label>

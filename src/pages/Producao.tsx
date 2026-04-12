@@ -242,6 +242,34 @@ export default function Producao() {
                 <SelectContent>{Object.entries(recipientCapacity).map(([key, val]) => <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {/* Production intelligence suggestion */}
+            {newDish && (() => {
+              const suggestion = getSuggestion(newDish);
+              if (!suggestion) return null;
+              const alreadySentToday = activeTrays
+                .filter(r => r.dish_name === newDish)
+                .reduce((s, r) => s + r.peso_kg, 0);
+              const remaining = Math.max(0, suggestion.suggestedKg - alreadySentToday);
+              return (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Sugestão IA</span>
+                  </div>
+                  <p className="text-sm text-foreground">
+                    Para <strong>{currentPax} clientes</strong> em sala, o histórico sugere <strong>{suggestion.suggestedKg.toFixed(1)}kg</strong> de {newDish}.
+                  </p>
+                  {alreadySentToday > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Já enviados hoje: {alreadySentToday.toFixed(1)}kg · Falta: ~{remaining.toFixed(1)}kg
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Baseado em {suggestion.basedOnDays} dias · ~{(suggestion.avgKgPerPax * 1000).toFixed(0)}g/cliente
+                  </p>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Cancelar</Button>

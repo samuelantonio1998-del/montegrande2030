@@ -181,7 +181,7 @@ export default function DashboardCozinha() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
         <div className="rounded-md border border-border bg-card px-2.5 py-1.5 flex items-center gap-2">
           <BarChart3 className="h-3 w-3 text-primary shrink-0" />
           <div><p className="text-[10px] text-muted-foreground leading-none">Produção</p><p className="text-sm font-bold text-foreground">{totalProduced.toFixed(0)}kg</p></div>

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat, RefreshCw } from 'lucide-react';
+import { Plus, Clock, ArrowRight, Recycle, Trash2, AlertTriangle, ChefHat, RefreshCw, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,7 @@ import { recipientCapacity, type RecipientSize, type TrayStatus } from '@/lib/bu
 import { useRegistosProducao, type RegistoProducao } from '@/hooks/useRegistosProducao';
 import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
@@ -24,6 +25,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 export default function Producao() {
   const { user } = useAuth();
   const { registos, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary } = useRegistosProducao();
+  const { currentPax, occupiedTables, getSuggestion } = useProductionIntelligence();
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
@@ -95,12 +97,23 @@ export default function Producao() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl text-foreground">Produção Buffet</h1>
           <p className="mt-1 text-muted-foreground">Registo de tabuleiros e ciclo de vida</p>
         </div>
-        <Button onClick={() => setShowNewDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> Enviar Tabuleiro</Button>
+        <div className="flex items-center gap-3">
+          {currentPax > 0 && (
+            <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2">
+              <Users className="h-4 w-4 text-primary" />
+              <div className="text-right">
+                <p className="text-lg font-bold text-primary leading-none">{currentPax}</p>
+                <p className="text-[10px] text-muted-foreground">{occupiedTables} mesa{occupiedTables !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          )}
+          <Button onClick={() => setShowNewDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> Enviar Tabuleiro</Button>
+        </div>
       </div>
 
       {alerts.length > 0 && (
@@ -229,6 +242,34 @@ export default function Producao() {
                 <SelectContent>{Object.entries(recipientCapacity).map(([key, val]) => <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {/* Production intelligence suggestion */}
+            {newDish && (() => {
+              const suggestion = getSuggestion(newDish);
+              if (!suggestion) return null;
+              const alreadySentToday = activeTrays
+                .filter(r => r.dish_name === newDish)
+                .reduce((s, r) => s + r.peso_kg, 0);
+              const remaining = Math.max(0, suggestion.suggestedKg - alreadySentToday);
+              return (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Sugestão IA</span>
+                  </div>
+                  <p className="text-sm text-foreground">
+                    Para <strong>{currentPax} clientes</strong> em sala, o histórico sugere <strong>{suggestion.suggestedKg.toFixed(1)}kg</strong> de {newDish}.
+                  </p>
+                  {alreadySentToday > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Já enviados hoje: {alreadySentToday.toFixed(1)}kg · Falta: ~{remaining.toFixed(1)}kg
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Baseado em {suggestion.basedOnDays} dias · ~{(suggestion.avgKgPerPax * 1000).toFixed(0)}g/cliente
+                  </p>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Cancelar</Button>

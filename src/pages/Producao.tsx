@@ -24,7 +24,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 
 export default function Producao() {
   const { user } = useAuth();
-  const { registos, addRegisto, recolherRegisto, activeTrays, completedTrays, wasteSummary } = useRegistosProducao();
+  const { currentPax, occupiedTables, getSuggestion } = useProductionIntelligence();
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 

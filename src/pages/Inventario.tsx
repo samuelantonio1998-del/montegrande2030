@@ -907,7 +907,10 @@ export default function Inventario() {
                                 ) : null;
                               })()}
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-xs text-muted-foreground">Total: €{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Total: €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)}
+                                  {item.desconto > 0 && <span className="text-success ml-1">(-€{item.desconto.toFixed(2)})</span>}
+                                </span>
                                 {!item.produto_id && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/30">Novo</Badge>}
                               </div>
                             </div>

@@ -602,7 +602,8 @@ export default function Inventario() {
   }
 
   const selectedCount = scannedItems.filter(i => i.selected).length;
-  const totalValue = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.quantidade * i.custo_unitario, 0);
+  const totalValue = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.quantidade * i.custo_unitario - i.desconto, 0);
+  const totalDiscount = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.desconto, 0);
 
   return (
     <div className="space-y-6">

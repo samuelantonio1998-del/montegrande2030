@@ -48,10 +48,11 @@ export default function DashboardSala() {
     }
   };
 
-  const activeTasks = tarefas.filter(i => !i.concluida);
+  const myDeptTarefas = tarefas.filter(t => t.departamento === 'todos' || t.departamento === 'sala');
+  const activeTasks = myDeptTarefas.filter(i => !i.concluida);
   const filtered = filter === 'all' ? activeTasks : activeTasks.filter(i => i.categoria === filter);
-  const doneCount = tarefas.filter(i => i.concluida).length;
-  const progress = tarefas.length > 0 ? (doneCount / tarefas.length) * 100 : 0;
+  const doneCount = myDeptTarefas.filter(i => i.concluida).length;
+  const progress = myDeptTarefas.length > 0 ? (doneCount / myDeptTarefas.length) * 100 : 0;
 
   const myTasks = tarefas.filter(i => i.responsavel === user?.name);
   const myDoneCount = myTasks.filter(i => i.concluida).length;

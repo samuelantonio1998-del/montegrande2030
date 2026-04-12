@@ -70,10 +70,14 @@ export default function Producao() {
   async function handleCheckout() {
     if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
-    await recolherRegisto(checkoutTarget.id, kg, leftoverAction, leftoverAction === 'aproveitamento' ? aprovNote : null);
+    const note = leftoverAction === 'aproveitamento'
+      ? (isReporBuffet ? `Repor no buffet${aprovNote ? ' — ' + aprovNote : ''}` : aprovNote)
+      : null;
+    await recolherRegisto(checkoutTarget.id, kg, leftoverAction, note);
     setCheckoutTarget(null);
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
+    setIsReporBuffet(false);
     setAprovNote('');
   }
 

@@ -825,15 +825,15 @@ export default function Inventario() {
                                 onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
                                 className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1"
                               />
-                              <div className="grid grid-cols-3 gap-2">
+                               <div className="grid grid-cols-4 gap-2">
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">Qtd.</span>
                                   <Input
-                                    type="number"
-                                    value={item.quantidade}
-                                    onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'quantidade', item.quantidade)}
+                                    onChange={(e) => handleDecimalChange(i, 'quantidade', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'quantidade')}
                                     className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
-                                    step="0.01"
                                   />
                                 </div>
                                 <div>
@@ -847,11 +847,22 @@ export default function Inventario() {
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">€/Un</span>
                                   <Input
-                                    type="number"
-                                    value={item.custo_unitario}
-                                    onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'custo_unitario', item.custo_unitario)}
+                                    onChange={(e) => handleDecimalChange(i, 'custo_unitario', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'custo_unitario')}
                                     className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
-                                    step="0.01"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Desc.</span>
+                                  <Input
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'desconto', item.desconto)}
+                                    onChange={(e) => handleDecimalChange(i, 'desconto', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'desconto')}
+                                    className={cn("h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input", item.desconto > 0 && "text-success")}
+                                    placeholder="0"
                                   />
                                 </div>
                               </div>

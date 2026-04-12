@@ -345,15 +345,16 @@ export default function Inventario() {
       if (item.produto_id) {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
+          const effectiveCost = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
           const newStock = parseFloat((produto.stock_atual + item.quantidade).toFixed(2));
-          const totalCost = produto.custo_medio * produto.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
+          const totalCost = produto.custo_medio * produto.stock_atual + effectiveCost * item.quantidade;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : effectiveCost).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (fornecedorId && !produto.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
           await supabase.from('produtos').update(updatePayload).eq('id', item.produto_id);
           await supabase.from('movimentacoes').insert({
             produto_id: item.produto_id, tipo: 'entrada', quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            custo_unitario: effectiveCost, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
             fornecedor_id: fornecedorId,
           });
 

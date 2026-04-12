@@ -929,6 +929,7 @@ export default function Inventario() {
                             <th className="px-3 py-2 w-20">Qtd.</th>
                             <th className="px-3 py-2 w-16">Un.</th>
                             <th className="px-3 py-2 w-24">€/Un (s/IVA)</th>
+                            <th className="px-3 py-2 w-20">Desc.</th>
                             <th className="px-3 py-2 w-20">Total</th>
                             <th className="px-3 py-2 w-24">SKU</th>
                             <th className="px-3 py-2 w-28">Fornecedor</th>
@@ -960,11 +961,11 @@ export default function Inventario() {
                               </td>
                               <td className="px-3 py-2.5">
                                 <Input
-                                  type="number"
-                                  value={item.quantidade}
-                                  onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'quantidade', item.quantidade)}
+                                  onChange={(e) => handleDecimalChange(i, 'quantidade', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'quantidade')}
                                   className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                  step="0.01"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
@@ -976,15 +977,28 @@ export default function Inventario() {
                               </td>
                               <td className="px-3 py-2.5">
                                 <Input
-                                  type="number"
-                                  value={item.custo_unitario}
-                                  onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'custo_unitario', item.custo_unitario)}
+                                  onChange={(e) => handleDecimalChange(i, 'custo_unitario', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'custo_unitario')}
                                   className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                  step="0.01"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
-                                <span className="text-sm font-medium text-foreground">€{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
+                                <Input
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'desconto', item.desconto)}
+                                  onChange={(e) => handleDecimalChange(i, 'desconto', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'desconto')}
+                                  className={cn("h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input", item.desconto > 0 && "text-success")}
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-sm font-medium text-foreground">
+                                  €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)}
+                                </span>
+                                {item.desconto > 0 && <span className="text-[10px] text-success block">-€{item.desconto.toFixed(2)}</span>}
                               </td>
                               <td className="px-3 py-2.5">
                                 <span className="text-xs text-muted-foreground font-mono">

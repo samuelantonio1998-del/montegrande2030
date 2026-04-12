@@ -644,6 +644,36 @@ export type Database = {
           },
         ]
       }
+      precario_takeaway: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          id: string
+          nome: string
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome: string
+          preco?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       produto_aliases: {
         Row: {
           alias_nome: string
@@ -746,6 +776,7 @@ export type Database = {
         Row: {
           aproveitamento_nota: string | null
           buffet_item_id: string | null
+          canal: string
           created_at: string
           dish_name: string
           enviado_at: string
@@ -763,6 +794,7 @@ export type Database = {
         Insert: {
           aproveitamento_nota?: string | null
           buffet_item_id?: string | null
+          canal?: string
           created_at?: string
           dish_name: string
           enviado_at?: string
@@ -780,6 +812,7 @@ export type Database = {
         Update: {
           aproveitamento_nota?: string | null
           buffet_item_id?: string | null
+          canal?: string
           created_at?: string
           dish_name?: string
           enviado_at?: string

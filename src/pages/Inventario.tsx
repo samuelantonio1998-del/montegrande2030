@@ -1039,6 +1039,7 @@ export default function Inventario() {
                         <span className="font-medium text-foreground">{selectedCount}</span> itens selecionados
                         {' · '}
                         Total: <span className="font-semibold text-foreground">€{totalValue.toFixed(2)}</span>
+                        {totalDiscount > 0 && <span className="text-success ml-1">(desc. -€{totalDiscount.toFixed(2)})</span>}
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={resetScanner}>

@@ -58,12 +58,14 @@ PRODUCT ITEMS - Extract with these fields:
 
 - unidade: unit of measure - un, garrafa, kg, L, caixa, etc. (string). For packed items, use the individual unit (e.g., "un" for bottles, "garrafa" for wine bottles).
 - custo_unitario: NET unit cost in euros WITHOUT VAT/IVA PER INDIVIDUAL UNIT (number). CRITICAL: If the invoice price is per pack, divide by the number of units in the pack to get the per-unit cost. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
+- desconto: Discount amount in euros for this line item (number, default 0). Look for columns labeled "Desconto", "Desc.", "Discount", "%Desc", or negative values on the line. If a percentage discount is shown, calculate the euro amount. If no discount, return 0.
 - fornecedor: supplier name if visible on the invoice header/footer (string or null).
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available.
 
 Only return the JSON via the tool call, no other text. If you cannot read the invoice, return empty items array.
 Always use Portuguese product names when possible.
 REMEMBER: For bundled/pack items, ALWAYS multiply to get total individual units and divide cost to get per-unit cost.
+REMEMBER: Always check for discount columns/values on each line item.
 DOUBLE-CHECK all quantities before returning - they should be realistic for a restaurant order.`,
           },
           {
@@ -101,10 +103,11 @@ DOUBLE-CHECK all quantities before returning - they should be realistic for a re
                         quantidade: { type: "number", description: "Quantity" },
                         unidade: { type: "string", description: "Unit (kg, L, un, garrafa, caixa)" },
                         custo_unitario: { type: "number", description: "NET unit cost in euros WITHOUT VAT/IVA" },
+                        desconto: { type: "number", description: "Discount amount in euros for this line item (0 if none)" },
                         fornecedor: { type: "string", description: "Supplier name if visible" },
                         sku: { type: "string", description: "Product code if visible" },
                       },
-                      required: ["nome", "quantidade", "unidade", "custo_unitario"],
+                      required: ["nome", "quantidade", "unidade", "custo_unitario", "desconto"],
                     },
                   },
                 },

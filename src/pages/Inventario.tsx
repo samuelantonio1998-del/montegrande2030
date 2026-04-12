@@ -54,6 +54,7 @@ type ScannedItem = {
   quantidade: number;
   unidade: string;
   custo_unitario: number;
+  desconto: number;
   fornecedor: string | null;
   sku: string | null;
   selected: boolean;
@@ -300,7 +301,7 @@ export default function Inventario() {
           }
         }
         const match = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || matchByFuzzy;
-        return { ...item, selected: true, produto_id: match?.id };
+        return { ...item, desconto: item.desconto || 0, selected: true, produto_id: match?.id };
       });
 
       setTimeout(() => {
@@ -344,15 +345,16 @@ export default function Inventario() {
       if (item.produto_id) {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
+          const effectiveCost = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
           const newStock = parseFloat((produto.stock_atual + item.quantidade).toFixed(2));
-          const totalCost = produto.custo_medio * produto.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
+          const totalCost = produto.custo_medio * produto.stock_atual + effectiveCost * item.quantidade;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : effectiveCost).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (fornecedorId && !produto.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
           await supabase.from('produtos').update(updatePayload).eq('id', item.produto_id);
           await supabase.from('movimentacoes').insert({
             produto_id: item.produto_id, tipo: 'entrada', quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            custo_unitario: effectiveCost, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
             fornecedor_id: fornecedorId,
           });
 
@@ -394,29 +396,30 @@ export default function Inventario() {
           }
         }
 
+        const effectiveCost2 = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
         if (existingProd) {
           const newStock = parseFloat((existingProd.stock_atual + item.quantidade).toFixed(2));
-          const totalCost = existingProd.custo_medio * existingProd.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
+          const totalCost = existingProd.custo_medio * existingProd.stock_atual + effectiveCost2 * item.quantidade;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : effectiveCost2).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (item.sku && !existingProd.sku) updatePayload.sku = item.sku;
           if (fornecedorId && !existingProd.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
           await supabase.from('produtos').update(updatePayload).eq('id', existingProd.id);
           await supabase.from('movimentacoes').insert({
             produto_id: existingProd.id, tipo: 'entrada', quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
             fornecedor_id: fornecedorId,
           });
         } else {
           const { data: newProd } = await supabase.from('produtos').insert({
             nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
-            custo_medio: item.custo_unitario, sku: item.sku,
+            custo_medio: effectiveCost2, sku: item.sku,
             fornecedor_id: fornecedorId,
           }).select().single();
           if (newProd) {
             await supabase.from('movimentacoes').insert({
               produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
-              custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
+              custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR - Novo produto (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR - Novo produto',
               fornecedor_id: fornecedorId,
             });
           }
@@ -449,6 +452,7 @@ export default function Inventario() {
     setPreviewUrl(null);
     setPreviewFile(null);
     setScannedItems([]);
+    setRawInputs({});
     setProcessingProgress(0);
     setInvoiceMeta({ numero_fatura: null, data_fatura: null, fornecedor_nome: null });
     setDuplicateWarning(null);
@@ -459,6 +463,44 @@ export default function Inventario() {
     const copy = [...scannedItems];
     (copy[index] as any)[field] = value;
     setScannedItems(copy);
+  };
+
+  // Helper: parse decimal input accepting both comma and dot
+  const parseDecimalInput = (val: string): number => {
+    const normalized = val.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Track raw string values for numeric inputs to allow editing with commas
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
+  const getRawKey = (idx: number, field: string) => `${idx}_${field}`;
+  const getRawValue = (idx: number, field: string, numericValue: number) => {
+    const key = getRawKey(idx, field);
+    return rawInputs[key] ?? String(numericValue);
+  };
+  const setRawValue = (idx: number, field: string, val: string) => {
+    setRawInputs(prev => ({ ...prev, [getRawKey(idx, field)]: val }));
+  };
+  const handleDecimalChange = (idx: number, field: keyof ScannedItem, val: string) => {
+    // Allow empty, commas, dots while typing
+    setRawValue(idx, field, val);
+    const normalized = val.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    if (!isNaN(parsed)) {
+      updateScannedItem(idx, field, parsed);
+    } else if (val === '' || val === '0' || val === '0,' || val === '0.') {
+      updateScannedItem(idx, field, 0);
+    }
+  };
+  const handleDecimalBlur = (idx: number, field: keyof ScannedItem) => {
+    const key = getRawKey(idx, field);
+    const raw = rawInputs[key];
+    if (raw !== undefined) {
+      const parsed = parseDecimalInput(raw);
+      updateScannedItem(idx, field, parsed);
+      setRawInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
+    }
   };
 
   const handleCreateProduct = async () => {
@@ -563,7 +605,8 @@ export default function Inventario() {
   }
 
   const selectedCount = scannedItems.filter(i => i.selected).length;
-  const totalValue = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.quantidade * i.custo_unitario, 0);
+  const totalValue = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.quantidade * i.custo_unitario - i.desconto, 0);
+  const totalDiscount = scannedItems.filter(i => i.selected).reduce((sum, i) => sum + i.desconto, 0);
 
   return (
     <div className="space-y-6">
@@ -786,15 +829,15 @@ export default function Inventario() {
                                 onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
                                 className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1"
                               />
-                              <div className="grid grid-cols-3 gap-2">
+                               <div className="grid grid-cols-4 gap-2">
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">Qtd.</span>
                                   <Input
-                                    type="number"
-                                    value={item.quantidade}
-                                    onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'quantidade', item.quantidade)}
+                                    onChange={(e) => handleDecimalChange(i, 'quantidade', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'quantidade')}
                                     className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
-                                    step="0.01"
                                   />
                                 </div>
                                 <div>
@@ -808,11 +851,22 @@ export default function Inventario() {
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">€/Un</span>
                                   <Input
-                                    type="number"
-                                    value={item.custo_unitario}
-                                    onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'custo_unitario', item.custo_unitario)}
+                                    onChange={(e) => handleDecimalChange(i, 'custo_unitario', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'custo_unitario')}
                                     className="h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input"
-                                    step="0.01"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase text-muted-foreground">Desc.</span>
+                                  <Input
+                                    inputMode="decimal"
+                                    value={getRawValue(i, 'desconto', item.desconto)}
+                                    onChange={(e) => handleDecimalChange(i, 'desconto', e.target.value)}
+                                    onBlur={() => handleDecimalBlur(i, 'desconto')}
+                                    className={cn("h-7 text-sm border-transparent bg-muted/40 hover:border-input focus:border-input", item.desconto > 0 && "text-success")}
+                                    placeholder="0"
                                   />
                                 </div>
                               </div>
@@ -857,7 +911,10 @@ export default function Inventario() {
                                 ) : null;
                               })()}
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-xs text-muted-foreground">Total: €{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Total: €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)}
+                                  {item.desconto > 0 && <span className="text-success ml-1">(-€{item.desconto.toFixed(2)})</span>}
+                                </span>
                                 {!item.produto_id && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/30">Novo</Badge>}
                               </div>
                             </div>
@@ -876,6 +933,7 @@ export default function Inventario() {
                             <th className="px-3 py-2 w-20">Qtd.</th>
                             <th className="px-3 py-2 w-16">Un.</th>
                             <th className="px-3 py-2 w-24">€/Un (s/IVA)</th>
+                            <th className="px-3 py-2 w-20">Desc.</th>
                             <th className="px-3 py-2 w-20">Total</th>
                             <th className="px-3 py-2 w-24">SKU</th>
                             <th className="px-3 py-2 w-28">Fornecedor</th>
@@ -907,11 +965,11 @@ export default function Inventario() {
                               </td>
                               <td className="px-3 py-2.5">
                                 <Input
-                                  type="number"
-                                  value={item.quantidade}
-                                  onChange={(e) => updateScannedItem(i, 'quantidade', parseFloat(e.target.value) || 0)}
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'quantidade', item.quantidade)}
+                                  onChange={(e) => handleDecimalChange(i, 'quantidade', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'quantidade')}
                                   className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                  step="0.01"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
@@ -923,15 +981,28 @@ export default function Inventario() {
                               </td>
                               <td className="px-3 py-2.5">
                                 <Input
-                                  type="number"
-                                  value={item.custo_unitario}
-                                  onChange={(e) => updateScannedItem(i, 'custo_unitario', parseFloat(e.target.value) || 0)}
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'custo_unitario', item.custo_unitario)}
+                                  onChange={(e) => handleDecimalChange(i, 'custo_unitario', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'custo_unitario')}
                                   className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                  step="0.01"
                                 />
                               </td>
                               <td className="px-3 py-2.5">
-                                <span className="text-sm font-medium text-foreground">€{(item.quantidade * item.custo_unitario).toFixed(2)}</span>
+                                <Input
+                                  inputMode="decimal"
+                                  value={getRawValue(i, 'desconto', item.desconto)}
+                                  onChange={(e) => handleDecimalChange(i, 'desconto', e.target.value)}
+                                  onBlur={() => handleDecimalBlur(i, 'desconto')}
+                                  className={cn("h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input", item.desconto > 0 && "text-success")}
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-sm font-medium text-foreground">
+                                  €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)}
+                                </span>
+                                {item.desconto > 0 && <span className="text-[10px] text-success block">-€{item.desconto.toFixed(2)}</span>}
                               </td>
                               <td className="px-3 py-2.5">
                                 <span className="text-xs text-muted-foreground font-mono">
@@ -971,6 +1042,7 @@ export default function Inventario() {
                         <span className="font-medium text-foreground">{selectedCount}</span> itens selecionados
                         {' · '}
                         Total: <span className="font-semibold text-foreground">€{totalValue.toFixed(2)}</span>
+                        {totalDiscount > 0 && <span className="text-success ml-1">(desc. -€{totalDiscount.toFixed(2)})</span>}
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={resetScanner}>

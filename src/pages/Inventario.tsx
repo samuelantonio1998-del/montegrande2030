@@ -1300,7 +1300,79 @@ export default function Inventario() {
                 className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
               />
             </div>
-            <table className="w-full">
+            {/* Mobile card layout */}
+            <div className="md:hidden divide-y divide-border">
+              {filteredProdutos.map(p => {
+                const level = getStockLevel(p);
+                return (
+                  <div key={p.id} className="px-4 py-3 active:bg-muted/30 transition-colors" onClick={() => { if (editingProductId !== p.id) { setSelectedProduto(p); setHistoryOpen(true); } }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        {editingProductId === p.id ? (
+                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                            <Input
+                              value={editProductName}
+                              onChange={e => setEditProductName(e.target.value)}
+                              className="h-8 text-sm flex-1"
+                              autoFocus
+                              onKeyDown={async e => {
+                                if (e.key === 'Enter' && editProductName.trim()) {
+                                  await supabase.from('produtos').update({ nome: editProductName.trim() }).eq('id', p.id);
+                                  await fetchData();
+                                  setEditingProductId(null);
+                                  toast({ title: 'Nome atualizado' });
+                                }
+                                if (e.key === 'Escape') setEditingProductId(null);
+                              }}
+                            />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={async () => {
+                              if (editProductName.trim()) {
+                                await supabase.from('produtos').update({ nome: editProductName.trim() }).eq('id', p.id);
+                                await fetchData();
+                                setEditingProductId(null);
+                                toast({ title: 'Nome atualizado' });
+                              }
+                            }}>
+                              <Check className="h-4 w-4 text-success" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setEditingProductId(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-base font-medium text-foreground leading-snug">{p.nome}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-0.5">{p.categoria} · {p.sku || 'Sem SKU'}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-foreground">{p.stock_atual}{p.unidade}</p>
+                          <p className="text-[10px] text-muted-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</p>
+                        </div>
+                        <span className={cn(
+                          'inline-flex items-center justify-center h-6 w-6 rounded-full',
+                          p.stock_atual <= p.stock_minimo ? 'bg-destructive/10 text-destructive' :
+                          level.label === 'Baixo' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                        )}>
+                          {p.stock_atual <= p.stock_minimo ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-1.5">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={cn('h-full rounded-full transition-all', level.color)}
+                          style={{ width: `${Math.min((p.stock_atual / p.stock_maximo) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <table className="w-full hidden md:table">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Produto</th>

@@ -396,29 +396,30 @@ export default function Inventario() {
           }
         }
 
+        const effectiveCost2 = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
         if (existingProd) {
           const newStock = parseFloat((existingProd.stock_atual + item.quantidade).toFixed(2));
-          const totalCost = existingProd.custo_medio * existingProd.stock_atual + item.custo_unitario * item.quantidade;
-          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : item.custo_unitario).toFixed(4));
+          const totalCost = existingProd.custo_medio * existingProd.stock_atual + effectiveCost2 * item.quantidade;
+          const newCustoMedio = parseFloat((newStock > 0 ? totalCost / newStock : effectiveCost2).toFixed(4));
           const updatePayload: any = { stock_atual: newStock, custo_medio: newCustoMedio };
           if (item.sku && !existingProd.sku) updatePayload.sku = item.sku;
           if (fornecedorId && !existingProd.fornecedor_id) updatePayload.fornecedor_id = fornecedorId;
           await supabase.from('produtos').update(updatePayload).eq('id', existingProd.id);
           await supabase.from('movimentacoes').insert({
             produto_id: existingProd.id, tipo: 'entrada', quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario, motivo: 'Fatura OCR',
+            custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
             fornecedor_id: fornecedorId,
           });
         } else {
           const { data: newProd } = await supabase.from('produtos').insert({
             nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
-            custo_medio: item.custo_unitario, sku: item.sku,
+            custo_medio: effectiveCost2, sku: item.sku,
             fornecedor_id: fornecedorId,
           }).select().single();
           if (newProd) {
             await supabase.from('movimentacoes').insert({
               produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
-              custo_unitario: item.custo_unitario, motivo: 'Fatura OCR - Novo produto',
+              custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR - Novo produto (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR - Novo produto',
               fornecedor_id: fornecedorId,
             });
           }

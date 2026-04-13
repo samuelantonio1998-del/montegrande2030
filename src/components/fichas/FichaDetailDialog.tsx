@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText } from 'lucide-react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useProdutos, useUpdateFicha, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useProdutos, useUpdateFicha, useDeleteFicha, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -135,6 +136,7 @@ export function FichaDetailDialog({
 }) {
   const { data: produtos = [] } = useProdutos();
   const updateFicha = useUpdateFicha();
+  const deleteFicha = useDeleteFicha();
   const [editing, setEditing] = useState(false);
 
   // Edit state
@@ -423,7 +425,7 @@ export function FichaDetailDialog({
                 )}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? (porcoes === 1 ? 'Unitário' : `${porcoes}kg`)})
+                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? `${porcoes} doses`})
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}
@@ -462,24 +464,83 @@ export function FichaDetailDialog({
           </div>
         )}
 
-        {/* Save/Cancel buttons */}
-        {editing && (
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => {
-              setEditing(false);
-              setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));
-              setEditPorcoes(ficha.porcoes);
-              setEditPreco(ficha.preco_venda);
-              setEditTempo(ficha.tempo_preparacao ?? 0);
-              setEditNome(ficha.nome);
-              setEditNotas((ficha as any).notas_preparacao ?? '');
-            }}>
-              <X className="h-4 w-4 mr-1.5" /> Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={updateFicha.isPending || !editTempo}>
-              <Save className="h-4 w-4 mr-1.5" />
-              {updateFicha.isPending ? 'A guardar...' : 'Guardar'}
-            </Button>
+        {/* Save/Cancel/Delete buttons */}
+        {editing ? (
+          <div className="flex justify-between gap-2 pt-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5">
+                  <Trash2 className="h-4 w-4" /> Eliminar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Eliminar ficha técnica?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A ficha "{ficha.nome}" será desativada e deixará de aparecer na lista.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => { deleteFicha.mutate(ficha.id); onClose(); }}
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                setEditing(false);
+                setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));
+                setEditPorcoes(ficha.porcoes);
+                setEditPreco(ficha.preco_venda);
+                setEditTempo(ficha.tempo_preparacao ?? 0);
+                setEditNome(ficha.nome);
+                setEditNotas((ficha as any).notas_preparacao ?? '');
+              }}>
+                <X className="h-4 w-4 mr-1.5" /> Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={updateFicha.isPending || !editTempo}>
+                <Save className="h-4 w-4 mr-1.5" />
+                {updateFicha.isPending ? 'A guardar...' : 'Guardar'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end pt-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5" /> Eliminar ficha
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Eliminar ficha técnica?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A ficha "{ficha.nome}" será desativada e deixará de aparecer na lista.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => { deleteFicha.mutate(ficha.id); onClose(); }}
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </DialogContent>

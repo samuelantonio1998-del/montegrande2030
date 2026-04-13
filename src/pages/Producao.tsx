@@ -82,12 +82,13 @@ export default function Producao() {
       });
     } else {
       const cap = recipientCapacity[newRecipient];
+      const pesoKg = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
       await addRegisto({
         dish_name: newDish,
         ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: newRecipient,
-        peso_kg: cap.capacityKg,
+        peso_kg: pesoKg,
         registado_por: user?.name || 'Gerente',
         canal: 'buffet',
       });
@@ -225,12 +226,20 @@ export default function Producao() {
             </div>
 
             {activeTab === 'buffet' ? (
-              <div>
-                <Label>Recipiente</Label>
-                <Select value={newRecipient} onValueChange={v => setNewRecipient(v as RecipientSize)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(recipientCapacity).map(([key, val]) => <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <div>
+                  <Label>Recipiente</Label>
+                  <Select value={newRecipient} onValueChange={v => { setNewRecipient(v as RecipientSize); setNewTakeawayKg(''); }}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(recipientCapacity).map(([key, val]) => <SelectItem key={key} value={key}>{val.label} ({val.capacityKg}kg)</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                {newRecipient === 'unitario' && (
+                  <div>
+                    <Label>Peso (kg)</Label>
+                    <Input type="number" step="0.1" min="0.1" placeholder="Ex: 2.5" value={newTakeawayKg} onChange={e => setNewTakeawayKg(e.target.value)} />
+                  </div>
+                )}
               </div>
             ) : (
               <div>

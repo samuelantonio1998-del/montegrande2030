@@ -73,7 +73,7 @@ export default function Producao() {
       if (kg <= 0) return;
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.id,
+        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
         peso_kg: kg,
@@ -84,7 +84,7 @@ export default function Producao() {
       const cap = recipientCapacity[newRecipient];
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.id,
+        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: newRecipient,
         peso_kg: cap.capacityKg,

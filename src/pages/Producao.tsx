@@ -59,36 +59,57 @@ export default function Producao() {
   const [newDish, setNewDish] = useState('');
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [newTakeawayKg, setNewTakeawayKg] = useState('');
+  const [discountLeftover, setDiscountLeftover] = useState(true);
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('aproveitamento');
   const [isReporBuffet, setIsReporBuffet] = useState(false);
   const [aprovNote, setAprovNote] = useState('');
 
+  // Find the most recent approved leftover for the selected dish (today)
+  const previousLeftover = useMemo(() => {
+    if (!newDish) return null;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const approved = registos.filter(r =>
+      r.dish_name === newDish &&
+      r.sobra_acao === 'aproveitamento' &&
+      r.sobra_kg && r.sobra_kg > 0 &&
+      r.enviado_at.slice(0, 10) === todayStr
+    );
+    if (approved.length === 0) return null;
+    // Sum all approved leftovers for this dish today
+    const totalKg = approved.reduce((sum, r) => sum + (r.sobra_kg || 0), 0);
+    return { totalKg, count: approved.length };
+  }, [newDish, registos]);
+
   async function handleSendTray() {
     if (!newDish) return;
     const dish = allEmentaDishes.find(d => d.nome === newDish);
 
+    const leftoverDiscount = (discountLeftover && previousLeftover) ? previousLeftover.totalKg : 0;
+
     if (activeTab === 'take_away') {
       const kg = parseFloat(newTakeawayKg) || 0;
       if (kg <= 0) return;
+      const realKg = Math.max(0.1, kg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
         ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
-        peso_kg: kg,
+        peso_kg: realKg,
         registado_por: user?.name || 'Gerente',
         canal: 'take_away',
       });
     } else {
       const cap = recipientCapacity[newRecipient];
       const pesoKg = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
+      const realKg = Math.max(0.1, pesoKg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
         ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: newRecipient,
-        peso_kg: pesoKg,
+        peso_kg: realKg,
         registado_por: user?.name || 'Gerente',
         canal: 'buffet',
       });
@@ -98,6 +119,7 @@ export default function Producao() {
     setNewDish('');
     setNewRecipient('tabuleiro_grande');
     setNewTakeawayKg('');
+    setDiscountLeftover(true);
   }
 
   async function handleCheckout() {
@@ -248,7 +270,52 @@ export default function Producao() {
               </div>
             )}
 
-            {/* Production intelligence suggestion (buffet only) */}
+            {/* Leftover discount info */}
+            {newDish && previousLeftover && (
+              <div className="rounded-lg border border-success/30 bg-success/5 p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Recycle className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium text-success">Sobra aproveitada disponível</span>
+                  </div>
+                  <Badge variant="outline" className="border-success/30 text-success text-xs">
+                    {previousLeftover.totalKg.toFixed(1)}kg
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Existe {previousLeftover.totalKg.toFixed(1)}kg de sobra aproveitada de {newDish} de hoje.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDiscountLeftover(!discountLeftover)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-md border-2 p-2 transition-all text-left',
+                    discountLeftover ? 'border-success bg-success/10' : 'border-border hover:border-success/50'
+                  )}
+                >
+                  <div className={cn('h-4 w-4 rounded border-2 flex items-center justify-center shrink-0',
+                    discountLeftover ? 'border-success bg-success' : 'border-muted-foreground'
+                  )}>
+                    {discountLeftover && <span className="text-white text-[10px] font-bold">✓</span>}
+                  </div>
+                  <div>
+                    <span className={cn('text-sm font-medium', discountLeftover ? 'text-success' : 'text-foreground')}>
+                      Descontar sobra no custo
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(() => {
+                        const cap = recipientCapacity[newRecipient];
+                        const gross = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
+                        const net = Math.max(0.1, gross - previousLeftover.totalKg);
+                        return `${gross.toFixed(1)}kg - ${previousLeftover.totalKg.toFixed(1)}kg sobra = ${net.toFixed(1)}kg custo real`;
+                      })()}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+
             {activeTab === 'buffet' && newDish && (() => {
               const suggestion = getSuggestion(newDish);
               if (!suggestion) return null;

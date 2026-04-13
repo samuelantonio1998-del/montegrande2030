@@ -270,7 +270,52 @@ export default function Producao() {
               </div>
             )}
 
-            {/* Production intelligence suggestion (buffet only) */}
+            {/* Leftover discount info */}
+            {newDish && previousLeftover && (
+              <div className="rounded-lg border border-success/30 bg-success/5 p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Recycle className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium text-success">Sobra aproveitada disponível</span>
+                  </div>
+                  <Badge variant="outline" className="border-success/30 text-success text-xs">
+                    {previousLeftover.totalKg.toFixed(1)}kg
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Existe {previousLeftover.totalKg.toFixed(1)}kg de sobra aproveitada de {newDish} de hoje.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDiscountLeftover(!discountLeftover)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-md border-2 p-2 transition-all text-left',
+                    discountLeftover ? 'border-success bg-success/10' : 'border-border hover:border-success/50'
+                  )}
+                >
+                  <div className={cn('h-4 w-4 rounded border-2 flex items-center justify-center shrink-0',
+                    discountLeftover ? 'border-success bg-success' : 'border-muted-foreground'
+                  )}>
+                    {discountLeftover && <span className="text-white text-[10px] font-bold">✓</span>}
+                  </div>
+                  <div>
+                    <span className={cn('text-sm font-medium', discountLeftover ? 'text-success' : 'text-foreground')}>
+                      Descontar sobra no custo
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(() => {
+                        const cap = recipientCapacity[newRecipient];
+                        const gross = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
+                        const net = Math.max(0.1, gross - previousLeftover.totalKg);
+                        return `${gross.toFixed(1)}kg - ${previousLeftover.totalKg.toFixed(1)}kg sobra = ${net.toFixed(1)}kg custo real`;
+                      })()}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+
             {activeTab === 'buffet' && newDish && (() => {
               const suggestion = getSuggestion(newDish);
               if (!suggestion) return null;

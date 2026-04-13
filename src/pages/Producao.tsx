@@ -59,6 +59,7 @@ export default function Producao() {
   const [newDish, setNewDish] = useState('');
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [newTakeawayKg, setNewTakeawayKg] = useState('');
+  const [discountLeftover, setDiscountLeftover] = useState(true);
   const [leftoverKg, setLeftoverKg] = useState('');
   const [leftoverAction, setLeftoverAction] = useState<'aproveitamento' | 'desperdicio'>('aproveitamento');
   const [isReporBuffet, setIsReporBuffet] = useState(false);

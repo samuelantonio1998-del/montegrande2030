@@ -328,7 +328,7 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
                           </div>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                          <Badge variant="secondary" className="text-[10px]">{f.doses} doses</Badge>
+                          <Badge variant="secondary" className="text-[10px]">{f.doses} kg</Badge>
                           <span>{f.ingredientes.length} ingredientes</span>
                           <span className={cn(allMatched ? 'text-success' : 'text-warning')}>
                             ({matchedCount}/{f.ingredientes.length} encontrados)

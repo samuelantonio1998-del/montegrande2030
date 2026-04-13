@@ -57,8 +57,8 @@ PRODUCT ITEMS - Extract with these fields:
   5. Verify each quantity makes sense for the product type (e.g., a restaurant won't order 44038 units of a single item).
 
 - unidade: unit of measure - un, garrafa, kg, L, caixa, etc. (string). For packed items, use the individual unit (e.g., "un" for bottles, "garrafa" for wine bottles).
-- custo_unitario: NET unit cost in euros WITHOUT VAT/IVA PER INDIVIDUAL UNIT (number). CRITICAL: If the invoice price is per pack, divide by the number of units in the pack to get the per-unit cost. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, calculate the net value by removing the applicable VAT rate.
-- desconto: Discount amount in euros for this line item (number, default 0). Look for columns labeled "Desconto", "Desc.", "Discount", "%Desc", or negative values on the line. If a percentage discount is shown, calculate the euro amount. If no discount, return 0.
+- custo_unitario: GROSS unit price in euros WITHOUT VAT/IVA, BEFORE any line discounts, PER INDIVIDUAL UNIT (number). CRITICAL: This must be the ORIGINAL catalog/list price per unit BEFORE subtracting any discount. If the invoice price is per pack, divide by the number of units in the pack. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, divide by (1 + VAT_rate). DO NOT subtract discounts from this value — discounts go in the 'desconto' field separately.
+- desconto: TOTAL discount amount in euros for the ENTIRE line (number, default 0). This is the total discount for all units on this line, NOT per unit. If a percentage discount is shown (e.g., 3% on a line totaling €127.10), calculate: line_total × percentage / 100 = €3.81. If no discount, return 0. Look for columns labeled "Desconto", "Desc.", "Discount", "%Desc", or negative values.
 - fornecedor: supplier name if visible on the invoice header/footer (string or null).
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available.
 
@@ -102,8 +102,8 @@ DOUBLE-CHECK all quantities before returning - they should be realistic for a re
                         nome: { type: "string", description: "Product name" },
                         quantidade: { type: "number", description: "Quantity" },
                         unidade: { type: "string", description: "Unit (kg, L, un, garrafa, caixa)" },
-                        custo_unitario: { type: "number", description: "NET unit cost in euros WITHOUT VAT/IVA" },
-                        desconto: { type: "number", description: "Discount amount in euros for this line item (0 if none)" },
+                        custo_unitario: { type: "number", description: "GROSS unit price in euros WITHOUT VAT, BEFORE discounts. E.g. if price is 12.71 with 3% discount, return 12.71 NOT 12.33" },
+                        desconto: { type: "number", description: "TOTAL discount in euros for the entire line (0 if none). E.g. 10kg at 12.71 with 3% = 127.1 * 0.03 = 3.81" },
                         fornecedor: { type: "string", description: "Supplier name if visible" },
                         sku: { type: "string", description: "Product code if visible" },
                       },

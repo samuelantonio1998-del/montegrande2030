@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateFicha, useProdutos, LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
-import { recipientCapacity, type RecipientSize } from '@/lib/buffet-data';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -24,11 +23,6 @@ type IngredienteLine = {
   unidade: string;
 };
 
-/** Dose options from recipientes */
-const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
-  value: key,
-  label: key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
-}));
 
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
@@ -165,20 +159,14 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Nº de Doses (Recipiente)</label>
-                  <Select
-                    value={Object.entries(recipientCapacity).find(([_, v]) => v.capacityKg === porcoes)?.[0] ?? 'unitario'}
-                    onValueChange={v => setPorcoes(recipientCapacity[v as RecipientSize]?.capacityKg ?? 1)}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {doseOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <label className="text-xs font-medium text-muted-foreground">Rendimento (kg)</label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    value={porcoes}
+                    onChange={e => setPorcoes(parseFloat(e.target.value) || 1)}
+                  />
                 </div>
               </div>
             </div>
@@ -297,7 +285,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
               <p className="text-lg font-bold text-foreground">€{totalCost.toFixed(2)}</p>
             </div>
             <div className="rounded-lg bg-muted/50 p-3 text-center">
-              <p className="text-xs text-muted-foreground">Custo/Dose</p>
+              <p className="text-xs text-muted-foreground">Custo/kg</p>
               <p className="text-lg font-bold text-foreground">€{costPerDose.toFixed(2)}</p>
             </div>
             <div className="rounded-lg bg-muted/50 p-3 text-center">

@@ -51,6 +51,7 @@ export default function Producao() {
 
   const allEmentaDishes = useMemo(() => ementaItems.filter(e => e.buffet_item).map(e => ({
     id: e.buffet_item!.id, nome: e.buffet_item!.nome, recipiente: e.recipiente_sugerido as RecipientSize,
+    ficha_tecnica_id: e.buffet_item!.ficha_tecnica_id || null,
   })), [ementaItems]);
 
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -72,7 +73,7 @@ export default function Producao() {
       if (kg <= 0) return;
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.id,
+        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
         peso_kg: kg,
@@ -83,7 +84,7 @@ export default function Producao() {
       const cap = recipientCapacity[newRecipient];
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.id,
+        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: newRecipient,
         peso_kg: cap.capacityKg,

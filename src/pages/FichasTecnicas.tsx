@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChefHat, Plus, Clock, Search, Utensils, Loader2 } from 'lucide-react';
+import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useFichasTecnicas, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
+import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
 
 const categoryLabels: Record<string, string> = {
   entrada: 'Entrada',
@@ -48,6 +49,7 @@ export default function FichasTecnicas() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const categories = ['all', ...new Set(fichas.map(f => f.categoria))];
 
@@ -64,10 +66,16 @@ export default function FichasTecnicas() {
           <h1 className="text-3xl text-foreground">Fichas Técnicas</h1>
           <p className="mt-1 text-muted-foreground">Receitas, ingredientes e custos de cada prato</p>
         </div>
-        <Button className="gap-2" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4" />
-          Nova Ficha
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+            <Upload className="h-4 w-4" />
+            Importar Excel
+          </Button>
+          <Button className="gap-2" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            Nova Ficha
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -179,6 +187,7 @@ export default function FichasTecnicas() {
       {/* Dialogs */}
       <FichaDetailDialog ficha={selectedFicha} onClose={() => setSelectedFicha(null)} />
       <FichaCreateForm open={showCreate} onClose={() => setShowCreate(false)} />
+      <FichaImportDialog open={showImport} onClose={() => setShowImport(false)} />
     </div>
   );
 }

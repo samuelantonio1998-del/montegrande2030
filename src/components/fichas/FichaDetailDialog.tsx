@@ -20,11 +20,7 @@ type EditIngredient = {
   unidade: string;
 };
 
-/** Dose options from recipientes */
-const doseOptions = Object.entries(recipientCapacity).map(([key, val]) => ({
-  value: key,
-  label: key === 'unitario' ? 'Unitário (un)' : `${val.label} (${val.capacityKg}kg)`,
-}));
+/** No longer using container-based doses — recipes specify output in KG */
 
 function calcCostFromProdutos(
   ingredientes: EditIngredient[],
@@ -261,20 +257,15 @@ export function FichaDetailDialog({
               <Input value={editNome} onChange={e => setEditNome(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Recipiente (Dose)</label>
-              <Select
-                value={Object.entries(recipientCapacity).find(([_, v]) => v.capacityKg === editPorcoes)?.[0] ?? 'unitario'}
-                onValueChange={v => setEditPorcoes(recipientCapacity[v as RecipientSize]?.capacityKg ?? 1)}
-              >
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {doseOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-xs text-muted-foreground">Rendimento (kg)</label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0.1"
+                value={editPorcoes}
+                onChange={e => setEditPorcoes(parseFloat(e.target.value) || 1)}
+                className="mt-1"
+              />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Preço Venda (€)</label>
@@ -307,7 +298,7 @@ export function FichaDetailDialog({
             <p className="text-lg font-bold text-foreground">€{totalCost.toFixed(2)}</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
-            <p className="text-xs text-muted-foreground">Custo/Dose</p>
+            <p className="text-xs text-muted-foreground">Custo/kg</p>
             <p className="text-lg font-bold text-foreground">€{costPerPortion.toFixed(2)}</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
@@ -425,7 +416,7 @@ export function FichaDetailDialog({
                 )}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({Object.values(recipientCapacity).find(r => r.capacityKg === porcoes)?.label ?? `${porcoes} doses`})
+                    Total ({porcoes} kg)
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}

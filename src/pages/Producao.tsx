@@ -65,31 +65,51 @@ export default function Producao() {
   const [isReporBuffet, setIsReporBuffet] = useState(false);
   const [aprovNote, setAprovNote] = useState('');
 
+  // Find the most recent approved leftover for the selected dish (today)
+  const previousLeftover = useMemo(() => {
+    if (!newDish) return null;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const approved = registos.filter(r =>
+      r.dish_name === newDish &&
+      r.sobra_acao === 'aproveitamento' &&
+      r.sobra_kg && r.sobra_kg > 0 &&
+      r.enviado_at.slice(0, 10) === todayStr
+    );
+    if (approved.length === 0) return null;
+    // Sum all approved leftovers for this dish today
+    const totalKg = approved.reduce((sum, r) => sum + (r.sobra_kg || 0), 0);
+    return { totalKg, count: approved.length };
+  }, [newDish, registos]);
+
   async function handleSendTray() {
     if (!newDish) return;
     const dish = allEmentaDishes.find(d => d.nome === newDish);
 
+    const leftoverDiscount = (discountLeftover && previousLeftover) ? previousLeftover.totalKg : 0;
+
     if (activeTab === 'take_away') {
       const kg = parseFloat(newTakeawayKg) || 0;
       if (kg <= 0) return;
+      const realKg = Math.max(0.1, kg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
         ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
-        peso_kg: kg,
+        peso_kg: realKg,
         registado_por: user?.name || 'Gerente',
         canal: 'take_away',
       });
     } else {
       const cap = recipientCapacity[newRecipient];
       const pesoKg = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
+      const realKg = Math.max(0.1, pesoKg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
         ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: newRecipient,
-        peso_kg: pesoKg,
+        peso_kg: realKg,
         registado_por: user?.name || 'Gerente',
         canal: 'buffet',
       });
@@ -99,6 +119,7 @@ export default function Producao() {
     setNewDish('');
     setNewRecipient('tabuleiro_grande');
     setNewTakeawayKg('');
+    setDiscountLeftover(true);
   }
 
   async function handleCheckout() {

@@ -133,14 +133,10 @@ export function FichaDetailDialog({
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
   const [editing, setEditing] = useState(false);
-
-  // Edit state
-  const [editNome, setEditNome] = useState('');
-  const [editPorcoes, setEditPorcoes] = useState(1);
-  const [editPreco, setEditPreco] = useState(0);
-  const [editTempo, setEditTempo] = useState(0);
-  const [editNotas, setEditNotas] = useState('');
-  const [editIngredientes, setEditIngredientes] = useState<EditIngredient[]>([]);
+  const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
+  const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
 

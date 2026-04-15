@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle, ImageIcon, Camera } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -133,6 +133,10 @@ export function FichaDetailDialog({
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
   const [editing, setEditing] = useState(false);
+  const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
+  const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit state
   const [editNome, setEditNome] = useState('');
@@ -158,11 +162,34 @@ export function FichaDetailDialog({
           unidade: i.unidade,
         }))
       );
+      setEditFotoPreview(null);
+      setEditFotoFile(null);
       setEditing(false);
     }
   }, [ficha]);
 
   if (!ficha) return null;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditFotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setEditFotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!editFotoFile) return ficha.foto_url;
+    setUploading(true);
+    const ext = editFotoFile.name.split('.').pop();
+    const path = `fichas/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('pratos').upload(path, editFotoFile);
+    setUploading(false);
+    if (error) return ficha.foto_url;
+    const { data: urlData } = supabase.storage.from('pratos').getPublicUrl(path);
+    return urlData.publicUrl;
+  };
 
   const currentIngredientes = editing ? editIngredientes : ficha.ingredientes.map(i => ({
     produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade,
@@ -179,6 +206,7 @@ export function FichaDetailDialog({
   const racio = precoVenda > 0 ? (costPerPortion / precoVenda) * 100 : 0;
 
   const handleSave = async () => {
+    const fotoUrl = await uploadPhoto();
     await updateFicha.mutateAsync({
       id: ficha.id,
       nome: editNome,
@@ -186,7 +214,7 @@ export function FichaDetailDialog({
       porcoes: editPorcoes,
       preco_venda: editPreco,
       tempo_preparacao: editTempo,
-      foto_url: ficha.foto_url,
+      foto_url: fotoUrl,
       notas_preparacao: editNotas || null,
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
@@ -218,18 +246,26 @@ export function FichaDetailDialog({
   return (
     <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         {/* Photo header */}
-        {ficha.foto_url ? (
+        {(editFotoPreview || ficha.foto_url) ? (
           <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/9] overflow-hidden rounded-t-lg">
-            <img src={ficha.foto_url} alt={ficha.nome} className="w-full h-full object-cover" />
+            <img src={editFotoPreview || ficha.foto_url!} alt={ficha.nome} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
               <h2 className="text-lg font-display text-white">{editing ? editNome : ficha.nome}</h2>
-              {!editing && (
-                <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
-              )}
+              <div className="flex gap-1.5">
+                {editing && (
+                  <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                    <Camera className="h-3.5 w-3.5" /> Alterar foto
+                  </Button>
+                )}
+                {!editing && (
+                  <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -239,11 +275,18 @@ export function FichaDetailDialog({
                 <ChefHat className="h-5 w-5 text-primary" />
                 {editing ? editNome : ficha.nome}
               </DialogTitle>
-              {!editing && (
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
-              )}
+              <div className="flex gap-1.5">
+                {editing && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon className="h-3.5 w-3.5" /> Adicionar foto
+                  </Button>
+                )}
+                {!editing && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </DialogHeader>
         )}
@@ -493,12 +536,14 @@ export function FichaDetailDialog({
                 setEditTempo(ficha.tempo_preparacao ?? 0);
                 setEditNome(ficha.nome);
                 setEditNotas((ficha as any).notas_preparacao ?? '');
+                setEditFotoPreview(null);
+                setEditFotoFile(null);
               }}>
                 <X className="h-4 w-4 mr-1.5" /> Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={updateFicha.isPending || !editTempo}>
+              <Button onClick={handleSave} disabled={updateFicha.isPending || uploading || !editTempo}>
                 <Save className="h-4 w-4 mr-1.5" />
-                {updateFicha.isPending ? 'A guardar...' : 'Guardar'}
+                {uploading ? 'A enviar foto...' : updateFicha.isPending ? 'A guardar...' : 'Guardar'}
               </Button>
             </div>
           </div>

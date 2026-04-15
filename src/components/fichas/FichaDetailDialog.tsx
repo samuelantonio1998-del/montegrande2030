@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle, ImageIcon, Camera } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

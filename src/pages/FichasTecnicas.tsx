@@ -139,14 +139,13 @@ export default function FichasTecnicas() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => setSelectedFicha(ficha)}
-                className="cursor-pointer rounded-xl border border-border bg-card overflow-hidden shadow-sm transition-shadow hover:shadow-md"
+                className="cursor-pointer rounded-xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
               >
                 {ficha.foto_url ? (
-                  <div className="aspect-[16/9] overflow-hidden">
+                  <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl">
                     <img src={ficha.foto_url} alt={ficha.nome} className="w-full h-full object-cover" />
                   </div>
                 ) : null}
-                <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {!ficha.foto_url && (
@@ -185,7 +184,6 @@ export default function FichasTecnicas() {
                   {ficha.tempo_preparacao && (
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{ficha.tempo_preparacao} min</span>
                   )}
-                </div>
                 </div>
               </motion.div>
             );

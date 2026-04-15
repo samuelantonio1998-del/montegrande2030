@@ -166,6 +166,11 @@ export function useUpdateFicha() {
           );
         if (ingError) throw ingError;
       }
+
+      await supabase
+        .from('buffet_items')
+        .update({ ficha_tecnica_id: data.id })
+        .ilike('nome', data.nome);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });

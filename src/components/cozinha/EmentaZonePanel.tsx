@@ -37,9 +37,21 @@ export default function EmentaZonePanel({ ementaItems, trayStates, onReplenish, 
     setCustomWeight('');
   };
 
-  const getFichaForItem = (fichaTecnicaId: string | null | undefined): FichaComIngredientes | undefined => {
-    if (!fichaTecnicaId) return undefined;
-    return fichas.find(f => f.id === fichaTecnicaId);
+  const normalizeDishName = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+  const getFichaForItem = (fichaTecnicaId: string | null | undefined, itemName: string): FichaComIngredientes | undefined => {
+    if (fichaTecnicaId) {
+      const linkedFicha = fichas.find(f => f.id === fichaTecnicaId);
+      if (linkedFicha) return linkedFicha;
+    }
+
+    const normalizedItemName = normalizeDishName(itemName);
+    return fichas.find(f => normalizeDishName(f.nome) === normalizedItemName);
   };
 
   if (ementaItems.length === 0) {
@@ -61,7 +73,7 @@ export default function EmentaZonePanel({ ementaItems, trayStates, onReplenish, 
           const repCount = state?.replenishments.length || 0;
           const totalKg = state?.totalSentKg || 0;
           const isOnBuffet = state?.isOnBuffet || false;
-          const ficha = getFichaForItem(item.ficha_tecnica_id);
+          const ficha = getFichaForItem(item.ficha_tecnica_id, item.nome);
           const fotoUrl = ficha?.foto_url;
 
           return (

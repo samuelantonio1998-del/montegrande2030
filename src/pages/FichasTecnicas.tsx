@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -58,6 +58,14 @@ export default function FichasTecnicas() {
     const matchCategory = selectedCategory === 'all' || f.categoria === selectedCategory;
     return matchSearch && matchCategory;
   });
+
+  useEffect(() => {
+    if (!selectedFicha) return;
+    const freshFicha = fichas.find(ficha => ficha.id === selectedFicha.id);
+    if (freshFicha && freshFicha !== selectedFicha) {
+      setSelectedFicha(freshFicha);
+    }
+  }, [fichas, selectedFicha]);
 
   return (
     <div className="space-y-6">

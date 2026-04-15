@@ -536,12 +536,14 @@ export function FichaDetailDialog({
                 setEditTempo(ficha.tempo_preparacao ?? 0);
                 setEditNome(ficha.nome);
                 setEditNotas((ficha as any).notas_preparacao ?? '');
+                setEditFotoPreview(null);
+                setEditFotoFile(null);
               }}>
                 <X className="h-4 w-4 mr-1.5" /> Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={updateFicha.isPending || !editTempo}>
+              <Button onClick={handleSave} disabled={updateFicha.isPending || uploading || !editTempo}>
                 <Save className="h-4 w-4 mr-1.5" />
-                {updateFicha.isPending ? 'A guardar...' : 'Guardar'}
+                {uploading ? 'A enviar foto...' : updateFicha.isPending ? 'A guardar...' : 'Guardar'}
               </Button>
             </div>
           </div>

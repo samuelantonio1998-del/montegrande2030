@@ -162,11 +162,34 @@ export function FichaDetailDialog({
           unidade: i.unidade,
         }))
       );
+      setEditFotoPreview(null);
+      setEditFotoFile(null);
       setEditing(false);
     }
   }, [ficha]);
 
   if (!ficha) return null;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditFotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setEditFotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!editFotoFile) return ficha.foto_url;
+    setUploading(true);
+    const ext = editFotoFile.name.split('.').pop();
+    const path = `fichas/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('pratos').upload(path, editFotoFile);
+    setUploading(false);
+    if (error) return ficha.foto_url;
+    const { data: urlData } = supabase.storage.from('pratos').getPublicUrl(path);
+    return urlData.publicUrl;
+  };
 
   const currentIngredientes = editing ? editIngredientes : ficha.ingredientes.map(i => ({
     produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade,
@@ -183,6 +206,7 @@ export function FichaDetailDialog({
   const racio = precoVenda > 0 ? (costPerPortion / precoVenda) * 100 : 0;
 
   const handleSave = async () => {
+    const fotoUrl = await uploadPhoto();
     await updateFicha.mutateAsync({
       id: ficha.id,
       nome: editNome,
@@ -190,7 +214,7 @@ export function FichaDetailDialog({
       porcoes: editPorcoes,
       preco_venda: editPreco,
       tempo_preparacao: editTempo,
-      foto_url: ficha.foto_url,
+      foto_url: fotoUrl,
       notas_preparacao: editNotas || null,
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });

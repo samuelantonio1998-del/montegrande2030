@@ -138,6 +138,14 @@ export function FichaDetailDialog({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit state
+  const [editNome, setEditNome] = useState('');
+  const [editPorcoes, setEditPorcoes] = useState(1);
+  const [editPreco, setEditPreco] = useState(0);
+  const [editTempo, setEditTempo] = useState(0);
+  const [editNotas, setEditNotas] = useState('');
+  const [editIngredientes, setEditIngredientes] = useState<EditIngredient[]>([]);
+
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
 
   useEffect(() => {

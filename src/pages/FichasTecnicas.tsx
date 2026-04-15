@@ -186,6 +186,7 @@ export default function FichasTecnicas() {
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{ficha.tempo_preparacao} min</span>
                   )}
                 </div>
+                </div>
               </motion.div>
             );
           })}

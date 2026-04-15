@@ -136,7 +136,7 @@ export function useUpdateFicha() {
       notas_preparacao?: string | null;
       ingredientes: { produto_id: string; quantidade: number; unidade: string }[];
     }) => {
-      const { error } = await supabase
+      const { data: ficha, error } = await supabase
         .from('fichas_tecnicas')
         .update({
           nome: data.nome,
@@ -147,7 +147,9 @@ export function useUpdateFicha() {
           foto_url: data.foto_url || null,
           notas_preparacao: data.notas_preparacao || null,
         })
-        .eq('id', data.id);
+        .eq('id', data.id)
+        .select()
+        .single();
       if (error) throw error;
 
       // Delete existing ingredients and re-insert
@@ -171,8 +173,33 @@ export function useUpdateFicha() {
         .from('buffet_items')
         .update({ ficha_tecnica_id: data.id })
         .ilike('nome', data.nome);
+
+      return {
+        ...ficha,
+        ingredientes: data.ingredientes.map(ing => ({
+          id: `${data.id}-${ing.produto_id}`,
+          ficha_id: data.id,
+          produto_id: ing.produto_id,
+          quantidade: ing.quantidade,
+          unidade: ing.unidade,
+        })),
+      };
     },
-    onSuccess: () => {
+    onSuccess: (updatedFicha) => {
+      qc.setQueryData(['fichas_tecnicas'], (current: FichaComIngredientes[] | undefined) =>
+        (current || []).map(ficha =>
+          ficha.id === updatedFicha.id
+            ? {
+                ...ficha,
+                ...updatedFicha,
+                ingredientes: updatedFicha.ingredientes.map(ing => ({
+                  ...ing,
+                  produto: ficha.ingredientes.find(existing => existing.produto_id === ing.produto_id)?.produto,
+                })),
+              }
+            : ficha
+        )
+      );
       qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
       toast({ title: 'Ficha atualizada com sucesso' });
     },

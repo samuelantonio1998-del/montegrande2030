@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle, ImageIcon, Camera } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -184,9 +185,13 @@ export function FichaDetailDialog({
     setUploading(true);
     const ext = editFotoFile.name.split('.').pop();
     const path = `fichas/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('pratos').upload(path, editFotoFile);
+    const { error } = await supabase.storage.from('pratos').upload(path, editFotoFile, { upsert: true });
     setUploading(false);
-    if (error) return ficha.foto_url;
+    if (error) {
+      console.error('Upload error:', error);
+      toast({ title: 'Erro ao carregar foto', description: error.message, variant: 'destructive' });
+      return ficha.foto_url;
+    }
     const { data: urlData } = supabase.storage.from('pratos').getPublicUrl(path);
     return urlData.publicUrl;
   };

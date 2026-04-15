@@ -246,18 +246,26 @@ export function FichaDetailDialog({
   return (
     <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         {/* Photo header */}
-        {ficha.foto_url ? (
+        {(editFotoPreview || ficha.foto_url) ? (
           <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/9] overflow-hidden rounded-t-lg">
-            <img src={ficha.foto_url} alt={ficha.nome} className="w-full h-full object-cover" />
+            <img src={editFotoPreview || ficha.foto_url!} alt={ficha.nome} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
               <h2 className="text-lg font-display text-white">{editing ? editNome : ficha.nome}</h2>
-              {!editing && (
-                <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
-              )}
+              <div className="flex gap-1.5">
+                {editing && (
+                  <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                    <Camera className="h-3.5 w-3.5" /> Alterar foto
+                  </Button>
+                )}
+                {!editing && (
+                  <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -267,11 +275,18 @@ export function FichaDetailDialog({
                 <ChefHat className="h-5 w-5 text-primary" />
                 {editing ? editNome : ficha.nome}
               </DialogTitle>
-              {!editing && (
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
-              )}
+              <div className="flex gap-1.5">
+                {editing && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon className="h-3.5 w-3.5" /> Adicionar foto
+                  </Button>
+                )}
+                {!editing && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </DialogHeader>
         )}

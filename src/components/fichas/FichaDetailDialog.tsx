@@ -255,7 +255,11 @@ export function FichaDetailDialog({
         {/* Photo header */}
         {(editFotoPreview || ficha.foto_url) ? (
           <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/9] overflow-hidden rounded-t-lg">
-            <img src={editFotoPreview || ficha.foto_url!} alt={ficha.nome} className="w-full h-full object-cover" />
+            <img
+              src={editFotoPreview || `${ficha.foto_url!}?v=${new Date(ficha.updated_at).getTime()}`}
+              alt={ficha.nome}
+              className="w-full h-full object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
               <h2 className="text-lg font-display text-white">{editing ? editNome : ficha.nome}</h2>

@@ -104,16 +104,15 @@ export function useCreateFicha() {
         if (ingError) throw ingError;
       }
 
-      // Auto-link to buffet items by name match
-      await supabase
-        .from('buffet_items')
-        .update({ ficha_tecnica_id: ficha.id })
-        .ilike('nome', data.nome);
+      // Auto-link to buffet items by normalized name match (handles accents/spaces)
+      await linkBuffetItemsByName(ficha.id, data.nome);
 
       return ficha;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
+      qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+      qc.invalidateQueries({ queryKey: ['buffet_items'] });
       toast({ title: 'Ficha criada com sucesso' });
     },
     onError: (err: Error) => {
@@ -169,10 +168,7 @@ export function useUpdateFicha() {
         if (ingError) throw ingError;
       }
 
-      await supabase
-        .from('buffet_items')
-        .update({ ficha_tecnica_id: data.id })
-        .ilike('nome', data.nome);
+      await linkBuffetItemsByName(data.id, data.nome);
 
       return {
         ...ficha,
@@ -201,12 +197,42 @@ export function useUpdateFicha() {
         )
       );
       qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
+      qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+      qc.invalidateQueries({ queryKey: ['buffet_items'] });
       toast({ title: 'Ficha atualizada com sucesso' });
     },
     onError: (err: Error) => {
       toast({ title: 'Erro ao atualizar ficha', description: err.message, variant: 'destructive' });
     },
   });
+}
+
+/** Normalize names (strip accents, lowercase, trim) for matching */
+function normalizeName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/** Link any buffet_items with a matching normalized name to the given ficha id */
+async function linkBuffetItemsByName(fichaId: string, nome: string) {
+  const target = normalizeName(nome);
+  const { data: items } = await supabase
+    .from('buffet_items')
+    .select('id, nome, ficha_tecnica_id');
+
+  const matchingIds = (items || [])
+    .filter(it => normalizeName(it.nome) === target && it.ficha_tecnica_id !== fichaId)
+    .map(it => it.id);
+
+  if (matchingIds.length > 0) {
+    await supabase
+      .from('buffet_items')
+      .update({ ficha_tecnica_id: fichaId })
+      .in('id', matchingIds);
+  }
 }
 
 export function useDeleteFicha() {

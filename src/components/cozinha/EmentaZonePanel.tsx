@@ -74,7 +74,9 @@ export default function EmentaZonePanel({ ementaItems, trayStates, onReplenish, 
           const totalKg = state?.totalSentKg || 0;
           const isOnBuffet = state?.isOnBuffet || false;
           const ficha = getFichaForItem(item.ficha_tecnica_id, item.nome);
-          const fotoUrl = ficha?.foto_url;
+          const fotoUrl = ficha?.foto_url
+            ? `${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`
+            : null;
 
           return (
             <motion.div

@@ -151,7 +151,7 @@ export default function FichasTecnicas() {
               >
                 {ficha.foto_url ? (
                   <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl">
-                    <img src={ficha.foto_url} alt={ficha.nome} className="w-full h-full object-cover" />
+                    <img src={`${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`} alt={ficha.nome} className="w-full h-full object-cover" />
                   </div>
                 ) : null}
                 <div className="flex items-start justify-between">

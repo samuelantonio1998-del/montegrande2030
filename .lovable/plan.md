@@ -1,53 +1,40 @@
 
-## Diagnóstico do problema
+## Pedido
 
-A foto está a ser corretamente enviada para o Storage e gravada na coluna `foto_url` da tabela `fichas_tecnicas`. O problema é **unicamente de exibição**:
+Adicionar opção de **alterar/remover foto diretamente no card** da ficha técnica, sem ter de abrir o diálogo de edição. Se não selecionar ficheiro → fica sem foto.
 
-1. **Ementa não atualiza** mesmo após upload bem sucedido.
-2. **Cards das fichas técnicas** podem mostrar imagem em cache antiga.
-3. **Falta refresh** das queries relacionadas após gravar.
+## Análise
 
-### Causa raiz (3 pontos)
+Atualmente em `FichasTecnicas.tsx` cada card mostra a foto (se existir) e abre o `FichaDetailDialog` ao clicar. Não há forma rápida de trocar/remover a foto a partir do card.
 
-1. **Cache do browser na imagem**: o URL público do Storage é o mesmo entre uploads (mesmo path com `upsert:true` quando o utilizador substitui), então o `<img src>` mostra a versão antiga em cache. Quando o path muda (timestamp novo), a tag `<img>` continua a mostrar a versão anterior porque o React Query não força re-fetch correto da ficha em todos os componentes.
+## Plano
 
-2. **`useFichasTecnicas` não é invalidada** após upload na ementa nem na produção — o componente `EmentaZonePanel` usa o seu próprio fetch de fichas que não recarrega quando a foto muda.
+### 1. Botão "câmara" no canto da foto/card
+- **Card com foto**: pequeno botão circular (ícone `Camera`) no canto superior direito da imagem, sobre overlay escuro suave. Ao clicar abre menu com 2 opções: *"Alterar foto"* (abre file picker) e *"Remover foto"*.
+- **Card sem foto**: botão pequeno "Adicionar foto" (ícone `ImagePlus`) no canto do header onde está o ícone `ChefHat`, ao clicar abre file picker direto.
 
-3. **Hook `useEmentaDiaria`** carrega `buffet_item.ficha_tecnica_id` mas não a foto, e o fallback por nome funciona — mas não há realtime nem invalidação cruzada quando uma ficha é editada.
+### 2. Comportamento do upload
+- Usar exatamente a mesma lógica já existente em `FichaDetailDialog` (upload para bucket `fichas`, gravar `foto_url` em `fichas_tecnicas`).
+- Se o utilizador abre o picker e **cancela / não seleciona ficheiro** → não acontece nada (foto permanece como estava).
+- Se carregar em "Remover foto" → atualiza `foto_url = null` na BD.
+- `event.stopPropagation()` em todos os botões para não abrir o diálogo de detalhe ao clicar.
 
-## Plano de correção
+### 3. Feedback visual
+- Loader spinner sobre a foto durante upload.
+- Toast de sucesso/erro reaproveitando `useToast`.
+- Invalidação das queries `['fichas_tecnicas']`, `['ementa_diaria']`, `['buffet_items']` após sucesso (já existe noutros sítios, replicar).
 
-### 1. Cache busting da imagem
-Adicionar query string `?v={updated_at_timestamp}` ao `src` em **todos** os locais onde a foto da ficha é exibida:
-- `FichasTecnicas.tsx` (cards da lista)
-- `FichaDetailDialog.tsx` (header do diálogo)  
-- `EmentaZonePanel.tsx` (cartões da ementa)
-
-Assim o browser força reload sempre que `updated_at` muda.
-
-### 2. Garantir invalidação completa após `useUpdateFicha`
-No `onSuccess` de `useUpdateFicha`:
-- Invalidar `['fichas_tecnicas']` (já existe).
-- Invalidar também `['ementa_diaria']` e `['buffet_items']` para forçar a ementa a refletir nova foto/ligação.
-
-### 3. Sincronização robusta `buffet_items ↔ fichas_tecnicas`
-Atualmente `useUpdateFicha` faz `update buffet_items where nome ilike X`. Isto:
-- Não cria a ligação se o `buffet_item` ainda não existir.
-- Pode falhar com nomes ligeiramente diferentes (acentos/espaços).
-
-Solução: aplicar a mesma normalização que `EmentaZonePanel` usa para encontrar a ficha — fazer um `select` de todos os `buffet_items` ativos sem ficha ligada, comparar com nome normalizado em código, e atualizar os IDs corretos. Garante que ao gravar a ficha, todos os itens da ementa correspondentes ficam ligados.
-
-### 4. Subscrição realtime (opcional, mas recomendado)
-Activar realtime para `fichas_tecnicas` para que, se duas pessoas estiverem na cozinha e ementa em simultâneo, o upload de foto numa janela atualize a outra automaticamente.
+### 4. Hook auxiliar
+Criar um pequeno hook `useUpdateFichaFoto` em `useFichasTecnicas.ts` para isolar a lógica:
+- Input: `{ id, file: File | null }`
+- Faz upload (se `file`), faz update de `foto_url`, invalida queries.
 
 ## Detalhes técnicos
 
-**Ficheiros a modificar (4):**
-- `src/hooks/useFichasTecnicas.ts` → invalidação cruzada + sync robusto buffet_items
-- `src/pages/FichasTecnicas.tsx` → cache busting `?v=updated_at`
-- `src/components/fichas/FichaDetailDialog.tsx` → cache busting + também aplicar ao create
-- `src/components/cozinha/EmentaZonePanel.tsx` → cache busting
+**Ficheiros a modificar (2):**
+- `src/hooks/useFichasTecnicas.ts` — adicionar hook `useUpdateFichaFoto` (upload + update + invalidação)
+- `src/pages/FichasTecnicas.tsx` — adicionar botão de câmara/menu nos cards, input file oculto por card, handlers com `stopPropagation`
 
-**Sem migrações novas** — a infraestrutura (bucket público, políticas RLS, coluna `foto_url`) já está toda correta.
+**Sem migrações** — bucket `fichas`, RLS e coluna `foto_url` já existem.
 
-**Nota sobre crédito**: como pediu reembolso na mensagem anterior — isto é decidido pela equipa da Lovable, não posso processar reembolsos diretamente. Posso garantir é que esta correção fica certa de uma vez.
+**UX nota**: o menu "Alterar/Remover" usa `DropdownMenu` (já no projeto) para evitar confirmação extra. Remover foto não pede confirmação porque é reversível (basta voltar a fazer upload).

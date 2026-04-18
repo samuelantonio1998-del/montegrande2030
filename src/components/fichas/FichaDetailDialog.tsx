@@ -252,36 +252,38 @@ export function FichaDetailDialog({
     <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-        {/* Photo header — VIEW MODE: hero image / plain title */}
+        {/* Photo header — VIEW MODE: compact thumbnail + title (consistent with edit mode) */}
         {!editing && (
-          (ficha.foto_url) ? (
-            <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/9] overflow-hidden rounded-t-lg">
-              <img
-                src={`${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`}
-                alt={ficha.nome}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-                <h2 className="text-lg font-display text-white">{ficha.nome}</h2>
-                <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setEditing(true)}>
+          <DialogHeader>
+            <DialogTitle className="sr-only">{ficha.nome}</DialogTitle>
+            <div className="flex gap-3 items-start">
+              <div
+                className={cn(
+                  'relative shrink-0 w-20 h-20 rounded-xl border border-border overflow-hidden',
+                  'flex items-center justify-center bg-muted/30'
+                )}
+              >
+                {ficha.foto_url ? (
+                  <img
+                    src={`${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`}
+                    alt={ficha.nome}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ChefHat className="h-7 w-7 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Ficha técnica</p>
+                  <h2 className="text-base font-display text-foreground truncate">{ficha.nome}</h2>
+                </div>
+                <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => setEditing(true)}>
                   <Edit3 className="h-3.5 w-3.5" /> Editar
                 </Button>
               </div>
             </div>
-          ) : (
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle className="flex items-center gap-2">
-                  <ChefHat className="h-5 w-5 text-primary" />
-                  {ficha.nome}
-                </DialogTitle>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
-              </div>
-            </DialogHeader>
-          )
+          </DialogHeader>
         )}
 
         {/* Photo header — EDIT MODE: compact thumbnail, no overlap */}

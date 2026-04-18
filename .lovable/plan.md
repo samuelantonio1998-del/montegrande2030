@@ -1,52 +1,27 @@
 
-## Diagnóstico
+## Interpretação
 
-Confirmei no código que o problema continua porque a correção planeada não chegou a ser aplicada em `src/components/fichas/FichaDetailDialog.tsx`.
+A screenshot mostra o diálogo de edição **já com o novo layout aplicado e a funcionar bem** — miniatura 80×80 à esquerda, "A editar ficha técnica / Leitão assado / Clique na imagem para alterar a foto" à direita, e os campos (Nome, Rendimento, Preço, Tempo Prep) por baixo sem sobreposição.
 
-Hoje, quando a ficha tem foto, o diálogo usa sempre este bloco:
-- header grande com imagem `aspect-[16/9]`
-- margens negativas `-mx-6 -mt-6`
-- gradiente e botões em `absolute`
+Como disseste apenas "assim", interpreto que estás a confirmar este como o **padrão visual canónico** e queres que ele seja consistente em todo o lado relacionado com fichas técnicas.
 
-Esse mesmo header continua ativo também em modo edição, por isso os campos aparecem logo abaixo de uma hero image demasiado alta e, no viewport que estás a usar, fica com efeito visual de sobreposição.
+## Pergunta antes de avançar
 
-## Correção a implementar
+Para não fazer alterações desnecessárias, preciso confirmar o que queres com o "assim":
 
-### 1. Separar totalmente os dois layouts no diálogo
-Em `FichaDetailDialog.tsx`:
-- **Modo visualização**: manter o header grande com foto.
-- **Modo edição**: deixar de usar o header grande. Em vez disso, mostrar um topo compacto igual ao estilo de `FichaCreateForm`:
-  - miniatura 24x24 ou 20x20
-  - nome e ações ao lado
-  - botão para alterar foto
-  - sem `absolute`, sem gradientes, sem margens negativas
+- **(A)** Já está bom, é só confirmar que o problema da sobreposição ficou resolvido — não tocar em nada.
+- **(B)** Aplicar este mesmo estilo compacto também ao **modo de visualização com foto** (substituir o hero header grande com gradiente por miniatura + título ao lado), para que ver e editar fiquem visualmente iguais.
+- **(C)** Aplicar este mesmo estilo ao **formulário de criação** (`FichaCreateForm`) para que criar uma nova ficha use exactamente o mesmo padrão visual.
+- **(D)** Aplicar a B **e** C — uniformizar tudo (visualização, edição e criação) com a miniatura compacta + título lateral.
 
-### 2. Reorganizar os campos de edição
-Ainda em `FichaDetailDialog.tsx`:
-- colocar a foto compacta + ações dentro de um `flex gap-4 items-start`
-- passar os campos principais para uma grelha estável:
-  - desktop: `grid-cols-2`
-  - mobile/área apertada: `grid-cols-1 sm:grid-cols-2`
-- garantir espaçamento fixo entre topo, campos e restantes secções
+## Plano se confirmares (D) — uniformização total
 
-### 3. Ajustar o content do modal
-- manter `max-h-[90vh] overflow-y-auto`
-- adicionar padding consistente no topo do conteúdo editável
-- evitar qualquer bloco visual que “saia” da caixa do diálogo durante edição
+**Ficheiros a alterar:**
+- `src/components/fichas/FichaDetailDialog.tsx` — remover o hero header com gradiente do modo visualização e usar o mesmo bloco compacto (miniatura 80×80 + nome + ações) que já existe no modo edição.
+- `src/components/fichas/FichaCreateForm.tsx` — alinhar a miniatura e tipografia ao mesmo padrão (80×80, mesma classe de borda, mesmo texto auxiliar "Clique na imagem para alterar a foto").
 
-### 4. Preservar a gestão de foto já existente
-- continuar a usar o mesmo upload atual
-- manter preview local se o utilizador escolher nova imagem
-- se cancelar edição, limpar preview temporário e voltar ao estado original
+**Sem migrações, sem novas dependências.**
 
-## Ficheiros a alterar
+**Resultado esperado:** ver, editar e criar uma ficha técnica passam a ter o mesmo cabeçalho visual — miniatura compacta + título à direita — eliminando qualquer hipótese de sobreposição e garantindo consistência total.
 
-- `src/components/fichas/FichaDetailDialog.tsx`
-
-## Resultado esperado
-
-Depois desta alteração:
-- ficha **com foto** e ficha **sem foto** passam a abrir o editor com o mesmo layout estável
-- a imagem deixa de ocupar o topo inteiro no modo edição
-- os campos deixam de ficar tapados/sobrepostos
-- o comportamento fica consistente com o formulário de criação
+Diz-me qual das opções (A, B, C ou D) queres e avanço.

@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useFichasTecnicas, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useFichasTecnicas, useUpdateFichaFoto, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';

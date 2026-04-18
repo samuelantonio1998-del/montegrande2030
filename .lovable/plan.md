@@ -1,40 +1,52 @@
 
-## Pedido
+## Diagnóstico
 
-Adicionar opção de **alterar/remover foto diretamente no card** da ficha técnica, sem ter de abrir o diálogo de edição. Se não selecionar ficheiro → fica sem foto.
+Confirmei no código que o problema continua porque a correção planeada não chegou a ser aplicada em `src/components/fichas/FichaDetailDialog.tsx`.
 
-## Análise
+Hoje, quando a ficha tem foto, o diálogo usa sempre este bloco:
+- header grande com imagem `aspect-[16/9]`
+- margens negativas `-mx-6 -mt-6`
+- gradiente e botões em `absolute`
 
-Atualmente em `FichasTecnicas.tsx` cada card mostra a foto (se existir) e abre o `FichaDetailDialog` ao clicar. Não há forma rápida de trocar/remover a foto a partir do card.
+Esse mesmo header continua ativo também em modo edição, por isso os campos aparecem logo abaixo de uma hero image demasiado alta e, no viewport que estás a usar, fica com efeito visual de sobreposição.
 
-## Plano
+## Correção a implementar
 
-### 1. Botão "câmara" no canto da foto/card
-- **Card com foto**: pequeno botão circular (ícone `Camera`) no canto superior direito da imagem, sobre overlay escuro suave. Ao clicar abre menu com 2 opções: *"Alterar foto"* (abre file picker) e *"Remover foto"*.
-- **Card sem foto**: botão pequeno "Adicionar foto" (ícone `ImagePlus`) no canto do header onde está o ícone `ChefHat`, ao clicar abre file picker direto.
+### 1. Separar totalmente os dois layouts no diálogo
+Em `FichaDetailDialog.tsx`:
+- **Modo visualização**: manter o header grande com foto.
+- **Modo edição**: deixar de usar o header grande. Em vez disso, mostrar um topo compacto igual ao estilo de `FichaCreateForm`:
+  - miniatura 24x24 ou 20x20
+  - nome e ações ao lado
+  - botão para alterar foto
+  - sem `absolute`, sem gradientes, sem margens negativas
 
-### 2. Comportamento do upload
-- Usar exatamente a mesma lógica já existente em `FichaDetailDialog` (upload para bucket `fichas`, gravar `foto_url` em `fichas_tecnicas`).
-- Se o utilizador abre o picker e **cancela / não seleciona ficheiro** → não acontece nada (foto permanece como estava).
-- Se carregar em "Remover foto" → atualiza `foto_url = null` na BD.
-- `event.stopPropagation()` em todos os botões para não abrir o diálogo de detalhe ao clicar.
+### 2. Reorganizar os campos de edição
+Ainda em `FichaDetailDialog.tsx`:
+- colocar a foto compacta + ações dentro de um `flex gap-4 items-start`
+- passar os campos principais para uma grelha estável:
+  - desktop: `grid-cols-2`
+  - mobile/área apertada: `grid-cols-1 sm:grid-cols-2`
+- garantir espaçamento fixo entre topo, campos e restantes secções
 
-### 3. Feedback visual
-- Loader spinner sobre a foto durante upload.
-- Toast de sucesso/erro reaproveitando `useToast`.
-- Invalidação das queries `['fichas_tecnicas']`, `['ementa_diaria']`, `['buffet_items']` após sucesso (já existe noutros sítios, replicar).
+### 3. Ajustar o content do modal
+- manter `max-h-[90vh] overflow-y-auto`
+- adicionar padding consistente no topo do conteúdo editável
+- evitar qualquer bloco visual que “saia” da caixa do diálogo durante edição
 
-### 4. Hook auxiliar
-Criar um pequeno hook `useUpdateFichaFoto` em `useFichasTecnicas.ts` para isolar a lógica:
-- Input: `{ id, file: File | null }`
-- Faz upload (se `file`), faz update de `foto_url`, invalida queries.
+### 4. Preservar a gestão de foto já existente
+- continuar a usar o mesmo upload atual
+- manter preview local se o utilizador escolher nova imagem
+- se cancelar edição, limpar preview temporário e voltar ao estado original
 
-## Detalhes técnicos
+## Ficheiros a alterar
 
-**Ficheiros a modificar (2):**
-- `src/hooks/useFichasTecnicas.ts` — adicionar hook `useUpdateFichaFoto` (upload + update + invalidação)
-- `src/pages/FichasTecnicas.tsx` — adicionar botão de câmara/menu nos cards, input file oculto por card, handlers com `stopPropagation`
+- `src/components/fichas/FichaDetailDialog.tsx`
 
-**Sem migrações** — bucket `fichas`, RLS e coluna `foto_url` já existem.
+## Resultado esperado
 
-**UX nota**: o menu "Alterar/Remover" usa `DropdownMenu` (já no projeto) para evitar confirmação extra. Remover foto não pede confirmação porque é reversível (basta voltar a fazer upload).
+Depois desta alteração:
+- ficha **com foto** e ficha **sem foto** passam a abrir o editor com o mesmo layout estável
+- a imagem deixa de ocupar o topo inteiro no modo edição
+- os campos deixam de ficar tapados/sobrepostos
+- o comportamento fica consistente com o formulário de criação

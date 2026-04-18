@@ -235,6 +235,40 @@ async function linkBuffetItemsByName(fichaId: string, nome: string) {
   }
 }
 
+export function useUpdateFichaFoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File | null }) => {
+      let foto_url: string | null = null;
+      if (file) {
+        const ext = file.name.split('.').pop();
+        const path = `fichas/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('pratos')
+          .upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from('pratos').getPublicUrl(path);
+        foto_url = urlData.publicUrl;
+      }
+      const { error } = await supabase
+        .from('fichas_tecnicas')
+        .update({ foto_url })
+        .eq('id', id);
+      if (error) throw error;
+      return { id, foto_url };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
+      qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+      qc.invalidateQueries({ queryKey: ['buffet_items'] });
+      toast({ title: 'Foto atualizada' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao atualizar foto', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 export function useDeleteFicha() {
   const qc = useQueryClient();
   return useMutation({

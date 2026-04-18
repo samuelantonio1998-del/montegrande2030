@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useFichasTecnicas, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useFichasTecnicas, useUpdateFichaFoto, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
@@ -45,11 +46,41 @@ function calcCost(ficha: FichaComIngredientes) {
 
 export default function FichasTecnicas() {
   const { data: fichas = [], isLoading } = useFichasTecnicas();
+  const updateFoto = useUpdateFichaFoto();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const triggerPick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputs.current[id]?.click();
+  };
+
+  const handleFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingId(id);
+    try {
+      await updateFoto.mutateAsync({ id, file });
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const handleRemoveFoto = async (id: string, e: Event) => {
+    e.stopPropagation?.();
+    setUploadingId(id);
+    try {
+      await updateFoto.mutateAsync({ id, file: null });
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const categories = ['all', ...new Set(fichas.map(f => f.categoria))];
 
@@ -150,16 +181,59 @@ export default function FichasTecnicas() {
                 className="cursor-pointer rounded-xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
               >
                 {ficha.foto_url ? (
-                  <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl">
+                  <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl relative group">
                     <img src={`${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`} alt={ficha.nome} className="w-full h-full object-cover" />
+                    {uploadingId === ficha.id && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Loader2 className="h-6 w-6 animate-spin text-white" />
+                      </div>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                          aria-label="Opções da foto"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onSelect={(e) => triggerPick(ficha.id, e as unknown as React.MouseEvent)}>
+                          <ImagePlus className="h-4 w-4 mr-2" /> Alterar foto
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={(e) => handleRemoveFoto(ficha.id, e as unknown as Event)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" /> Remover foto
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 ) : null}
+                <input
+                  ref={(el) => (fileInputs.current[ficha.id] = el)}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFileChange(ficha.id, e)}
+                  onClick={(e) => e.stopPropagation()}
+                />
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {!ficha.foto_url && (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <ChefHat className="h-5 w-5 text-primary" />
-                      </div>
+                      <button
+                        onClick={(e) => triggerPick(ficha.id, e)}
+                        className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors group/btn"
+                        aria-label="Adicionar foto"
+                      >
+                        {uploadingId === ficha.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        ) : (
+                          <>
+                            <ChefHat className="h-5 w-5 text-primary group-hover/btn:opacity-0 transition-opacity" />
+                            <ImagePlus className="h-5 w-5 text-primary absolute opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                          </>
+                        )}
+                      </button>
                     )}
                     <div>
                       <h3 className="font-sans text-sm font-semibold text-card-foreground">{ficha.nome}</h3>

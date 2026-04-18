@@ -46,11 +46,41 @@ function calcCost(ficha: FichaComIngredientes) {
 
 export default function FichasTecnicas() {
   const { data: fichas = [], isLoading } = useFichasTecnicas();
+  const updateFoto = useUpdateFichaFoto();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const triggerPick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputs.current[id]?.click();
+  };
+
+  const handleFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingId(id);
+    try {
+      await updateFoto.mutateAsync({ id, file });
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const handleRemoveFoto = async (id: string, e: Event) => {
+    e.stopPropagation?.();
+    setUploadingId(id);
+    try {
+      await updateFoto.mutateAsync({ id, file: null });
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const categories = ['all', ...new Set(fichas.map(f => f.categoria))];
 

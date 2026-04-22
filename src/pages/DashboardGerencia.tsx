@@ -37,13 +37,21 @@ export default function DashboardGerencia() {
       .then(({ data }) => {
         if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_atual <= p.stock_minimo));
       });
-    // Fetch recent activity logs
-    supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, metadata, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (data) setLogs(data as unknown as ActivityLog[]);
-      });
+    // Fetch recent activity logs (paginated to bypass 1000-row Supabase default)
+    (async () => {
+      const all: ActivityLog[] = [];
+      const pageSize = 1000;
+      for (let page = 0; page < 10; page++) {
+        const { data } = await supabase.from('activity_logs')
+          .select('id, user_name, user_role, action, module, details, metadata, created_at')
+          .order('created_at', { ascending: false })
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+        if (!data || data.length === 0) break;
+        all.push(...(data as unknown as ActivityLog[]));
+        if (data.length < pageSize) break;
+      }
+      setLogs(all);
+    })();
   }, []);
 
   const totalPax = mesas.filter(m => m.status === 'ocupada').reduce((s, m) => s + m.adults + m.children2to6 + m.children7to12, 0);
@@ -439,9 +447,20 @@ export default function DashboardGerencia() {
         onOpenChange={(open) => { if (!open) setEditingEntry(null); }}
         onSaved={() => {
           // Refresh logs
-          supabase.from('activity_logs').select('id, user_name, user_role, action, module, details, metadata, created_at')
-            .order('created_at', { ascending: false }).limit(50)
-            .then(({ data }) => { if (data) setLogs(data as unknown as ActivityLog[]); });
+          (async () => {
+            const all: ActivityLog[] = [];
+            const pageSize = 1000;
+            for (let page = 0; page < 10; page++) {
+              const { data } = await supabase.from('activity_logs')
+                .select('id, user_name, user_role, action, module, details, metadata, created_at')
+                .order('created_at', { ascending: false })
+                .range(page * pageSize, page * pageSize + pageSize - 1);
+              if (!data || data.length === 0) break;
+              all.push(...(data as unknown as ActivityLog[]));
+              if (data.length < pageSize) break;
+            }
+            setLogs(all);
+          })();
         }}
       />
     </div>

@@ -42,22 +42,58 @@ INVOICE METADATA - CRITICAL: Always extract these from the invoice header/footer
 
 PRODUCT ITEMS - Extract with these fields:
 - nome: product name (string)
-- quantidade: TOTAL quantity of individual units (number). 
-  
-  CRITICAL QUANTITY RULES:
-  1. READ CAREFULLY: Look at the "Qtd", "Qty", "Quantidade" column. The number there is the base quantity ordered.
-  2. CHECK FOR DECIMAL QUANTITIES: Some products are sold by weight (e.g., "2.500" means 2.5 kg, NOT 2500 units). If the unit is KG and the quantity has decimals, keep it as a decimal number.
-  3. PACKS/BUNDLES: If the product name contains pack indicators, multiply:
-     * "X6", "x6", "X12", "x24" in the product name → multiply ordered quantity by that number
-     * "1,5LTX6" means pack of 6 bottles of 1.5L → if 4 ordered, quantidade = 4 * 6 = 24
-     * "24X33C" or "24x33cl" means pack of 24 units of 33cl → if 2 ordered, quantidade = 2 * 24 = 48
-     * "Pack", "Pk", "Cx" followed by a number → multiply accordingly
-     Always calculate: quantidade = packs_ordered × units_per_pack
-  4. DO NOT confuse product codes/references with quantities. SKUs and article codes are NOT quantities.
-  5. Verify each quantity makes sense for the product type (e.g., a restaurant won't order 44038 units of a single item).
+- quantidade: TOTAL quantity of INDIVIDUAL UNITS (number).
+- unidade: the INDIVIDUAL unit of measure inside the pack (e.g., "lata", "garrafa", "un", "kg", "L"). NEVER return "caixa" or "pack" — always the smallest sellable unit.
+- custo_unitario: net price PER INDIVIDUAL UNIT (excluding VAT, before line discounts).
 
-- unidade: unit of measure - un, garrafa, kg, L, caixa, etc. (string). For packed items, use the individual unit (e.g., "un" for bottles, "garrafa" for wine bottles).
-- custo_unitario: GROSS unit price in euros WITHOUT VAT/IVA, BEFORE any line discounts, PER INDIVIDUAL UNIT (number). CRITICAL: This must be the ORIGINAL catalog/list price per unit BEFORE subtracting any discount. If the invoice price is per pack, divide by the number of units in the pack. Always use values BEFORE tax/IVA. If the invoice shows both gross and net values, use the net (sem IVA) value. If only gross values are shown, divide by (1 + VAT_rate). DO NOT subtract discounts from this value — discounts go in the 'desconto' field separately.
+============================================================
+PACK / BUNDLE HANDLING — THIS IS THE #1 SOURCE OF ERRORS. READ CAREFULLY.
+============================================================
+
+Look in the product NAME for pack indicators like:
+  "28X33CL", "24X33CL", "6X1,5L", "X12", "X6", "Pack 6", "Cx 24", "1,5LTX6"
+The number BEFORE the "X" (or after "Pack/Cx") is units_per_pack.
+
+The QUANTITY COLUMN on the invoice shows the number of PACKS ordered, NOT individual units.
+The PRICE COLUMN on the invoice shows the price PER PACK, NOT per individual unit.
+
+YOU MUST CONVERT BOTH:
+  quantidade        = packs_ordered  × units_per_pack
+  custo_unitario    = price_per_pack ÷ units_per_pack
+
+============================================================
+WORKED EXAMPLE (this exact mistake just happened in production):
+============================================================
+Invoice line: "COCA COLA REGULAR LATA 28X33CL"  Qtd: 2  Preço: 19.39  Total: 38.78
+  - units_per_pack = 28 (from "28X33CL" → 28 cans of 33cl)
+  - packs_ordered  = 2
+  - price_per_pack = 19.39
+
+  CORRECT output:
+    nome           = "Coca Cola Regular Lata 33cl"
+    quantidade     = 2 × 28 = 56
+    unidade        = "lata"          ← NOT "garrafa", NOT "caixa"
+    custo_unitario = 19.39 ÷ 28 ≈ 0.6925
+    Sanity check: 56 × 0.6925 = 38.78  ✓ matches line total
+
+  WRONG output (DO NOT DO THIS):
+    quantidade=56, custo_unitario=19.39  → implies 56 × 19.39 = €1085.84 (absurd)
+    quantidade=2,  custo_unitario=19.39  → forgot to expand pack
+
+============================================================
+SANITY CHECK (mandatory before returning each item):
+============================================================
+For every item, verify:  quantidade × custo_unitario ≈ line_total_on_invoice (within ±5%, ignoring discount).
+If your numbers produce a total that differs wildly from the printed line total, YOU GOT IT WRONG —
+recompute by re-reading the pack size and the price column.
+
+============================================================
+OTHER QUANTITY RULES:
+============================================================
+1. Decimal quantities (weight): "2.500" with unit KG means 2.5 kg, not 2500.
+2. SKUs / article codes are NOT quantities. Ignore them when reading the qty column.
+3. If no pack indicator is in the name, quantidade = the number in the qty column as-is.
+4. Quantities must be realistic for a restaurant (no 44038-unit orders).
 - desconto: TOTAL discount amount in euros for the ENTIRE line (number, default 0). This is the total discount for all units on this line, NOT per unit. If a percentage discount is shown (e.g., 3% on a line totaling €127.10), calculate: line_total × percentage / 100 = €3.81. If no discount, return 0. Look for columns labeled "Desconto", "Desc.", "Discount", "%Desc", or negative values.
 - fornecedor: supplier name if visible on the invoice header/footer (string or null).
 - sku: product code, reference number, or article code if visible next to the product line (string or null). IMPORTANT: Always extract the product reference/code/SKU when available.

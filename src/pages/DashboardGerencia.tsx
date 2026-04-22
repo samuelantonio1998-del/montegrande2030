@@ -379,14 +379,17 @@ export default function DashboardGerencia() {
         <div className="space-y-1">
           {(() => {
             const now = new Date();
-            const todayStr = now.toISOString().slice(0, 10);
-            const cutoff = logPeriodFilter === 'hoje' ? todayStr
-              : logPeriodFilter === '7dias' ? new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10)
-              : logPeriodFilter === '30dias' ? new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10)
-              : '1970-01-01';
+            // Use LOCAL date boundaries so "Hoje" matches the user's calendar day,
+            // not UTC. Otherwise late-night entries can disappear due to timezone shift.
+            const startOfLocalDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const cutoffMs = logPeriodFilter === 'hoje' ? startOfLocalDay.getTime()
+              : logPeriodFilter === '7dias' ? startOfLocalDay.getTime() - 7 * 86400000
+              : logPeriodFilter === '30dias' ? startOfLocalDay.getTime() - 30 * 86400000
+              : 0;
+            const todayLocalStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const filtered = logs.filter(l =>
               (logModuleFilter === 'all' || l.module === logModuleFilter) &&
-              l.created_at.slice(0, 10) >= cutoff
+              new Date(l.created_at).getTime() >= cutoffMs
             );
             if (filtered.length === 0) {
               return (
@@ -400,7 +403,8 @@ export default function DashboardGerencia() {
               const time = new Date(entry.created_at);
               const timeStr = time.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
               const dateStr = time.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-              const isToday = time.toISOString().slice(0, 10) === todayStr;
+              const entryLocalStr = `${time.getFullYear()}-${String(time.getMonth() + 1).padStart(2, '0')}-${String(time.getDate()).padStart(2, '0')}`;
+              const isToday = entryLocalStr === todayLocalStr;
               const moduleColors: Record<string, string> = {
                 Mesas: 'bg-primary/10 text-primary',
                 Cozinha: 'bg-orange-100 text-orange-700',

@@ -376,7 +376,7 @@ export default function DashboardGerencia() {
             </button>
           ))}
         </div>
-        <div className="space-y-1 max-h-80 overflow-y-auto">
+        <div className="space-y-1">
           {(() => {
             const now = new Date();
             const todayStr = now.toISOString().slice(0, 10);

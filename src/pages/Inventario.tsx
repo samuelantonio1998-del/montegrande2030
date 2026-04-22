@@ -173,18 +173,34 @@ export default function Inventario() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    // Fetch movimentações from this week
+    // Fetch movimentações from this week using pagination to avoid missing older same-day entries
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = weekAgo.toISOString();
-    const [prodRes, fornRes, movRes] = await Promise.all([
+
+    const [prodRes, fornRes] = await Promise.all([
       supabase.from('produtos').select('*').eq('ativo', true).order('nome'),
       supabase.from('fornecedores').select('*').order('nome'),
-      supabase.from('movimentacoes').select('*, produtos(nome, unidade)').order('created_at', { ascending: false }).gte('created_at', weekAgoStr).limit(200),
     ]);
+
+    const allMovs: Movimentacao[] = [];
+    const pageSize = 1000;
+    for (let page = 0; page < 10; page++) {
+      const { data } = await supabase
+        .from('movimentacoes')
+        .select('*, produtos(nome, unidade)')
+        .order('created_at', { ascending: false })
+        .gte('created_at', weekAgoStr)
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+
+      if (!data || data.length === 0) break;
+      allMovs.push(...(data as unknown as Movimentacao[]));
+      if (data.length < pageSize) break;
+    }
+
     if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
     if (fornRes.data) setFornecedores(fornRes.data);
-    if (movRes.data) setMovimentacoes(movRes.data as unknown as Movimentacao[]);
+    setMovimentacoes(allMovs);
     setLoading(false);
   }, []);
 

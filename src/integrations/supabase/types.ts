@@ -472,6 +472,7 @@ export type Database = {
           id: string
           nome: string
           pin: string
+          pin_hash: string | null
           role: string
           updated_at: string
         }
@@ -481,6 +482,7 @@ export type Database = {
           id?: string
           nome: string
           pin: string
+          pin_hash?: string | null
           role?: string
           updated_at?: string
         }
@@ -490,6 +492,7 @@ export type Database = {
           id?: string
           nome?: string
           pin?: string
+          pin_hash?: string | null
           role?: string
           updated_at?: string
         }
@@ -590,6 +593,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pin_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          ip: string
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          ip: string
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          ip?: string
+          success?: boolean
+        }
+        Relationships: []
       }
       precario_bebidas: {
         Row: {
@@ -948,6 +972,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      app_role: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -971,6 +996,18 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      set_employee_pin: {
+        Args: { p_id: string; p_pin: string }
+        Returns: undefined
+      }
+      verify_employee_pin: {
+        Args: { p_pin: string }
+        Returns: {
+          id: string
+          nome: string
+          role: string
         }[]
       }
     }

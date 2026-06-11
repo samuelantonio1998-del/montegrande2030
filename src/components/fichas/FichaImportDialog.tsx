@@ -235,8 +235,8 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
 
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) { onClose(); setFichas([]); } }}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             Importar Fichas Técnicas
@@ -246,7 +246,8 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+
           {/* Upload area */}
           <button
             type="button"
@@ -294,85 +295,84 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
 
           {/* Parsed fichas list */}
           {fichas.length > 0 && (
-            <ScrollArea className="max-h-[350px]">
-              <div className="space-y-2">
-                {fichas.map((f, i) => {
-                  const matchedCount = f.ingredientes.filter(ing => ing.produto_id).length;
-                  const allMatched = matchedCount === f.ingredientes.length;
-                  return (
-                    <div key={i} className={cn(
-                      'rounded-lg border border-border transition-colors',
-                      f.status === 'done' && 'bg-success/5 border-success/30',
-                      f.status === 'error' && 'bg-destructive/5 border-destructive/30',
-                      f.status === 'importing' && 'bg-primary/5 border-primary/30',
-                    )}>
-                      <div className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {f.status === 'importing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                            {f.status === 'done' && <CheckCircle2 className="h-4 w-4 text-success" />}
-                            {f.status === 'error' && <AlertCircle className="h-4 w-4 text-destructive" />}
-                            <span className="text-sm font-medium text-foreground">{f.nome}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {f.status === 'pending' && (
-                              <button onClick={() => toggleExpand(i)} className="text-muted-foreground hover:text-foreground p-1">
-                                {f.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                              </button>
-                            )}
-                            {f.status === 'pending' && (
-                              <button onClick={() => removeFicha(i)} className="text-muted-foreground hover:text-destructive p-1">
-                                <X className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
+            <div className="space-y-2">
+              {fichas.map((f, i) => {
+                const matchedCount = f.ingredientes.filter(ing => ing.produto_id).length;
+                const allMatched = matchedCount === f.ingredientes.length;
+                return (
+                  <div key={i} className={cn(
+                    'rounded-lg border border-border transition-colors',
+                    f.status === 'done' && 'bg-success/5 border-success/30',
+                    f.status === 'error' && 'bg-destructive/5 border-destructive/30',
+                    f.status === 'importing' && 'bg-primary/5 border-primary/30',
+                  )}>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {f.status === 'importing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                          {f.status === 'done' && <CheckCircle2 className="h-4 w-4 text-success" />}
+                          {f.status === 'error' && <AlertCircle className="h-4 w-4 text-destructive" />}
+                          <span className="text-sm font-medium text-foreground">{f.nome}</span>
                         </div>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                          <Badge variant="secondary" className="text-[10px]">{f.doses} kg</Badge>
-                          <span>{f.ingredientes.length} ingredientes</span>
-                          <span className={cn(allMatched ? 'text-success' : 'text-warning')}>
-                            ({matchedCount}/{f.ingredientes.length} encontrados)
-                          </span>
-                          {!allMatched && f.status === 'pending' && !f.expanded && (
-                            <button onClick={() => toggleExpand(i)} className="text-primary text-[10px] underline">
-                              mapear
+                        <div className="flex items-center gap-1">
+                          {f.status === 'pending' && (
+                            <button onClick={() => toggleExpand(i)} className="text-muted-foreground hover:text-foreground p-1">
+                              {f.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+                          )}
+                          {f.status === 'pending' && (
+                            <button onClick={() => removeFicha(i)} className="text-muted-foreground hover:text-destructive p-1">
+                              <X className="h-4 w-4" />
                             </button>
                           )}
                         </div>
-                        {f.error && <p className="text-xs text-destructive mt-1">{f.error}</p>}
                       </div>
-
-                      {/* Expanded ingredient mapping */}
-                      {f.expanded && f.status === 'pending' && (
-                        <div className="border-t border-border px-3 pb-3 pt-2 space-y-1.5">
-                          {f.ingredientes.map((ing, j) => (
-                            <div key={j} className="flex items-center gap-2">
-                              <span className={cn(
-                                'text-xs w-[120px] truncate shrink-0',
-                                ing.produto_id ? 'text-muted-foreground' : 'text-warning font-medium'
-                              )}>
-                                {ing.nome}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <ProductPicker
-                                  produtos={produtos}
-                                  value={ing.produto_id}
-                                  onChange={(id) => setIngredientProduct(i, j, id)}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="secondary" className="text-[10px]">{f.doses} kg</Badge>
+                        <span>{f.ingredientes.length} ingredientes</span>
+                        <span className={cn(allMatched ? 'text-success' : 'text-warning')}>
+                          ({matchedCount}/{f.ingredientes.length} encontrados)
+                        </span>
+                        {!allMatched && f.status === 'pending' && !f.expanded && (
+                          <button onClick={() => toggleExpand(i)} className="text-primary text-[10px] underline">
+                            mapear
+                          </button>
+                        )}
+                      </div>
+                      {f.error && <p className="text-xs text-destructive mt-1">{f.error}</p>}
                     </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+
+                    {/* Expanded ingredient mapping */}
+                    {f.expanded && f.status === 'pending' && (
+                      <div className="border-t border-border px-3 pb-3 pt-2 space-y-1.5">
+                        {f.ingredientes.map((ing, j) => (
+                          <div key={j} className="flex items-center gap-2">
+                            <span className={cn(
+                              'text-xs w-[120px] truncate shrink-0',
+                              ing.produto_id ? 'text-muted-foreground' : 'text-warning font-medium'
+                            )}>
+                              {ing.nome}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <ProductPicker
+                                produtos={produtos}
+                                value={ing.produto_id}
+                                onChange={(id) => setIngredientProduct(i, j, id)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
+
           {allDone ? (
             <Button onClick={() => { onClose(); setFichas([]); }} className="w-full">
               Concluído ({doneCount} importadas)

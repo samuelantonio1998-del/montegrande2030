@@ -64,6 +64,8 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
     setLoading(true);
     setStockMin(produto.stock_minimo.toString());
     setStockMax(produto.stock_maximo.toString());
+    setNome(produto.nome);
+    setEditingName(false);
 
     Promise.all([
       supabase.from('movimentacoes').select('*').eq('produto_id', produto.id).order('created_at', { ascending: true }),

@@ -55,6 +55,9 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
   const [editingStock, setEditingStock] = useState(false);
   const [stockMin, setStockMin] = useState('');
   const [stockMax, setStockMax] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nome, setNome] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     if (!produto || !open) return;

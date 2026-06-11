@@ -235,8 +235,8 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
 
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) { onClose(); setFichas([]); } }}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             Importar Fichas Técnicas
@@ -246,7 +246,8 @@ export function FichaImportDialog({ open, onClose }: { open: boolean; onClose: (
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+
           {/* Upload area */}
           <button
             type="button"

@@ -89,6 +89,21 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
     onUpdate?.();
   };
 
+  const handleSaveName = async () => {
+    if (!produto) return;
+    const trimmed = nome.trim();
+    if (!trimmed || trimmed === produto.nome) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    await supabase.from('produtos').update({ nome: trimmed }).eq('id', produto.id);
+    setSavingName(false);
+    setEditingName(false);
+    onUpdate?.();
+  };
+
+
   const analysis = useMemo(() => {
     if (!produto || movs.length === 0) return null;
 

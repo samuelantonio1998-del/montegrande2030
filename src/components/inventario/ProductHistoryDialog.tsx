@@ -55,12 +55,17 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
   const [editingStock, setEditingStock] = useState(false);
   const [stockMin, setStockMin] = useState('');
   const [stockMax, setStockMax] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nome, setNome] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     if (!produto || !open) return;
     setLoading(true);
     setStockMin(produto.stock_minimo.toString());
     setStockMax(produto.stock_maximo.toString());
+    setNome(produto.nome);
+    setEditingName(false);
 
     Promise.all([
       supabase.from('movimentacoes').select('*').eq('produto_id', produto.id).order('created_at', { ascending: true }),
@@ -83,6 +88,21 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
     setEditingStock(false);
     onUpdate?.();
   };
+
+  const handleSaveName = async () => {
+    if (!produto) return;
+    const trimmed = nome.trim();
+    if (!trimmed || trimmed === produto.nome) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    await supabase.from('produtos').update({ nome: trimmed }).eq('id', produto.id);
+    setSavingName(false);
+    setEditingName(false);
+    onUpdate?.();
+  };
+
 
   const analysis = useMemo(() => {
     if (!produto || movs.length === 0) return null;
@@ -149,12 +169,38 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <Package className="h-5 w-5 text-primary" />
-            {produto.nome}
-            <Badge variant="outline" className="text-xs font-normal">{produto.categoria}</Badge>
+          <DialogTitle className="flex items-center gap-3 flex-wrap">
+            <Package className="h-5 w-5 text-primary shrink-0" />
+            {editingName ? (
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Input
+                  value={nome}
+                  onChange={e => setNome(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') { setNome(produto.nome); setEditingName(false); } }}
+                  autoFocus
+                  className="h-9 text-base font-semibold"
+                />
+                <Button size="sm" onClick={handleSaveName} disabled={savingName}>
+                  <Save className="h-3.5 w-3.5 mr-1" />Guardar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setNome(produto.nome); setEditingName(false); }}>
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <>
+                <span className="truncate">{produto.nome}</span>
+                <Badge variant="outline" className="text-xs font-normal">{produto.categoria}</Badge>
+                {isGerencia && (
+                  <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setEditingName(true)}>
+                    <Edit3 className="h-3.5 w-3.5 mr-1" />Editar nome
+                  </Button>
+                )}
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
+
 
         {loading ? (
           <div className="flex items-center justify-center py-12">

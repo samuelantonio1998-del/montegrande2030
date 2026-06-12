@@ -345,7 +345,7 @@ export function FichaDetailDialog({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Preço Venda (€)</label>
+              <label className="text-xs text-muted-foreground">Preço Venda Kg (€)</label>
               <Input type="number" step="0.01" value={editPreco} onChange={e => setEditPreco(parseFloat(e.target.value) || 0)} className="mt-1" />
             </div>
             <div>

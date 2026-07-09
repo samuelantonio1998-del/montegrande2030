@@ -59,7 +59,14 @@ type ScannedItem = {
   sku: string | null;
   selected: boolean;
   produto_id?: string;
+  total_linha?: number | null;
+  produto_id_sugerido?: string | null;
+  confianca?: 'alta' | 'media' | 'baixa' | 'nenhuma';
+  warning?: boolean;
+  warning_msg?: string | null;
+  divergencia?: boolean;
 };
+
 
 type InvoiceMeta = {
   numero_fatura: string | null;
@@ -254,9 +261,16 @@ export default function Inventario() {
         reader.readAsDataURL(previewFile);
       });
 
+      const catalogo = produtos.map(p => ({
+        id: p.id,
+        nome: p.nome,
+        sku: p.sku ?? null,
+        unidade: p.unidade ?? null,
+      }));
       const { data, error } = await supabase.functions.invoke('scan-invoice', {
-        body: { imageBase64: base64 },
+        body: { imageBase64: base64, catalogo },
       });
+
 
       clearInterval(progressInterval);
       setProcessingProgress(100);
@@ -316,8 +330,30 @@ export default function Inventario() {
             }
           }
         }
-        const match = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || matchByFuzzy;
-        return { ...item, desconto: item.desconto || 0, selected: true, produto_id: match?.id };
+        const matchByAI = item.produto_id_sugerido
+          ? produtos.find(p => p.id === item.produto_id_sugerido) || null
+          : null;
+        const matchLocal = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || null;
+        const match = matchLocal || matchByAI || matchByFuzzy;
+        const divergencia = !!(matchLocal && matchByAI && matchLocal.id !== matchByAI.id);
+        return {
+          ...item,
+          desconto: item.desconto || 0,
+          selected: true,
+          produto_id: match?.id,
+          total_linha: item.total_linha ?? null,
+          produto_id_sugerido: item.produto_id_sugerido ?? null,
+          confianca: item.confianca ?? 'nenhuma',
+          warning: !!item.warning,
+          warning_msg: item.warning_msg ?? null,
+          divergencia,
+        };
+      });
+
+      // Ordenação: sem produto_id primeiro, depois warning/divergencia, depois OK
+      items.sort((a, b) => {
+        const rank = (it: ScannedItem) => !it.produto_id ? 0 : (it.warning || it.divergencia ? 1 : 2);
+        return rank(a) - rank(b);
       });
 
       setTimeout(() => {
@@ -325,6 +361,7 @@ export default function Inventario() {
         setScannerStep('review');
         toast({ title: `${items.length} itens detetados na fatura` });
       }, 500);
+
     } catch (err: any) {
       clearInterval(progressInterval);
       toast({ title: 'Erro no scanner', description: err.message, variant: 'destructive' });
@@ -840,11 +877,27 @@ export default function Inventario() {
                               className="accent-primary h-4 w-4 mt-2 shrink-0"
                             />
                             <div className="flex-1 min-w-0 space-y-2">
-                              <Input
-                                value={item.nome}
-                                onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
-                                className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1"
-                              />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={item.nome}
+                                  onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                  className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1 flex-1 min-w-0"
+                                />
+                                {!item.produto_id ? (
+                                  <Badge className="text-[9px] bg-destructive text-destructive-foreground shrink-0">SEM PRODUTO</Badge>
+                                ) : (item.warning || item.divergencia) ? (
+                                  <Badge className="text-[9px] bg-yellow-500 text-white shrink-0">VERIFICAR</Badge>
+                                ) : (
+                                  <Badge className="text-[9px] bg-success text-success-foreground shrink-0">OK{item.confianca === 'alta' ? ' · IA' : ''}</Badge>
+                                )}
+                              </div>
+                              {item.warning_msg && (
+                                <p className="text-[10px] text-yellow-700 dark:text-yellow-400">{item.warning_msg}</p>
+                              )}
+                              {item.divergencia && (
+                                <p className="text-[10px] text-yellow-700 dark:text-yellow-400">Sugestão IA difere do match local — verificar.</p>
+                              )}
+
                                <div className="grid grid-cols-4 gap-2">
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">Qtd.</span>
@@ -933,6 +986,12 @@ export default function Inventario() {
                                 </span>
                                 {!item.produto_id && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/30">Novo</Badge>}
                               </div>
+                              {item.total_linha != null && (
+                                <p className="text-[10px] text-muted-foreground font-mono">
+                                  {item.quantidade} × €{item.custo_unitario.toFixed(4)} − €{item.desconto.toFixed(2)} = €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)} <span className="text-foreground">(fatura: €{item.total_linha.toFixed(2)})</span>
+                                </p>
+                              )}
+
                             </div>
                           </div>
                         </div>
@@ -973,12 +1032,33 @@ export default function Inventario() {
                                 />
                               </td>
                               <td className="px-3 py-2.5">
-                                <Input
-                                  value={item.nome}
-                                  onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
-                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                />
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={item.nome}
+                                    onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                    className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input flex-1 min-w-0"
+                                  />
+                                  {!item.produto_id ? (
+                                    <Badge className="text-[9px] bg-destructive text-destructive-foreground shrink-0">SEM PRODUTO</Badge>
+                                  ) : (item.warning || item.divergencia) ? (
+                                    <Badge className="text-[9px] bg-yellow-500 text-white shrink-0">VERIFICAR</Badge>
+                                  ) : (
+                                    <Badge className="text-[9px] bg-success text-success-foreground shrink-0">OK{item.confianca === 'alta' ? ' · IA' : ''}</Badge>
+                                  )}
+                                </div>
+                                {item.warning_msg && (
+                                  <p className="text-[10px] text-yellow-700 dark:text-yellow-400 mt-1">{item.warning_msg}</p>
+                                )}
+                                {item.divergencia && (
+                                  <p className="text-[10px] text-yellow-700 dark:text-yellow-400 mt-1">Sugestão IA difere do match local.</p>
+                                )}
+                                {item.total_linha != null && (
+                                  <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                                    {item.quantidade} × €{item.custo_unitario.toFixed(4)} − €{item.desconto.toFixed(2)} = €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)} <span className="text-foreground">(fatura: €{item.total_linha.toFixed(2)})</span>
+                                  </p>
+                                )}
                               </td>
+
                               <td className="px-3 py-2.5">
                                 <Input
                                   inputMode="decimal"

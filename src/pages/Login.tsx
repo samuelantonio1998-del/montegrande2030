@@ -3,11 +3,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Delete } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginAdmin, requestAdminReset } = useAuth();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('samuelantonio1998@hotmail.com');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminBusy, setAdminBusy] = useState(false);
 
   const handleDigit = async (d: string) => {
     if (pin.length >= 4) return;
@@ -26,6 +35,29 @@ export default function Login() {
   const handleDelete = () => {
     setPin(p => p.slice(0, -1));
     setError(false);
+  };
+
+  const handleAdminLogin = async () => {
+    setAdminBusy(true);
+    const res = await loginAdmin(adminEmail.trim(), adminPassword);
+    setAdminBusy(false);
+    if (!res.ok) {
+      toast.error(res.error ?? 'Falha ao entrar');
+      return;
+    }
+    setAdminOpen(false);
+  };
+
+  const handleAdminReset = async () => {
+    if (!adminEmail.trim()) return;
+    setAdminBusy(true);
+    const res = await requestAdminReset(adminEmail.trim());
+    setAdminBusy(false);
+    if (!res.ok) {
+      toast.error(res.error ?? 'Falha ao enviar email');
+      return;
+    }
+    toast.success('Email de recuperação enviado');
   };
 
   return (
@@ -84,7 +116,57 @@ export default function Login() {
           })}
         </div>
 
+        <div className="text-center">
+          <button
+            onClick={() => setAdminOpen(true)}
+            className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline underline-offset-4"
+          >
+            Entrar como administrador
+          </button>
+        </div>
       </motion.div>
+
+      <Dialog open={adminOpen} onOpenChange={setAdminOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Entrar como administrador</DialogTitle>
+            <DialogDescription>Acesso reservado à gerência.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="admin-email">Email</Label>
+              <Input
+                id="admin-email"
+                type="email"
+                autoComplete="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="admin-password">Palavra-passe</Label>
+              <Input
+                id="admin-password"
+                type="password"
+                autoComplete="current-password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+              />
+            </div>
+            <Button onClick={handleAdminLogin} disabled={adminBusy || !adminPassword} className="w-full">
+              Entrar
+            </Button>
+            <button
+              onClick={handleAdminReset}
+              disabled={adminBusy}
+              className="w-full text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+            >
+              Enviar email de recuperação de palavra-passe
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

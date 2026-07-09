@@ -21,6 +21,7 @@ import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
 import Funcionarios from "./pages/Funcionarios";
 import Unsubscribe from "./pages/Unsubscribe";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +37,8 @@ function DashboardRouter() {
 }
 
 function ProtectedRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   if (!user) return <Navigate to="/login" />;
 
   return (
@@ -70,6 +72,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>
@@ -81,7 +84,8 @@ const App = () => (
 );
 
 function LoginRoute() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   if (user) return <Navigate to="/" />;
   return <Login />;
 }

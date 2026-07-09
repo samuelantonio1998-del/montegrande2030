@@ -330,8 +330,30 @@ export default function Inventario() {
             }
           }
         }
-        const match = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || matchByFuzzy;
-        return { ...item, desconto: item.desconto || 0, selected: true, produto_id: match?.id };
+        const matchByAI = item.produto_id_sugerido
+          ? produtos.find(p => p.id === item.produto_id_sugerido) || null
+          : null;
+        const matchLocal = matchBySku || matchByNameAndSupplier || matchByName || matchByAlias || null;
+        const match = matchLocal || matchByAI || matchByFuzzy;
+        const divergencia = !!(matchLocal && matchByAI && matchLocal.id !== matchByAI.id);
+        return {
+          ...item,
+          desconto: item.desconto || 0,
+          selected: true,
+          produto_id: match?.id,
+          total_linha: item.total_linha ?? null,
+          produto_id_sugerido: item.produto_id_sugerido ?? null,
+          confianca: item.confianca ?? 'nenhuma',
+          warning: !!item.warning,
+          warning_msg: item.warning_msg ?? null,
+          divergencia,
+        };
+      });
+
+      // Ordenação: sem produto_id primeiro, depois warning/divergencia, depois OK
+      items.sort((a, b) => {
+        const rank = (it: ScannedItem) => !it.produto_id ? 0 : (it.warning || it.divergencia ? 1 : 2);
+        return rank(a) - rank(b);
       });
 
       setTimeout(() => {
@@ -339,6 +361,7 @@ export default function Inventario() {
         setScannerStep('review');
         toast({ title: `${items.length} itens detetados na fatura` });
       }, 500);
+
     } catch (err: any) {
       clearInterval(progressInterval);
       toast({ title: 'Erro no scanner', description: err.message, variant: 'destructive' });

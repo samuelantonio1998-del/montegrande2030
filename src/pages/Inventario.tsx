@@ -261,9 +261,16 @@ export default function Inventario() {
         reader.readAsDataURL(previewFile);
       });
 
+      const catalogo = produtos.map(p => ({
+        id: p.id,
+        nome: p.nome,
+        sku: p.sku ?? null,
+        unidade: p.unidade ?? null,
+      }));
       const { data, error } = await supabase.functions.invoke('scan-invoice', {
-        body: { imageBase64: base64 },
+        body: { imageBase64: base64, catalogo },
       });
+
 
       clearInterval(progressInterval);
       setProcessingProgress(100);

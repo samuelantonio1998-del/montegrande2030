@@ -59,7 +59,14 @@ type ScannedItem = {
   sku: string | null;
   selected: boolean;
   produto_id?: string;
+  total_linha?: number | null;
+  produto_id_sugerido?: string | null;
+  confianca?: 'alta' | 'media' | 'baixa' | 'nenhuma';
+  warning?: boolean;
+  warning_msg?: string | null;
+  divergencia?: boolean;
 };
+
 
 type InvoiceMeta = {
   numero_fatura: string | null;

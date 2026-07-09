@@ -986,6 +986,12 @@ export default function Inventario() {
                                 </span>
                                 {!item.produto_id && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/30">Novo</Badge>}
                               </div>
+                              {item.total_linha != null && (
+                                <p className="text-[10px] text-muted-foreground font-mono">
+                                  {item.quantidade} × €{item.custo_unitario.toFixed(4)} − €{item.desconto.toFixed(2)} = €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)} <span className="text-foreground">(fatura: €{item.total_linha.toFixed(2)})</span>
+                                </p>
+                              )}
+
                             </div>
                           </div>
                         </div>

@@ -877,11 +877,27 @@ export default function Inventario() {
                               className="accent-primary h-4 w-4 mt-2 shrink-0"
                             />
                             <div className="flex-1 min-w-0 space-y-2">
-                              <Input
-                                value={item.nome}
-                                onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
-                                className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1"
-                              />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={item.nome}
+                                  onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                  className="h-8 text-sm font-medium border-transparent bg-transparent hover:border-input focus:border-input px-1 flex-1 min-w-0"
+                                />
+                                {!item.produto_id ? (
+                                  <Badge className="text-[9px] bg-destructive text-destructive-foreground shrink-0">SEM PRODUTO</Badge>
+                                ) : (item.warning || item.divergencia) ? (
+                                  <Badge className="text-[9px] bg-yellow-500 text-white shrink-0">VERIFICAR</Badge>
+                                ) : (
+                                  <Badge className="text-[9px] bg-success text-success-foreground shrink-0">OK{item.confianca === 'alta' ? ' · IA' : ''}</Badge>
+                                )}
+                              </div>
+                              {item.warning_msg && (
+                                <p className="text-[10px] text-yellow-700 dark:text-yellow-400">{item.warning_msg}</p>
+                              )}
+                              {item.divergencia && (
+                                <p className="text-[10px] text-yellow-700 dark:text-yellow-400">Sugestão IA difere do match local — verificar.</p>
+                              )}
+
                                <div className="grid grid-cols-4 gap-2">
                                 <div>
                                   <span className="text-[10px] uppercase text-muted-foreground">Qtd.</span>

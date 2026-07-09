@@ -1032,12 +1032,33 @@ export default function Inventario() {
                                 />
                               </td>
                               <td className="px-3 py-2.5">
-                                <Input
-                                  value={item.nome}
-                                  onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
-                                  className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input"
-                                />
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={item.nome}
+                                    onChange={(e) => updateScannedItem(i, 'nome', e.target.value)}
+                                    className="h-8 text-sm border-transparent bg-transparent hover:border-input focus:border-input flex-1 min-w-0"
+                                  />
+                                  {!item.produto_id ? (
+                                    <Badge className="text-[9px] bg-destructive text-destructive-foreground shrink-0">SEM PRODUTO</Badge>
+                                  ) : (item.warning || item.divergencia) ? (
+                                    <Badge className="text-[9px] bg-yellow-500 text-white shrink-0">VERIFICAR</Badge>
+                                  ) : (
+                                    <Badge className="text-[9px] bg-success text-success-foreground shrink-0">OK{item.confianca === 'alta' ? ' · IA' : ''}</Badge>
+                                  )}
+                                </div>
+                                {item.warning_msg && (
+                                  <p className="text-[10px] text-yellow-700 dark:text-yellow-400 mt-1">{item.warning_msg}</p>
+                                )}
+                                {item.divergencia && (
+                                  <p className="text-[10px] text-yellow-700 dark:text-yellow-400 mt-1">Sugestão IA difere do match local.</p>
+                                )}
+                                {item.total_linha != null && (
+                                  <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                                    {item.quantidade} × €{item.custo_unitario.toFixed(4)} − €{item.desconto.toFixed(2)} = €{(item.quantidade * item.custo_unitario - item.desconto).toFixed(2)} <span className="text-foreground">(fatura: €{item.total_linha.toFixed(2)})</span>
+                                  </p>
+                                )}
                               </td>
+
                               <td className="px-3 py-2.5">
                                 <Input
                                   inputMode="decimal"

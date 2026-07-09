@@ -21,6 +21,7 @@ import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
 import Funcionarios from "./pages/Funcionarios";
 import Unsubscribe from "./pages/Unsubscribe";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

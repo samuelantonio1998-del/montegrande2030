@@ -84,7 +84,8 @@ const App = () => (
 );
 
 function LoginRoute() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   if (user) return <Navigate to="/" />;
   return <Login />;
 }

@@ -27,6 +27,7 @@ type IngredienteLine = {
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
   const createFicha = useCreateFicha();
+  const laborCostPerHour = useLaborCostPerHour();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState('');

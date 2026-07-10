@@ -133,6 +133,7 @@ export function FichaDetailDialog({
   const { data: produtos = [] } = useProdutos();
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
+  const laborCostPerHour = useLaborCostPerHour();
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);

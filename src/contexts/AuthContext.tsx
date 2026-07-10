@@ -25,14 +25,26 @@ function deriveUser(session: Session | null): AppUser | null {
   if (!session?.user) return null;
   const meta = (session.user.app_metadata ?? {}) as Record<string, unknown>;
   const umeta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
-  const role = (meta.role as UserRole) ?? 'gerencia';
-  const name = (meta.nome as string) ?? (umeta.nome as string) ?? session.user.email ?? 'Utilizador';
-  return {
-    name,
-    role,
-    funcionarioId: meta.funcionario_id as string | undefined,
-  };
+  const funcionarioId = meta.funcionario_id as string | undefined;
+  const role = meta.role as UserRole | undefined;
+
+  // Case 1: PIN-based employee session — must have funcionario_id + role
+  if (funcionarioId && role) {
+    const name = (meta.nome as string) ?? (umeta.nome as string) ?? 'Funcionário';
+    return { name, role, funcionarioId };
+  }
+
+  // Case 2: Admin session — role gerencia, NO funcionario_id
+  if (!funcionarioId && role === 'gerencia') {
+    const emailName = session.user.email?.split('@')[0];
+    const name = (meta.nome as string) ?? (umeta.nome as string) ?? emailName ?? 'Administrador';
+    return { name, role: 'gerencia' };
+  }
+
+  // Invalid session — no fallback to first funcionario
+  return null;
 }
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);

@@ -59,7 +59,7 @@ export function useRegistosProducao() {
     const map = new Map<string, FichaCostInfo>();
     fichas.forEach(f => {
       const ingredientCost = ingCostMap.get(f.id) ?? 0;
-      const laborCost = ((f.tempo_preparacao ?? 0) / 60) * LABOR_COST_PER_HOUR;
+      const laborCost = ((f.tempo_preparacao ?? 0) / 60) * laborCostPerHour;
       const totalCost = ingredientCost + laborCost;
       const capacityKg = f.porcoes || 1;
       map.set(f.id, {

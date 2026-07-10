@@ -164,7 +164,7 @@ export default function FichasTecnicas() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {filtered.map((ficha, i) => {
-            const cost = calcCost(ficha);
+            const cost = calcCost(ficha, laborCostPerHour);
             const costPerPortion = ficha.porcoes > 0 ? cost / ficha.porcoes : 0;
             const margin = ficha.preco_venda > 0
               ? ((ficha.preco_venda - costPerPortion) / ficha.preco_venda) * 100

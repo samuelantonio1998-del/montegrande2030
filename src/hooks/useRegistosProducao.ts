@@ -32,6 +32,7 @@ type FichaCostInfo = {
 const FALLBACK_COST_PER_KG = 5; // €5/kg when no ficha linked
 
 export function useRegistosProducao() {
+  const laborCostPerHour = useLaborCostPerHour();
   const [registos, setRegistos] = useState<RegistoProducao[]>([]);
   const [loading, setLoading] = useState(true);
   const [fichaCosts, setFichaCosts] = useState<Map<string, FichaCostInfo>>(new Map());

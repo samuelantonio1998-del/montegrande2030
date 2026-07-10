@@ -230,7 +230,34 @@ export default function Funcionarios() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancelar</Button>
-            <Button onClick={handleAdd} disabled={!newName.trim() || !newPin.trim()}>Adicionar</Button>
+            <Button onClick={handleAdd} disabled={!newName.trim() || !isValidPin(newPin)}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change PIN dialog */}
+      <Dialog open={!!pinTarget} onOpenChange={open => { if (!open) { setPinTarget(null); setPinValue(''); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> Alterar PIN — {pinTarget?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-sm text-muted-foreground">Novo PIN (4 a 6 dígitos)</label>
+            <Input
+              value={pinValue}
+              onChange={e => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="Ex: 1234"
+              maxLength={6}
+              inputMode="numeric"
+              type="password"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPinTarget(null); setPinValue(''); }}>Cancelar</Button>
+            <Button onClick={handleChangePin} disabled={!isValidPin(pinValue)}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

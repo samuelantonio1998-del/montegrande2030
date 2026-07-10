@@ -52,14 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Register listener FIRST to avoid missing events
+    const handle = (session: Session | null) => {
+      const derived = deriveUser(session);
+      if (session && !derived) {
+        // Invalid session (no funcionario_id and not gerencia) — force logout
+        console.error('Sessão inválida: sem funcionario_id e sem role=gerencia. A terminar sessão.');
+        supabase.auth.signOut();
+        setUser(null);
+        return;
+      }
+      setUser(derived);
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(deriveUser(session));
+      handle(session);
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      setUser(deriveUser(data.session));
+      handle(data.session);
       setLoading(false);
     });
+
 
     return () => {
       sub.subscription.unsubscribe();

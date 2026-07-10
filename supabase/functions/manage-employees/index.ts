@@ -20,6 +20,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ---- AuthN/AuthZ: require an authenticated gerencia session ----
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+    const token = authHeader.slice("Bearer ".length).trim();
+    const authClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+    const role = (claimsData.claims as any)?.app_metadata?.role;
+    if (role !== "gerencia") {
+      return json({ error: "Forbidden" }, 403);
+    }
+
     const body = await req.json();
     const { action } = body;
 
@@ -75,7 +95,6 @@ Deno.serve(async (req) => {
 
       if (pinErr) {
         console.error("set_employee_pin error:", pinErr);
-        // Rollback: hard-delete the row we just inserted to avoid orphan without hash
         await supabase.from("funcionarios").delete().eq("id", inserted.id);
         return json({ error: "Erro ao definir PIN" }, 500);
       }

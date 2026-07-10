@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X, Link, Unlink, Search } from 'lucide-react';
+import { Save, Euro, UtensilsCrossed, Wine, Plus, Trash2, FolderPlus, CakeSlice, GlassWater, Droplets, Pencil, Check, X, Link, Unlink, Search, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useLaborCostPerHour, useUpdateLaborCostPerHour } from '@/hooks/useFichasTecnicas';
 
 const mealLabels: Record<string, string> = {
   adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',
@@ -23,6 +24,14 @@ const MEAL_KEYS: (keyof MealPrices)[] = ['adultWeekdayLunch', 'adultPremium', 'c
 
 export default function PriceManagementPanel() {
   const { beverageMenu, mealPrices, saveMealPrices, saveBevPrices, addBebida, deleteBebida, deleteCategoria, fetchAll } = usePrecario();
+  const laborCostPerHour = useLaborCostPerHour();
+  const updateLaborCost = useUpdateLaborCostPerHour();
+  const [laborInput, setLaborInput] = useState(String(laborCostPerHour));
+  const [prevLabor, setPrevLabor] = useState(laborCostPerHour);
+  if (laborCostPerHour !== prevLabor) {
+    setPrevLabor(laborCostPerHour);
+    setLaborInput(String(laborCostPerHour));
+  }
   
   const [localMealPrices, setLocalMealPrices] = useState<MealPrices>(mealPrices);
   const [localBev, setLocalBev] = useState(beverageMenu);
@@ -196,6 +205,51 @@ export default function PriceManagementPanel() {
           </div>
         </div>
       </div>
+
+      {/* Labor cost */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Custo de Mão-de-Obra
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <div className="flex flex-col">
+              <span className="text-sm text-foreground">Custo por hora (sem IVA)</span>
+              <span className="text-xs text-muted-foreground">Usado no cálculo das fichas técnicas</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">€</span>
+              <Input
+                type="number"
+                step="0.05"
+                min="0"
+                inputMode="decimal"
+                value={laborInput}
+                onChange={e => setLaborInput(e.target.value)}
+                className="w-24 h-8 text-right text-sm"
+              />
+              <span className="text-xs text-muted-foreground">/h</span>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const v = parseFloat(laborInput);
+                  if (Number.isFinite(v) && v >= 0) updateLaborCost.mutate(v);
+                }}
+                disabled={
+                  updateLaborCost.isPending ||
+                  parseFloat(laborInput) === laborCostPerHour ||
+                  !Number.isFinite(parseFloat(laborInput))
+                }
+              >
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* Beverage pricing */}
       <div className="rounded-xl border border-border bg-card p-6">

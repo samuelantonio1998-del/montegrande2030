@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useProdutos, useUpdateFicha, useDeleteFicha, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -133,6 +133,7 @@ export function FichaDetailDialog({
   const { data: produtos = [] } = useProdutos();
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
+  const laborCostPerHour = useLaborCostPerHour();
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -202,7 +203,7 @@ export function FichaDetailDialog({
 
   const ingredientCost = calcCostFromProdutos(currentIngredientes, produtosMap);
   const tempo = editing ? editTempo : (ficha.tempo_preparacao ?? 0);
-  const laborCost = (tempo / 60) * LABOR_COST_PER_HOUR;
+  const laborCost = (tempo / 60) * laborCostPerHour;
   const totalCost = ingredientCost + laborCost;
   const porcoes = editing ? editPorcoes : ficha.porcoes;
   const precoVenda = editing ? editPreco : ficha.preco_venda;
@@ -485,7 +486,7 @@ export function FichaDetailDialog({
                 {tempo > 0 && (
                   <tr className="border-t border-border bg-muted/20">
                     <td className="px-3 py-2 text-xs text-muted-foreground" colSpan={3}>
-                      Mão-de-obra ({tempo} min × €{LABOR_COST_PER_HOUR}/h s/ IVA)
+                      Mão-de-obra ({tempo} min × €{laborCostPerHour}/h s/ IVA)
                     </td>
                     <td className="px-3 py-2 text-right font-medium text-foreground">€{laborCost.toFixed(2)}</td>
                     {editing && <td></td>}

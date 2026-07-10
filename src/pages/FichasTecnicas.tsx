@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useFichasTecnicas, useUpdateFichaFoto, LABOR_COST_PER_HOUR, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useFichasTecnicas, useUpdateFichaFoto, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
@@ -35,18 +35,19 @@ const categoryColors: Record<string, string> = {
   geral: 'bg-muted text-muted-foreground',
 };
 
-function calcCost(ficha: FichaComIngredientes) {
+function calcCost(ficha: FichaComIngredientes, laborCostPerHour: number) {
   const ingredientCost = ficha.ingredientes.reduce((sum, ing) => {
     const cost = ing.produto?.custo_medio ?? 0;
     return sum + ing.quantidade * cost;
   }, 0);
-  const laborCost = ((ficha.tempo_preparacao ?? 0) / 60) * LABOR_COST_PER_HOUR;
+  const laborCost = ((ficha.tempo_preparacao ?? 0) / 60) * laborCostPerHour;
   return ingredientCost + laborCost;
 }
 
 export default function FichasTecnicas() {
   const { data: fichas = [], isLoading } = useFichasTecnicas();
   const updateFoto = useUpdateFichaFoto();
+  const laborCostPerHour = useLaborCostPerHour();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);
@@ -163,7 +164,7 @@ export default function FichasTecnicas() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {filtered.map((ficha, i) => {
-            const cost = calcCost(ficha);
+            const cost = calcCost(ficha, laborCostPerHour);
             const costPerPortion = ficha.porcoes > 0 ? cost / ficha.porcoes : 0;
             const margin = ficha.preco_venda > 0
               ? ((ficha.preco_venda - costPerPortion) / ficha.preco_venda) * 100

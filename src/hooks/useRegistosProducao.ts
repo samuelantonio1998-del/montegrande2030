@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/lib/toast-with-sound';
 import type { RecipientSize } from '@/lib/buffet-data';
-import { LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
+import { useLaborCostPerHour } from '@/hooks/useFichasTecnicas';
 
 export type RegistoProducao = {
   id: string;
@@ -32,6 +32,7 @@ type FichaCostInfo = {
 const FALLBACK_COST_PER_KG = 5; // €5/kg when no ficha linked
 
 export function useRegistosProducao() {
+  const laborCostPerHour = useLaborCostPerHour();
   const [registos, setRegistos] = useState<RegistoProducao[]>([]);
   const [loading, setLoading] = useState(true);
   const [fichaCosts, setFichaCosts] = useState<Map<string, FichaCostInfo>>(new Map());
@@ -58,7 +59,7 @@ export function useRegistosProducao() {
     const map = new Map<string, FichaCostInfo>();
     fichas.forEach(f => {
       const ingredientCost = ingCostMap.get(f.id) ?? 0;
-      const laborCost = ((f.tempo_preparacao ?? 0) / 60) * LABOR_COST_PER_HOUR;
+      const laborCost = ((f.tempo_preparacao ?? 0) / 60) * laborCostPerHour;
       const totalCost = ingredientCost + laborCost;
       const capacityKg = f.porcoes || 1;
       map.set(f.id, {
@@ -68,7 +69,7 @@ export function useRegistosProducao() {
       });
     });
     setFichaCosts(map);
-  }, []);
+  }, [laborCostPerHour]);
 
   // Also build a buffet_item → ficha_tecnica_id map
   const [buffetFichaMap, setBuffetFichaMap] = useState<Map<string, string>>(new Map());

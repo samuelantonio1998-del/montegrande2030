@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateFicha, useProdutos, LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
+import { useCreateFicha, useProdutos, useLaborCostPerHour } from '@/hooks/useFichasTecnicas';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,7 @@ type IngredienteLine = {
 export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: produtos = [] } = useProdutos();
   const createFicha = useCreateFicha();
+  const laborCostPerHour = useLaborCostPerHour();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState('');
@@ -75,7 +76,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
     const prod = produtos.find(p => p.id === ing.produto_id);
     return sum + (prod ? ing.quantidade * prod.custo_medio : 0);
   }, 0);
-  const laborCost = (tempoPreparacao / 60) * LABOR_COST_PER_HOUR;
+  const laborCost = (tempoPreparacao / 60) * laborCostPerHour;
   const totalCost = ingredientCost + laborCost;
   const costPerDose = porcoes > 0 ? totalCost / porcoes : 0;
   const margem = precoVenda > 0 ? ((precoVenda - costPerDose) / precoVenda) * 100 : 0;
@@ -191,7 +192,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
               />
               {tempoPreparacao > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Custo M.O.: €{laborCost.toFixed(2)} (€{LABOR_COST_PER_HOUR}/h s/ IVA)
+                  Custo M.O.: €{laborCost.toFixed(2)} (€{laborCostPerHour}/h s/ IVA)
                 </p>
               )}
             </div>
@@ -255,7 +256,7 @@ export function FichaCreateForm({ open, onClose }: { open: boolean; onClose: () 
                   {tempoPreparacao > 0 && (
                     <tr className="border-t border-border bg-muted/20">
                       <td className="px-2 py-1 text-xs text-muted-foreground" colSpan={4}>
-                        Mão-de-obra ({tempoPreparacao} min × €{LABOR_COST_PER_HOUR}/h)
+                        Mão-de-obra ({tempoPreparacao} min × €{laborCostPerHour}/h)
                       </td>
                       <td className="px-2 py-1 text-right text-xs font-medium text-foreground">€{laborCost.toFixed(2)}</td>
                       <td></td>

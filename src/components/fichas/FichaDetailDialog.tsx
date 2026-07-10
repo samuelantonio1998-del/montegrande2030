@@ -203,7 +203,7 @@ export function FichaDetailDialog({
 
   const ingredientCost = calcCostFromProdutos(currentIngredientes, produtosMap);
   const tempo = editing ? editTempo : (ficha.tempo_preparacao ?? 0);
-  const laborCost = (tempo / 60) * LABOR_COST_PER_HOUR;
+  const laborCost = (tempo / 60) * laborCostPerHour;
   const totalCost = ingredientCost + laborCost;
   const porcoes = editing ? editPorcoes : ficha.porcoes;
   const precoVenda = editing ? editPreco : ficha.preco_venda;

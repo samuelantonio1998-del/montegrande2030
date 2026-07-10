@@ -69,7 +69,7 @@ export function useRegistosProducao() {
       });
     });
     setFichaCosts(map);
-  }, []);
+  }, [laborCostPerHour]);
 
   // Also build a buffet_item → ficha_tecnica_id map
   const [buffetFichaMap, setBuffetFichaMap] = useState<Map<string, string>>(new Map());

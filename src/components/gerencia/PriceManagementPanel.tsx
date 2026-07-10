@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useLaborCostPerHour, useUpdateLaborCostPerHour } from '@/hooks/useFichasTecnicas';
 
 const mealLabels: Record<string, string> = {
   adultWeekdayLunch: 'Adulto Almoço (Seg–Sex)',

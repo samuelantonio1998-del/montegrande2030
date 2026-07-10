@@ -25,14 +25,26 @@ function deriveUser(session: Session | null): AppUser | null {
   if (!session?.user) return null;
   const meta = (session.user.app_metadata ?? {}) as Record<string, unknown>;
   const umeta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
-  const role = (meta.role as UserRole) ?? 'gerencia';
-  const name = (meta.nome as string) ?? (umeta.nome as string) ?? session.user.email ?? 'Utilizador';
-  return {
-    name,
-    role,
-    funcionarioId: meta.funcionario_id as string | undefined,
-  };
+  const funcionarioId = meta.funcionario_id as string | undefined;
+  const role = meta.role as UserRole | undefined;
+
+  // Case 1: PIN-based employee session — must have funcionario_id + role
+  if (funcionarioId && role) {
+    const name = (meta.nome as string) ?? (umeta.nome as string) ?? 'Funcionário';
+    return { name, role, funcionarioId };
+  }
+
+  // Case 2: Admin session — role gerencia, NO funcionario_id
+  if (!funcionarioId && role === 'gerencia') {
+    const emailName = session.user.email?.split('@')[0];
+    const name = (meta.nome as string) ?? (umeta.nome as string) ?? emailName ?? 'Administrador';
+    return { name, role: 'gerencia' };
+  }
+
+  // Invalid session — no fallback to first funcionario
+  return null;
 }
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -40,14 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Register listener FIRST to avoid missing events
+    const handle = (session: Session | null) => {
+      const derived = deriveUser(session);
+      if (session && !derived) {
+        // Invalid session (no funcionario_id and not gerencia) — force logout
+        console.error('Sessão inválida: sem funcionario_id e sem role=gerencia. A terminar sessão.');
+        supabase.auth.signOut();
+        setUser(null);
+        return;
+      }
+      setUser(derived);
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(deriveUser(session));
+      handle(session);
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      setUser(deriveUser(data.session));
+      handle(data.session);
       setLoading(false);
     });
+
 
     return () => {
       sub.subscription.unsubscribe();

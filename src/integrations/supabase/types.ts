@@ -982,6 +982,8 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      is_gerencia: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string

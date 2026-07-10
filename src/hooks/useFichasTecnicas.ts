@@ -16,8 +16,48 @@ export type FichaTecnicaDB = {
   updated_at: string;
 };
 
-/** Custo de mão-de-obra por hora (sem IVA) */
-export const LABOR_COST_PER_HOUR = 11;
+/** Custo de mão-de-obra por hora (sem IVA) — fallback quando ainda não há valor guardado */
+export const LABOR_COST_PER_HOUR_DEFAULT = 11;
+
+/** Lê o custo de mão-de-obra por hora (sem IVA) da tabela configuracao_precos */
+export function useLaborCostPerHour() {
+  const { data } = useQuery({
+    queryKey: ['configuracao_precos', 'custo_mao_obra_hora'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('configuracao_precos')
+        .select('valor')
+        .eq('chave', 'custo_mao_obra_hora')
+        .maybeSingle();
+      if (error) throw error;
+      return data?.valor != null ? Number(data.valor) : LABOR_COST_PER_HOUR_DEFAULT;
+    },
+    staleTime: 60_000,
+  });
+  return data ?? LABOR_COST_PER_HOUR_DEFAULT;
+}
+
+export function useUpdateLaborCostPerHour() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (valor: number) => {
+      if (!Number.isFinite(valor) || valor < 0) throw new Error('Valor inválido');
+      const { error } = await supabase
+        .from('configuracao_precos')
+        .upsert({ chave: 'custo_mao_obra_hora', valor }, { onConflict: 'chave' });
+      if (error) throw error;
+      return valor;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['configuracao_precos', 'custo_mao_obra_hora'] });
+      qc.invalidateQueries({ queryKey: ['fichas_tecnicas'] });
+      toast({ title: 'Custo de mão-de-obra atualizado' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao atualizar', description: err.message, variant: 'destructive' });
+    },
+  });
+}
 
 export type IngredienteDB = {
   id: string;

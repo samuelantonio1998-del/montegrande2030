@@ -486,7 +486,7 @@ export function FichaDetailDialog({
                 {tempo > 0 && (
                   <tr className="border-t border-border bg-muted/20">
                     <td className="px-3 py-2 text-xs text-muted-foreground" colSpan={3}>
-                      Mão-de-obra ({tempo} min × €{LABOR_COST_PER_HOUR}/h s/ IVA)
+                      Mão-de-obra ({tempo} min × €{laborCostPerHour}/h s/ IVA)
                     </td>
                     <td className="px-3 py-2 text-right font-medium text-foreground">€{laborCost.toFixed(2)}</td>
                     {editing && <td></td>}

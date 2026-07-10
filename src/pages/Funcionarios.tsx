@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Users, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Users, Pencil, Check, X, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,8 +17,53 @@ const roleLabels: Record<UserRole, string> = {
   gerencia: 'Gerência',
 };
 
+const isValidPin = (pin: string) => /^\d{4,6}$/.test(pin);
+
 export default function Funcionarios() {
-  const { employees, addEmployee, removeEmployee, updateRole, updateName } = useEmployees();
+  const { employees, addEmployee, removeEmployee, updateRole, updateName, updatePin } = useEmployees();
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('sala');
+  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [pinTarget, setPinTarget] = useState<Employee | null>(null);
+  const [pinValue, setPinValue] = useState('');
+
+  const handleAdd = async () => {
+    if (!newName.trim() || !newPin.trim()) {
+      toast.error('Preencha nome e PIN');
+      return;
+    }
+    if (!isValidPin(newPin)) {
+      toast.error('O PIN deve ter 4 a 6 dígitos');
+      return;
+    }
+    const success = await addEmployee({ name: newName.trim(), pin: newPin.trim(), role: newRole });
+    if (success) {
+      setShowAdd(false);
+      setNewName('');
+      setNewPin('');
+      setNewRole('sala');
+      toast.success('Funcionário adicionado');
+    }
+  };
+
+  const handleChangePin = async () => {
+    if (!pinTarget) return;
+    if (!isValidPin(pinValue)) {
+      toast.error('O PIN deve ter 4 a 6 dígitos');
+      return;
+    }
+    const ok = await updatePin(pinTarget.id, pinValue);
+    if (ok) {
+      toast.success(`PIN de ${pinTarget.name} atualizado`);
+      setPinTarget(null);
+      setPinValue('');
+    }
+  };
 
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');

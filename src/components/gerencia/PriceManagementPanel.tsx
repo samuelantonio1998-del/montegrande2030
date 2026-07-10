@@ -24,6 +24,14 @@ const MEAL_KEYS: (keyof MealPrices)[] = ['adultWeekdayLunch', 'adultPremium', 'c
 
 export default function PriceManagementPanel() {
   const { beverageMenu, mealPrices, saveMealPrices, saveBevPrices, addBebida, deleteBebida, deleteCategoria, fetchAll } = usePrecario();
+  const laborCostPerHour = useLaborCostPerHour();
+  const updateLaborCost = useUpdateLaborCostPerHour();
+  const [laborInput, setLaborInput] = useState(String(laborCostPerHour));
+  const [prevLabor, setPrevLabor] = useState(laborCostPerHour);
+  if (laborCostPerHour !== prevLabor) {
+    setPrevLabor(laborCostPerHour);
+    setLaborInput(String(laborCostPerHour));
+  }
   
   const [localMealPrices, setLocalMealPrices] = useState<MealPrices>(mealPrices);
   const [localBev, setLocalBev] = useState(beverageMenu);

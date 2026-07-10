@@ -206,6 +206,51 @@ export default function PriceManagementPanel() {
         </div>
       </div>
 
+      {/* Labor cost */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Custo de Mão-de-Obra
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <div className="flex flex-col">
+              <span className="text-sm text-foreground">Custo por hora (sem IVA)</span>
+              <span className="text-xs text-muted-foreground">Usado no cálculo das fichas técnicas</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">€</span>
+              <Input
+                type="number"
+                step="0.05"
+                min="0"
+                inputMode="decimal"
+                value={laborInput}
+                onChange={e => setLaborInput(e.target.value)}
+                className="w-24 h-8 text-right text-sm"
+              />
+              <span className="text-xs text-muted-foreground">/h</span>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const v = parseFloat(laborInput);
+                  if (Number.isFinite(v) && v >= 0) updateLaborCost.mutate(v);
+                }}
+                disabled={
+                  updateLaborCost.isPending ||
+                  parseFloat(laborInput) === laborCostPerHour ||
+                  !Number.isFinite(parseFloat(laborInput))
+                }
+              >
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
       {/* Beverage pricing */}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-4">

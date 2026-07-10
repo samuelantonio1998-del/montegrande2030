@@ -104,20 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const requestAdminReset = async (email: string) => {
-    // Ensure admin user exists + get a recovery link sent by Supabase
-    try {
-      await supabase.functions.invoke('bootstrap-admin', {
-        body: { redirectTo: `${window.location.origin}/reset-password` },
-      });
-    } catch {
-      // continue — resetPasswordForEmail below will still work if user exists
-    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   };
+
 
   const logout = async () => {
     await supabase.auth.signOut();

@@ -65,32 +65,6 @@ export default function Funcionarios() {
     }
   };
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [newRole, setNewRole] = useState<UserRole>('sala');
-  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-
-  const handleAdd = async () => {
-    if (!newName.trim() || !newPin.trim()) {
-      toast.error('Preencha nome e PIN');
-      return;
-    }
-    if (newPin.length < 4) {
-      toast.error('O PIN deve ter pelo menos 4 dígitos');
-      return;
-    }
-    const success = await addEmployee({ name: newName.trim(), pin: newPin.trim(), role: newRole });
-    if (success) {
-      setShowAdd(false);
-      setNewName('');
-      setNewPin('');
-      setNewRole('sala');
-      toast.success('Funcionário adicionado');
-    }
-  };
 
   const handleDelete = () => {
     if (!deleteTarget) return;

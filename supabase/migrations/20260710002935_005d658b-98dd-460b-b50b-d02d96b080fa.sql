@@ -1,0 +1,1 @@
+UPDATE auth.users SET raw_app_meta_data = jsonb_build_object('role','gerencia','nome','Administrador','provider','email','providers', jsonb_build_array('email')), raw_user_meta_data = jsonb_build_object('nome','Administrador','email_verified',true) WHERE email='samuelantonio1998@hotmail.com';

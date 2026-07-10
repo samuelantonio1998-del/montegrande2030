@@ -47,6 +47,7 @@ function calcCost(ficha: FichaComIngredientes, laborCostPerHour: number) {
 export default function FichasTecnicas() {
   const { data: fichas = [], isLoading } = useFichasTecnicas();
   const updateFoto = useUpdateFichaFoto();
+  const laborCostPerHour = useLaborCostPerHour();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateFicha, useProdutos, LABOR_COST_PER_HOUR } from '@/hooks/useFichasTecnicas';
+import { useCreateFicha, useProdutos, useLaborCostPerHour } from '@/hooks/useFichasTecnicas';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 

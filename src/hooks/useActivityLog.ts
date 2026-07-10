@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export type LogEntry = {
   id: string;
@@ -14,8 +13,6 @@ export type LogEntry = {
 };
 
 export function useActivityLog() {
-  const { user } = useAuth();
-
   const log = useCallback(async (
     action: string,
     module: string,
@@ -25,8 +22,6 @@ export function useActivityLog() {
     try {
       await supabase.functions.invoke('log-activity', {
         body: {
-          user_name: user?.name || 'Sistema',
-          user_role: user?.role || '',
           action,
           module,
           details: details || '',
@@ -36,15 +31,16 @@ export function useActivityLog() {
     } catch (e) {
       console.error('Erro ao registar log:', e);
     }
-  }, [user?.name, user?.role]);
+  }, []);
 
   return { log };
 }
 
-// Standalone version for use outside React components
+// Standalone version for use outside React components.
+// Identity is derived server-side from the caller's JWT — user args are ignored server-side.
 export async function logActivity(
-  userName: string,
-  userRole: string,
+  _userName: string,
+  _userRole: string,
   action: string,
   module: string,
   details?: string,
@@ -53,8 +49,6 @@ export async function logActivity(
   try {
     await supabase.functions.invoke('log-activity', {
       body: {
-        user_name: userName,
-        user_role: userRole,
         action,
         module,
         details: details || '',

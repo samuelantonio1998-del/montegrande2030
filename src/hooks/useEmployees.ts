@@ -62,5 +62,16 @@ export function useEmployees() {
     await fetchEmployees();
   }, [fetchEmployees]);
 
-  return { employees, addEmployee, removeEmployee, updateRole, updateName };
+  const updatePin = useCallback(async (id: string, pin: string): Promise<boolean> => {
+    const { data, error } = await supabase.functions.invoke('manage-employees', {
+      body: { action: 'update_pin', id, pin },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || 'Erro ao atualizar PIN');
+      return false;
+    }
+    return true;
+  }, []);
+
+  return { employees, addEmployee, removeEmployee, updateRole, updateName, updatePin };
 }

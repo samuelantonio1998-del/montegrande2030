@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Users, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Users, Pencil, Check, X, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,8 +17,10 @@ const roleLabels: Record<UserRole, string> = {
   gerencia: 'Gerência',
 };
 
+const isValidPin = (pin: string) => /^\d{4,6}$/.test(pin);
+
 export default function Funcionarios() {
-  const { employees, addEmployee, removeEmployee, updateRole, updateName } = useEmployees();
+  const { employees, addEmployee, removeEmployee, updateRole, updateName, updatePin } = useEmployees();
 
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
@@ -27,14 +29,16 @@ export default function Funcionarios() {
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [pinTarget, setPinTarget] = useState<Employee | null>(null);
+  const [pinValue, setPinValue] = useState('');
 
   const handleAdd = async () => {
     if (!newName.trim() || !newPin.trim()) {
       toast.error('Preencha nome e PIN');
       return;
     }
-    if (newPin.length < 4) {
-      toast.error('O PIN deve ter pelo menos 4 dígitos');
+    if (!isValidPin(newPin)) {
+      toast.error('O PIN deve ter 4 a 6 dígitos');
       return;
     }
     const success = await addEmployee({ name: newName.trim(), pin: newPin.trim(), role: newRole });
@@ -46,6 +50,21 @@ export default function Funcionarios() {
       toast.success('Funcionário adicionado');
     }
   };
+
+  const handleChangePin = async () => {
+    if (!pinTarget) return;
+    if (!isValidPin(pinValue)) {
+      toast.error('O PIN deve ter 4 a 6 dígitos');
+      return;
+    }
+    const ok = await updatePin(pinTarget.id, pinValue);
+    if (ok) {
+      toast.success(`PIN de ${pinTarget.name} atualizado`);
+      setPinTarget(null);
+      setPinValue('');
+    }
+  };
+
 
   const handleDelete = () => {
     if (!deleteTarget) return;
@@ -145,14 +164,25 @@ export default function Funcionarios() {
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => setDeleteTarget(emp)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Alterar PIN"
+                      onClick={() => { setPinTarget(emp); setPinValue(''); }}
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTarget(emp)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -181,8 +211,8 @@ export default function Funcionarios() {
               <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do funcionário" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">PIN de acesso</label>
-              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="Ex: 1234" maxLength={6} type="password" />
+              <label className="text-sm text-muted-foreground">PIN de acesso (4 a 6 dígitos)</label>
+              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Ex: 1234" maxLength={6} inputMode="numeric" type="password" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Perfil de acesso</label>
@@ -200,7 +230,34 @@ export default function Funcionarios() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancelar</Button>
-            <Button onClick={handleAdd} disabled={!newName.trim() || !newPin.trim()}>Adicionar</Button>
+            <Button onClick={handleAdd} disabled={!newName.trim() || !isValidPin(newPin)}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change PIN dialog */}
+      <Dialog open={!!pinTarget} onOpenChange={open => { if (!open) { setPinTarget(null); setPinValue(''); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> Alterar PIN — {pinTarget?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-sm text-muted-foreground">Novo PIN (4 a 6 dígitos)</label>
+            <Input
+              value={pinValue}
+              onChange={e => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="Ex: 1234"
+              maxLength={6}
+              inputMode="numeric"
+              type="password"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPinTarget(null); setPinValue(''); }}>Cancelar</Button>
+            <Button onClick={handleChangePin} disabled={!isValidPin(pinValue)}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

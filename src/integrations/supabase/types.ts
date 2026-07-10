@@ -471,7 +471,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
-          pin: string
+          pin: string | null
           pin_hash: string | null
           role: string
           updated_at: string
@@ -481,7 +481,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
-          pin: string
+          pin?: string | null
           pin_hash?: string | null
           role?: string
           updated_at?: string
@@ -491,7 +491,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
-          pin?: string
+          pin?: string | null
           pin_hash?: string | null
           role?: string
           updated_at?: string

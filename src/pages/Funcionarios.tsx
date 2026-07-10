@@ -211,8 +211,8 @@ export default function Funcionarios() {
               <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do funcionário" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">PIN de acesso</label>
-              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="Ex: 1234" maxLength={6} type="password" />
+              <label className="text-sm text-muted-foreground">PIN de acesso (4 a 6 dígitos)</label>
+              <Input value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Ex: 1234" maxLength={6} inputMode="numeric" type="password" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Perfil de acesso</label>

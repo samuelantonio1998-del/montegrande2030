@@ -30,9 +30,10 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: verify_jwt=true at the gateway accepts any valid JWT, including the
+// public anon key. We additionally require role === 'authenticated' (a real
+// signed-in user session) so anonymous clients cannot trigger email sends to
+// arbitrary recipients from the trusted domain.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -42,8 +43,9 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
     console.error('Missing required environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -53,6 +55,29 @@ Deno.serve(async (req) => {
       }
     )
   }
+
+  // Require an authenticated caller (real user session, not anon). Internal
+  // service-role callers are also allowed for backend-triggered sends.
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  const token = authHeader.slice('Bearer '.length).trim()
+  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token)
+  const callerRole = (claimsData?.claims as any)?.role
+  if (claimsErr || !claimsData?.claims || (callerRole !== 'authenticated' && callerRole !== 'service_role')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
 
   // Parse request body
   let templateName: string

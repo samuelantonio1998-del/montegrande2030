@@ -35,12 +35,12 @@ const categoryColors: Record<string, string> = {
   geral: 'bg-muted text-muted-foreground',
 };
 
-function calcCost(ficha: FichaComIngredientes) {
+function calcCost(ficha: FichaComIngredientes, laborCostPerHour: number) {
   const ingredientCost = ficha.ingredientes.reduce((sum, ing) => {
     const cost = ing.produto?.custo_medio ?? 0;
     return sum + ing.quantidade * cost;
   }, 0);
-  const laborCost = ((ficha.tempo_preparacao ?? 0) / 60) * LABOR_COST_PER_HOUR;
+  const laborCost = ((ficha.tempo_preparacao ?? 0) / 60) * laborCostPerHour;
   return ingredientCost + laborCost;
 }
 

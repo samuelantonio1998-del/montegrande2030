@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   try {
     const { pin, allowedRoles } = await req.json();
 
-    if (!pin || typeof pin !== "string" || pin.length < 4 || pin.length > 6) {
+    if (typeof pin !== "string" || !/^\d{4,6}$/.test(pin)) {
       return new Response(
         JSON.stringify({ error: "PIN inválido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -25,21 +25,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data, error } = await supabase
-      .from("funcionarios")
-      .select("nome, role")
-      .eq("pin", pin)
-      .eq("ativo", true)
-      .maybeSingle();
+    // Compare against bcrypt hash (pin_hash) via SECURITY DEFINER function
+    const { data, error } = await supabase.rpc("verify_employee_pin", { p_pin: pin });
+    const row = Array.isArray(data) ? data[0] : data;
 
-    if (error || !data) {
+    if (error || !row?.id) {
       return new Response(
         JSON.stringify({ success: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(data.role)) {
+    if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(row.role)) {
       return new Response(
         JSON.stringify({ success: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -47,7 +44,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, nome: data.nome, role: data.role }),
+      JSON.stringify({ success: true, nome: row.nome, role: row.role }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch {

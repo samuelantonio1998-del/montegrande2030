@@ -246,6 +246,20 @@ export default function FichasTecnicas() {
                       </Badge>
                     </div>
                   </div>
+                  {rotulos[ficha.id] && (
+                    <button
+                      onClick={(e) => handlePrintRotulo(ficha.id, ficha.nome, e)}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      aria-label="Imprimir rótulo"
+                      title="Imprimir rótulo"
+                    >
+                      {printingId === ficha.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">

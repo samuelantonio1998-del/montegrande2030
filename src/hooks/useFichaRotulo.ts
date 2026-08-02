@@ -50,6 +50,21 @@ export function useFichaRotulo(fichaId: string | null | undefined) {
   });
 }
 
+export function useFichaRotulos() {
+  return useQuery({
+    queryKey: ['ficha_rotulos'],
+    queryFn: async (): Promise<Record<string, FichaRotulo>> => {
+      const { data, error } = await supabase.from('ficha_rotulos').select('*');
+      if (error) throw error;
+      const map: Record<string, FichaRotulo> = {};
+      (data as FichaRotulo[] | null)?.forEach(r => {
+        if (r.titulo && r.titulo.trim()) map[r.ficha_id] = r;
+      });
+      return map;
+    },
+  });
+}
+
 export function useSaveFichaRotulo() {
   const qc = useQueryClient();
   return useMutation({
@@ -72,6 +87,7 @@ export function useSaveFichaRotulo() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['ficha_rotulo', vars.fichaId] });
+      qc.invalidateQueries({ queryKey: ['ficha_rotulos'] });
     },
     onError: (err: Error) => {
       toast({ title: 'Erro ao guardar rótulo', description: err.message, variant: 'destructive' });

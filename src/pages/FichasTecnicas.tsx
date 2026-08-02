@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2 } from 'lucide-react';
+import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useFichasTecnicas, useUpdateFichaFoto, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useFichaRotulos } from '@/hooks/useFichaRotulo';
+import { printRotulo } from '@/lib/rotulo-print';
+import { toast } from '@/hooks/use-toast';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
@@ -54,7 +57,24 @@ export default function FichasTecnicas() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [printingId, setPrintingId] = useState<string | null>(null);
+  const { data: rotulos = {} } = useFichaRotulos();
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handlePrintRotulo = async (id: string, nome: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rotulo = rotulos[id];
+    if (!rotulo) return;
+    setPrintingId(id);
+    try {
+      await printRotulo(rotulo, nome);
+    } catch (err) {
+      toast({ title: 'Erro ao gerar rótulo', description: (err as Error).message, variant: 'destructive' });
+    } finally {
+      setPrintingId(null);
+    }
+  };
+
 
   const triggerPick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -243,6 +263,20 @@ export default function FichasTecnicas() {
                       </Badge>
                     </div>
                   </div>
+                  {rotulos[ficha.id] && (
+                    <button
+                      onClick={(e) => handlePrintRotulo(ficha.id, ficha.nome, e)}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      aria-label="Imprimir rótulo"
+                      title="Imprimir rótulo"
+                    >
+                      {printingId === ficha.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">

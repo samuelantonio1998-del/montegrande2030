@@ -135,6 +135,8 @@ export function FichaDetailDialog({
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
   const laborCostPerHour = useLaborCostPerHour();
+  const { data: rotulo } = useFichaRotulo(ficha?.id);
+  const saveRotulo = useSaveFichaRotulo();
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -148,8 +150,22 @@ export function FichaDetailDialog({
   const [editTempo, setEditTempo] = useState(0);
   const [editNotas, setEditNotas] = useState('');
   const [editIngredientes, setEditIngredientes] = useState<EditIngredient[]>([]);
+  const [editRotulo, setEditRotulo] = useState<RotuloInput>(emptyRotulo);
+
+  useEffect(() => {
+    setEditRotulo(rotulo ? {
+      titulo: rotulo.titulo ?? '',
+      modo_preparacao: rotulo.modo_preparacao ?? '',
+      ingredientes: rotulo.ingredientes ?? '',
+      nutricional: rotulo.nutricional ?? '',
+      alergenios: rotulo.alergenios ?? '',
+      conservacao: rotulo.conservacao ?? '',
+      peso: rotulo.peso ?? '',
+    } : emptyRotulo);
+  }, [rotulo]);
 
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
+
 
   useEffect(() => {
     if (ficha) {

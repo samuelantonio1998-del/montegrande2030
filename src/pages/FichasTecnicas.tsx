@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2 } from 'lucide-react';
+import { ChefHat, Plus, Clock, Search, Utensils, Loader2, Upload, Camera, ImagePlus, Trash2, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useFichasTecnicas, useUpdateFichaFoto, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useFichaRotulos } from '@/hooks/useFichaRotulo';
+import { printRotulo } from '@/lib/rotulo-print';
+import { toast } from '@/hooks/use-toast';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';

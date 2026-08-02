@@ -87,6 +87,7 @@ export function useSaveFichaRotulo() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['ficha_rotulo', vars.fichaId] });
+      qc.invalidateQueries({ queryKey: ['ficha_rotulos'] });
     },
     onError: (err: Error) => {
       toast({ title: 'Erro ao guardar rótulo', description: err.message, variant: 'destructive' });

@@ -241,6 +241,7 @@ export function FichaDetailDialog({
       notas_preparacao: editNotas || null,
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
+    await saveRotulo.mutateAsync({ fichaId: ficha.id, rotulo: editRotulo });
     setEditing(false);
     onClose();
   };

@@ -387,6 +387,56 @@ export type Database = {
           },
         ]
       }
+      ficha_rotulos: {
+        Row: {
+          alergenios: string | null
+          conservacao: string | null
+          created_at: string
+          ficha_id: string
+          id: string
+          ingredientes: string | null
+          modo_preparacao: string | null
+          nutricional: string | null
+          peso: string | null
+          titulo: string | null
+          updated_at: string
+        }
+        Insert: {
+          alergenios?: string | null
+          conservacao?: string | null
+          created_at?: string
+          ficha_id: string
+          id?: string
+          ingredientes?: string | null
+          modo_preparacao?: string | null
+          nutricional?: string | null
+          peso?: string | null
+          titulo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alergenios?: string | null
+          conservacao?: string | null
+          created_at?: string
+          ficha_id?: string
+          id?: string
+          ingredientes?: string | null
+          modo_preparacao?: string | null
+          nutricional?: string | null
+          peso?: string | null
+          titulo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_rotulos_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: true
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas_tecnicas: {
         Row: {
           ativo: boolean

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';

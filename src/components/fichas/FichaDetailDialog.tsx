@@ -544,6 +544,38 @@ export function FichaDetailDialog({
           </div>
         ) : null}
 
+        {/* Rótulo */}
+        {editing && (
+          <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Rótulo</span>
+            </div>
+            {([
+              ['titulo', 'Título', 'ex: ARROZ BASMATI', 1],
+              ['modo_preparacao', 'Modo de preparação', 'Instruções para o consumidor...', 3],
+              ['ingredientes', 'Ingredientes', 'Lista de ingredientes...', 3],
+              ['nutricional', 'Declaração nutricional', 'Valores por 100g...', 3],
+              ['alergenios', 'Alergénios', 'ex: Contém glúten, leite...', 2],
+              ['conservacao', 'Conservação', 'ex: Conservar entre 0ºC e 5ºC', 2],
+              ['peso', 'Peso', 'ex: 400gr', 1],
+            ] as const).map(([key, label, placeholder, rows]) => (
+              <div key={key}>
+                <label className="text-xs font-medium text-muted-foreground">{label}</label>
+                <Textarea
+                  value={editRotulo[key]}
+                  onChange={e => setEditRotulo({ ...editRotulo, [key]: e.target.value })}
+                  placeholder={placeholder}
+                  rows={rows}
+                  className="mt-1 resize-none"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+
+
         {!editing && tempo > 0 && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />

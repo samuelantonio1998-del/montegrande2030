@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
+import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -134,6 +135,8 @@ export function FichaDetailDialog({
   const updateFicha = useUpdateFicha();
   const deleteFicha = useDeleteFicha();
   const laborCostPerHour = useLaborCostPerHour();
+  const { data: rotulo } = useFichaRotulo(ficha?.id);
+  const saveRotulo = useSaveFichaRotulo();
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -147,8 +150,22 @@ export function FichaDetailDialog({
   const [editTempo, setEditTempo] = useState(0);
   const [editNotas, setEditNotas] = useState('');
   const [editIngredientes, setEditIngredientes] = useState<EditIngredient[]>([]);
+  const [editRotulo, setEditRotulo] = useState<RotuloInput>(emptyRotulo);
+
+  useEffect(() => {
+    setEditRotulo(rotulo ? {
+      titulo: rotulo.titulo ?? '',
+      modo_preparacao: rotulo.modo_preparacao ?? '',
+      ingredientes: rotulo.ingredientes ?? '',
+      nutricional: rotulo.nutricional ?? '',
+      alergenios: rotulo.alergenios ?? '',
+      conservacao: rotulo.conservacao ?? '',
+      peso: rotulo.peso ?? '',
+    } : emptyRotulo);
+  }, [rotulo]);
 
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
+
 
   useEffect(() => {
     if (ficha) {
@@ -224,6 +241,7 @@ export function FichaDetailDialog({
       notas_preparacao: editNotas || null,
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
+    await saveRotulo.mutateAsync({ fichaId: ficha.id, rotulo: editRotulo });
     setEditing(false);
     onClose();
   };
@@ -525,6 +543,38 @@ export function FichaDetailDialog({
             <p className="text-sm text-foreground whitespace-pre-wrap">{notasPreparacao}</p>
           </div>
         ) : null}
+
+        {/* Rótulo */}
+        {editing && (
+          <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Rótulo</span>
+            </div>
+            {([
+              ['titulo', 'Título', 'ex: ARROZ BASMATI', 1],
+              ['modo_preparacao', 'Modo de preparação', 'Instruções para o consumidor...', 3],
+              ['ingredientes', 'Ingredientes', 'Lista de ingredientes...', 3],
+              ['nutricional', 'Declaração nutricional', 'Valores por 100g...', 3],
+              ['alergenios', 'Alergénios', 'ex: Contém glúten, leite...', 2],
+              ['conservacao', 'Conservação', 'ex: Conservar entre 0ºC e 5ºC', 2],
+              ['peso', 'Peso', 'ex: 400gr', 1],
+            ] as const).map(([key, label, placeholder, rows]) => (
+              <div key={key}>
+                <label className="text-xs font-medium text-muted-foreground">{label}</label>
+                <Textarea
+                  value={editRotulo[key]}
+                  onChange={e => setEditRotulo({ ...editRotulo, [key]: e.target.value })}
+                  placeholder={placeholder}
+                  rows={rows}
+                  className="mt-1 resize-none"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+
 
         {!editing && tempo > 0 && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

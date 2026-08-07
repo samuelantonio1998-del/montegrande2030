@@ -129,6 +129,61 @@ export function renderRotuloCanvas(rotulo: FichaRotulo): HTMLCanvasElement {
   return canvas;
 }
 
+function printImageViaIframe(dataUrl: string): Promise<boolean> {
+  return new Promise(resolve => {
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const cleanup = () => setTimeout(() => iframe.remove(), 1000);
+
+    const doc = iframe.contentDocument;
+    const win = iframe.contentWindow;
+    if (!doc || !win) {
+      iframe.remove();
+      resolve(false);
+      return;
+    }
+
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@page { size: 62mm auto; margin: 0; }
+html, body { margin: 0; padding: 0; }
+img { width: 62mm; display: block; }
+</style></head><body><img src="${dataUrl}" /></body></html>`);
+    doc.close();
+
+    const img = doc.querySelector('img');
+    const fire = () => {
+      try {
+        win.focus();
+        win.print();
+        cleanup();
+        resolve(true);
+      } catch {
+        iframe.remove();
+        resolve(false);
+      }
+    };
+
+    if (img && !img.complete) {
+      img.onload = fire;
+      img.onerror = () => {
+        iframe.remove();
+        resolve(false);
+      };
+    } else {
+      fire();
+    }
+  });
+}
+
 export async function printRotulo(rotulo: FichaRotulo, nomeFicha: string) {
   const canvas = renderRotuloCanvas(rotulo);
   const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -139,12 +194,22 @@ export async function printRotulo(rotulo: FichaRotulo, nomeFicha: string) {
   const file = new File([blob], fileName, { type: 'image/png' });
 
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-  if (nav.share && nav.canShare?.({ files: [file] })) {
+  const podePartilhar = !!(nav.share && nav.canShare?.({ files: [file] }));
+
+  if (podePartilhar) {
     try {
       await nav.share({ files: [file], title: rotulo.titulo || nomeFicha });
       return 'shared' as const;
     } catch (err) {
       if ((err as DOMException)?.name === 'AbortError') return 'cancelled' as const;
+    }
+  } else {
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const printed = await printImageViaIframe(dataUrl);
+      if (printed) return 'printed' as const;
+    } catch {
+      /* fallback abaixo */
     }
   }
 

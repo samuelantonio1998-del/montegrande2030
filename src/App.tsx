@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProductionProvider } from "@/contexts/ProductionContext";
 import { SidebarCollapseProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/components/AppLayout";
+import { RotaProtegida } from "@/components/RotaProtegida";
+
 import Login from "./pages/Login";
 import DashboardSala from "./pages/DashboardSala";
 import DashboardCozinha from "./pages/DashboardCozinha";
@@ -53,13 +55,21 @@ function ProtectedRoutes() {
         <Route path="/desperdicio" element={<Desperdicio />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/precario" element={<Precario />} />
-        <Route path="/funcionarios" element={<Funcionarios />} />
+        <Route
+          path="/funcionarios"
+          element={
+            <RotaProtegida permissao="gestao.funcionarios.gerir">
+              <Funcionarios />
+            </RotaProtegida>
+          }
+        />
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
   );
 }
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

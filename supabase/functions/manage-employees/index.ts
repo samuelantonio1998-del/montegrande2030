@@ -20,25 +20,31 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ---- AuthN/AuthZ: require an authenticated gerencia session ----
+    // ---- AuthN/AuthZ: sessão válida + permissão via RPC tem_permissao ----
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return json({ error: "Unauthorized" }, 401);
     }
-    const token = authHeader.slice("Bearer ".length).trim();
-    const authClient = createClient(
+    const callerClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) {
+    const { data: userData, error: userErr } = await callerClient.auth.getUser();
+    if (userErr || !userData?.user) {
       return json({ error: "Unauthorized" }, 401);
     }
-    const role = (claimsData.claims as any)?.app_metadata?.role;
-    if (role !== "gerencia") {
-      return json({ error: "Forbidden" }, 403);
+    const { data: temPerm, error: permErr } = await callerClient.rpc("tem_permissao", {
+      p_permissao: "gestao.funcionarios.gerir",
+    });
+    if (permErr) {
+      console.error("tem_permissao error:", permErr);
+      return json({ error: "Erro ao verificar permissões" }, 500);
     }
+    if (!temPerm) {
+      return json({ error: "Sem permissão" }, 403);
+    }
+
 
     const body = await req.json();
     const { action } = body;

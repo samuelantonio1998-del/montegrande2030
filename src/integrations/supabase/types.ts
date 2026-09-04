@@ -212,6 +212,7 @@ export type Database = {
           historico_consumo_kg: number[] | null
           historico_sobra_kg: number[] | null
           id: string
+          marca_id: string | null
           notas: string | null
           quantidade_prevista: number
           recipiente_sugerido: string
@@ -226,6 +227,7 @@ export type Database = {
           historico_consumo_kg?: number[] | null
           historico_sobra_kg?: number[] | null
           id?: string
+          marca_id?: string | null
           notas?: string | null
           quantidade_prevista?: number
           recipiente_sugerido?: string
@@ -240,6 +242,7 @@ export type Database = {
           historico_consumo_kg?: number[] | null
           historico_sobra_kg?: number[] | null
           id?: string
+          marca_id?: string | null
           notas?: string | null
           quantidade_prevista?: number
           recipiente_sugerido?: string
@@ -252,6 +255,13 @@ export type Database = {
             columns: ["buffet_item_id"]
             isOneToOne: false
             referencedRelation: "buffet_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ementa_diaria_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
             referencedColumns: ["id"]
           },
           {
@@ -403,6 +413,45 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ficha_marca: {
+        Row: {
+          ativo: boolean
+          ficha_tecnica_id: string
+          marca_id: string
+          nome_comercial: string | null
+          preco_venda: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          ficha_tecnica_id: string
+          marca_id: string
+          nome_comercial?: string | null
+          preco_venda?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          ficha_tecnica_id?: string
+          marca_id?: string
+          nome_comercial?: string | null
+          preco_venda?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_marca_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_marca_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
             referencedColumns: ["id"]
           },
         ]
@@ -608,6 +657,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marcas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          slug?: string
+        }
+        Relationships: []
       }
       mesas: {
         Row: {
@@ -943,6 +1016,7 @@ export type Database = {
           estado: string
           ficha_tecnica_id: string | null
           id: string
+          marca_id: string | null
           peso_kg: number
           recipiente: string
           recolhido_at: string | null
@@ -962,6 +1036,7 @@ export type Database = {
           estado?: string
           ficha_tecnica_id?: string | null
           id?: string
+          marca_id?: string | null
           peso_kg?: number
           recipiente?: string
           recolhido_at?: string | null
@@ -981,6 +1056,7 @@ export type Database = {
           estado?: string
           ficha_tecnica_id?: string | null
           id?: string
+          marca_id?: string | null
           peso_kg?: number
           recipiente?: string
           recolhido_at?: string | null
@@ -1003,6 +1079,13 @@ export type Database = {
             columns: ["ficha_tecnica_id"]
             isOneToOne: false
             referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registos_producao_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
             referencedColumns: ["id"]
           },
           {
@@ -1110,6 +1193,42 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tarefas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidade_marca_servicos: {
+        Row: {
+          ativo: boolean
+          marca_id: string
+          servico: string
+          unidade_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          marca_id: string
+          servico: string
+          unidade_id: string
+        }
+        Update: {
+          ativo?: boolean
+          marca_id?: string
+          servico?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unidade_marca_servicos_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unidade_marca_servicos_unidade_id_fkey"
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"

@@ -27,10 +27,10 @@ export type EmentaItem = {
 
 export function useEmentaDiaria(date?: Date) {
   const dateStr = format(date || new Date(), 'yyyy-MM-dd');
-  const { unidadeId, isConsolidado } = useUnidade();
+  const { unidadeId, isConsolidado, marcaId } = useUnidade();
 
   return useQuery({
-    queryKey: ['ementa_diaria', dateStr, isConsolidado ? 'todas' : unidadeId],
+    queryKey: ['ementa_diaria', dateStr, isConsolidado ? 'todas' : unidadeId, marcaId],
     queryFn: async (): Promise<EmentaItem[]> => {
       let q = supabase
         .from('ementa_diaria')
@@ -38,6 +38,7 @@ export function useEmentaDiaria(date?: Date) {
         .in('data', [dateStr, PERMANENT_DATE])
         .order('created_at');
       if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
+      if (marcaId) q = q.or(`marca_id.eq.${marcaId},marca_id.is.null`);
       const { data, error } = await q;
 
       if (error) throw error;
@@ -73,9 +74,9 @@ export function useEmentaDiaria(date?: Date) {
 }
 
 export function usePermanentEmentaItems() {
-  const { unidadeId, isConsolidado } = useUnidade();
+  const { unidadeId, isConsolidado, marcaId } = useUnidade();
   return useQuery({
-    queryKey: ['ementa_diaria', PERMANENT_DATE, isConsolidado ? 'todas' : unidadeId],
+    queryKey: ['ementa_diaria', PERMANENT_DATE, isConsolidado ? 'todas' : unidadeId, marcaId],
     queryFn: async (): Promise<EmentaItem[]> => {
       let q = supabase
         .from('ementa_diaria')
@@ -83,6 +84,7 @@ export function usePermanentEmentaItems() {
         .eq('data', PERMANENT_DATE)
         .order('created_at');
       if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
+      if (marcaId) q = q.or(`marca_id.eq.${marcaId},marca_id.is.null`);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []).map(d => ({
@@ -97,7 +99,7 @@ export function usePermanentEmentaItems() {
 
 export function useAddToEmenta() {
   const qc = useQueryClient();
-  const { unidadeId } = useUnidade();
+  const { unidadeId, marcaId } = useUnidade();
   return useMutation({
     mutationFn: async (data: {
       data: string;
@@ -109,7 +111,7 @@ export function useAddToEmenta() {
       notas?: string;
       criado_por?: string;
     }) => {
-      const { error } = await supabase.from('ementa_diaria').insert({ ...data, unidade_id: unidadeId });
+      const { error } = await supabase.from('ementa_diaria').insert({ ...data, unidade_id: unidadeId, marca_id: marcaId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -136,7 +138,7 @@ export function useRemoveFromEmenta() {
 
 export function useBulkAddEmenta() {
   const qc = useQueryClient();
-  const { unidadeId } = useUnidade();
+  const { unidadeId, marcaId } = useUnidade();
   return useMutation({
     mutationFn: async (items: {
       data: string;
@@ -149,7 +151,7 @@ export function useBulkAddEmenta() {
     }[]) => {
       const { error } = await supabase
         .from('ementa_diaria')
-        .insert(items.map(i => ({ ...i, unidade_id: unidadeId })));
+        .insert(items.map(i => ({ ...i, unidade_id: unidadeId, marca_id: marcaId })));
       if (error) throw error;
     },
     onSuccess: () => {
@@ -163,9 +165,9 @@ export function useBulkAddEmenta() {
 }
 
 export function useBuffetItems() {
-  const { unidadeId, isConsolidado } = useUnidade();
+  const { unidadeId, isConsolidado, marcaId } = useUnidade();
   return useQuery({
-    queryKey: ['buffet_items', isConsolidado ? 'todas' : unidadeId],
+    queryKey: ['buffet_items', isConsolidado ? 'todas' : unidadeId, marcaId],
     queryFn: async () => {
       let q = supabase
         .from('buffet_items')
@@ -174,6 +176,7 @@ export function useBuffetItems() {
         .not('ficha_tecnica_id', 'is', null)
         .order('nome');
       if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
+
       const { data, error } = await q;
       if (error) throw error;
       return data || [];

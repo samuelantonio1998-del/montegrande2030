@@ -16,6 +16,11 @@ import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 import { useUnidade } from '@/contexts/UnidadeContext';
+import { MarcaSwitcher } from '@/components/MarcaSwitcher';
+
+type Canal = 'buffet' | 'take_away' | 'delivery';
+
+const canalLabels: Record<Canal, string> = { buffet: 'Buffet', take_away: 'Take Away', delivery: 'Delivery' };
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
@@ -31,18 +36,20 @@ export default function Producao() {
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
-  const { servicos } = useUnidade();
-  // Abas geradas a partir dos serviços configurados na unidade activa
+  const { servicos, marca } = useUnidade();
+  // Abas geradas a partir de unidade_marca_servicos (local activo × marca activa)
   const temBuffet = servicos.includes('buffet');
   const temTakeaway = servicos.includes('takeaway');
+  const temDelivery = servicos.includes('delivery');
   const abas = useMemo(
     () => [
       ...(temBuffet ? ['buffet' as const] : []),
       ...(temTakeaway ? ['take_away' as const] : []),
+      ...(temDelivery ? ['delivery' as const] : []),
     ],
-    [temBuffet, temTakeaway]
+    [temBuffet, temTakeaway, temDelivery]
   );
-  const [tab, setTab] = useState<'buffet' | 'take_away'>('buffet');
+  const [tab, setTab] = useState<Canal>('buffet');
   const activeTab = abas.includes(tab) ? tab : (abas[0] ?? 'buffet');
   const setActiveTab = setTab;
 
@@ -52,6 +59,7 @@ export default function Producao() {
 
   const buffetActiveCount = useMemo(() => activeTrays.filter(r => (r.canal || 'buffet') === 'buffet').length, [activeTrays]);
   const takeawayActiveCount = useMemo(() => activeTrays.filter(r => (r.canal || 'buffet') === 'take_away').length, [activeTrays]);
+  const deliveryActiveCount = useMemo(() => activeTrays.filter(r => r.canal === 'delivery').length, [activeTrays]);
 
   const ementaByZone = useMemo(() => {
     const zones: Record<string, { id: string; nome: string; recipiente: string }[]> = { entradas: [], pratos_principais: [], sobremesas: [] };
@@ -101,7 +109,7 @@ export default function Producao() {
 
     const leftoverDiscount = (discountLeftover && previousLeftover) ? previousLeftover.totalKg : 0;
 
-    if (activeTab === 'take_away') {
+    if (activeTab !== 'buffet') {
       const kg = parseFloat(newTakeawayKg) || 0;
       if (kg <= 0) return;
       const realKg = Math.max(0.1, kg - leftoverDiscount);
@@ -112,7 +120,7 @@ export default function Producao() {
         recipiente: 'unitario',
         peso_kg: realKg,
         registado_por: user?.name || 'Gerente',
-        canal: 'take_away',
+        canal: activeTab,
       });
     } else {
       const cap = recipientCapacity[newRecipient];
@@ -166,9 +174,12 @@ export default function Producao() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl text-foreground">Produção</h1>
-          <p className="mt-1 text-muted-foreground">Registo de produção — Buffet e Take Away</p>
+          <p className="mt-1 text-muted-foreground">
+            Registo de produção{marca ? ` — ${marca.nome}` : ''}
+          </p>
         </div>
         <div className="flex items-center gap-3">
+          <MarcaSwitcher />
           {currentPax > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2">
               <Users className="h-4 w-4 text-primary" />
@@ -180,12 +191,12 @@ export default function Producao() {
           )}
           <Button onClick={() => setShowNewDialog(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            {activeTab === 'buffet' ? 'Enviar Tabuleiro' : 'Registar Take Away'}
+            {activeTab === 'buffet' ? 'Enviar Tabuleiro' : `Registar ${canalLabels[activeTab]}`}
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'buffet' | 'take_away')}>
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as Canal)}>
         <TabsList className="w-full sm:w-auto">
           {temBuffet && <TabsTrigger value="buffet" className="gap-2">
             <ChefHat className="h-4 w-4" />
@@ -196,6 +207,11 @@ export default function Producao() {
             <ShoppingBag className="h-4 w-4" />
             Take Away
             {takeawayActiveCount > 0 && <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{takeawayActiveCount}</Badge>}
+          </TabsTrigger>}
+          {temDelivery && <TabsTrigger value="delivery" className="gap-2">
+            <ShoppingBag className="h-4 w-4" />
+            Delivery
+            {deliveryActiveCount > 0 && <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{deliveryActiveCount}</Badge>}
           </TabsTrigger>}
         </TabsList>
 
@@ -360,8 +376,8 @@ export default function Producao() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Cancelar</Button>
-            <Button onClick={handleSendTray} disabled={!newDish || (activeTab === 'take_away' && !(parseFloat(newTakeawayKg) > 0))}>
-              {activeTab === 'buffet' ? 'Registar Saída' : 'Registar Take Away'}
+            <Button onClick={handleSendTray} disabled={!newDish || (activeTab !== 'buffet' && !(parseFloat(newTakeawayKg) > 0))}>
+              {activeTab === 'buffet' ? 'Registar Saída' : `Registar ${canalLabels[activeTab]}`}
             </Button>
           </DialogFooter>
         </DialogContent>

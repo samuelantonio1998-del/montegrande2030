@@ -252,6 +252,21 @@ export default function Producao() {
 
           <CompletedTraysSection records={filteredCompletedTrays} formatTime={formatTime} isTakeaway />
         </TabsContent>
+
+        <TabsContent value="delivery" className="space-y-8 mt-6">
+          <ActiveTraysSection
+            trays={filteredActiveTrays}
+            formatTime={formatTime}
+            onCheckout={setCheckoutTarget}
+            label="Pedidos Delivery Ativos"
+            emptyLabel="Nenhum pedido delivery pendente"
+            icon={<ShoppingBag className="h-5 w-5 text-primary" />}
+            isTakeaway
+          />
+
+          <CompletedTraysSection records={filteredCompletedTrays} formatTime={formatTime} isTakeaway />
+        </TabsContent>
+
       </Tabs>
 
       {/* Send Dialog */}

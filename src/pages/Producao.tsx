@@ -445,6 +445,8 @@ function ActiveTraysSection({ trays, formatTime, onCheckout, label, emptyLabel, 
     return map;
   }, [trays]);
 
+  const { isConsolidado, nomeUnidade } = useUnidade();
+
   return (
     <div>
       <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2">
@@ -463,6 +465,7 @@ function ActiveTraysSection({ trays, formatTime, onCheckout, label, emptyLabel, 
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-semibold text-foreground">{dishName}</h3>
+                      {isConsolidado && <p className="text-xs text-muted-foreground">{nomeUnidade(latestTray.unidade_id)}</p>}
                       <p className="text-sm text-muted-foreground">
                         {isTakeaway
                           ? `${items.length} pedido${items.length > 1 ? 's' : ''} · ${totalKg.toFixed(1)}kg total`

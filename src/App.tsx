@@ -23,6 +23,7 @@ import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
 import Funcionarios from "./pages/Funcionarios";
+import GestaoFuncionarios from "./pages/GestaoFuncionarios";
 import Unsubscribe from "./pages/Unsubscribe";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -61,6 +62,14 @@ function ProtectedRoutes() {
           element={
             <RotaProtegida permissao="gestao.funcionarios.gerir">
               <Funcionarios />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/gestao-utilizadores"
+          element={
+            <RotaProtegida permissao="gestao.funcionarios.gerir">
+              <GestaoFuncionarios />
             </RotaProtegida>
           }
         />

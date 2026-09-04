@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical, ShieldCheck } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
   { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
+  { to: '/gestao-utilizadores', icon: ShieldCheck, label: 'Utilizadores', roles: ['gerencia'] },
 ];
 
 const roleLabels: Record<UserRole, string> = {

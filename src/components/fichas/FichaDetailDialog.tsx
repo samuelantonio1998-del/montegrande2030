@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
+import { useFichaMarcas, useSaveFichaMarca } from '@/hooks/useFichaMarca';
+import { useUnidade } from '@/contexts/UnidadeContext';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -137,6 +139,10 @@ export function FichaDetailDialog({
   const laborCostPerHour = useLaborCostPerHour();
   const { data: rotulo } = useFichaRotulo(ficha?.id);
   const saveRotulo = useSaveFichaRotulo();
+  const { marcas } = useUnidade();
+  const { data: fichaMarcas = [] } = useFichaMarcas(ficha?.id);
+  const saveFichaMarca = useSaveFichaMarca();
+  const [editMarcas, setEditMarcas] = useState<Record<string, { nome_comercial: string; preco_venda: string }>>({});
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -164,7 +170,20 @@ export function FichaDetailDialog({
     } : emptyRotulo);
   }, [rotulo]);
 
+  useEffect(() => {
+    const map: Record<string, { nome_comercial: string; preco_venda: string }> = {};
+    marcas.forEach(m => {
+      const row = fichaMarcas.find(f => f.marca_id === m.id);
+      map[m.id] = {
+        nome_comercial: row?.nome_comercial ?? '',
+        preco_venda: row?.preco_venda != null ? String(row.preco_venda) : '',
+      };
+    });
+    setEditMarcas(map);
+  }, [marcas, fichaMarcas]);
+
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
+
 
 
   useEffect(() => {
@@ -242,6 +261,22 @@ export function FichaDetailDialog({
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
     await saveRotulo.mutateAsync({ fichaId: ficha.id, rotulo: editRotulo });
+    for (const m of marcas) {
+      const v = editMarcas[m.id];
+      if (!v) continue;
+      const preco = v.preco_venda === '' ? null : parseFloat(v.preco_venda);
+      const nome = v.nome_comercial.trim() || null;
+      const original = fichaMarcas.find(f => f.marca_id === m.id);
+      const mudou = (original?.nome_comercial ?? null) !== nome || (original?.preco_venda ?? null) !== preco;
+      if (!mudou) continue;
+      await saveFichaMarca.mutateAsync({
+        ficha_tecnica_id: ficha.id,
+        marca_id: m.id,
+        nome_comercial: nome,
+        preco_venda: preco,
+        ativo: true,
+      });
+    }
     setEditing(false);
     onClose();
   };
@@ -574,6 +609,45 @@ export function FichaDetailDialog({
           </div>
         )}
 
+        {/* Camada comercial por marca — receita e ingredientes mantêm-se partilhados */}
+        {marcas.length > 0 && (
+          <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Marcas (nome comercial e preço)</span>
+            </div>
+            {marcas.map(m => {
+              const row = fichaMarcas.find(f => f.marca_id === m.id);
+              return (
+                <div key={m.id} className="space-y-1">
+                  <span className="text-xs font-medium text-foreground">{m.nome}</span>
+                  {editing ? (
+                    <div className="grid grid-cols-[1fr_100px] gap-2">
+                      <Input
+                        value={editMarcas[m.id]?.nome_comercial ?? ''}
+                        onChange={e => setEditMarcas({ ...editMarcas, [m.id]: { ...(editMarcas[m.id] ?? { nome_comercial: '', preco_venda: '' }), nome_comercial: e.target.value } })}
+                        placeholder="Nome comercial"
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        inputMode="decimal"
+                        value={editMarcas[m.id]?.preco_venda ?? ''}
+                        onChange={e => setEditMarcas({ ...editMarcas, [m.id]: { ...(editMarcas[m.id] ?? { nome_comercial: '', preco_venda: '' }), preco_venda: e.target.value } })}
+                        placeholder="€ / kg"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {row?.nome_comercial || ficha.nome}
+                      {row?.preco_venda != null ? ` — €${Number(row.preco_venda).toFixed(2)}` : ''}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
 
         {!editing && tempo > 0 && (

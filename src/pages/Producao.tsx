@@ -15,6 +15,7 @@ import { useRegistosProducao, type RegistoProducao } from '@/hooks/useRegistosPr
 import { useEmentaDiaria } from '@/hooks/useEmentaDiaria';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
+import { useUnidade } from '@/contexts/UnidadeContext';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   no_buffet: { label: 'No Buffet', color: 'bg-primary/10 text-primary', icon: Clock },
@@ -30,7 +31,20 @@ export default function Producao() {
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
-  const [activeTab, setActiveTab] = useState<'buffet' | 'take_away'>('buffet');
+  const { servicos } = useUnidade();
+  // Abas geradas a partir dos serviços configurados na unidade activa
+  const temBuffet = servicos.includes('buffet');
+  const temTakeaway = servicos.includes('takeaway');
+  const abas = useMemo(
+    () => [
+      ...(temBuffet ? ['buffet' as const] : []),
+      ...(temTakeaway ? ['take_away' as const] : []),
+    ],
+    [temBuffet, temTakeaway]
+  );
+  const [tab, setTab] = useState<'buffet' | 'take_away'>('buffet');
+  const activeTab = abas.includes(tab) ? tab : (abas[0] ?? 'buffet');
+  const setActiveTab = setTab;
 
   // Filter trays by canal
   const filteredActiveTrays = useMemo(() => activeTrays.filter(r => (r.canal || 'buffet') === activeTab), [activeTrays, activeTab]);
@@ -173,16 +187,16 @@ export default function Producao() {
 
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'buffet' | 'take_away')}>
         <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="buffet" className="gap-2">
+          {temBuffet && <TabsTrigger value="buffet" className="gap-2">
             <ChefHat className="h-4 w-4" />
             Buffet
             {buffetActiveCount > 0 && <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{buffetActiveCount}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="take_away" className="gap-2">
+          </TabsTrigger>}
+          {temTakeaway && <TabsTrigger value="take_away" className="gap-2">
             <ShoppingBag className="h-4 w-4" />
             Take Away
             {takeawayActiveCount > 0 && <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{takeawayActiveCount}</Badge>}
-          </TabsTrigger>
+          </TabsTrigger>}
         </TabsList>
 
         <TabsContent value="buffet" className="space-y-8 mt-6">

@@ -6,6 +6,7 @@ import { useAuth, type UserRole } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
 import { useNavOrder } from '@/hooks/useNavOrder';
+import { UnidadeSwitcher } from '@/components/UnidadeSwitcher';
 
 type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[] };
 
@@ -99,6 +100,7 @@ export function AppSidebar() {
                   <div>
                     <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
                     <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                    <UnidadeSwitcher className="mt-0.5" />
                   </div>
                 </div>
                 <button onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-sidebar-foreground/50">
@@ -217,6 +219,7 @@ export function AppSidebar() {
                   <div>
                     <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
                     <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                    <UnidadeSwitcher className="mt-0.5" />
                   </div>
                 </div>
                 <button onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-sidebar-foreground/50"><X className="h-5 w-5" /></button>
@@ -267,6 +270,8 @@ export function AppSidebar() {
           </div>
         )}
       </div>
+
+      {!collapsed && <UnidadeSwitcher className="px-4 py-2 border-b border-sidebar-border" />}
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">

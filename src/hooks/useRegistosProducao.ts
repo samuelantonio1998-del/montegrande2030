@@ -96,18 +96,20 @@ export function useRegistosProducao() {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - diffToMon);
     const weekStartStr = weekStart.toISOString().slice(0, 10);
-    const { data, error } = await supabase
+    let query = supabase
       .from('registos_producao')
       .select('*')
       .gte('enviado_at', `${weekStartStr}T00:00:00`)
       .order('enviado_at', { ascending: false });
+    if (!isConsolidado && unidadeId) query = query.eq('unidade_id', unidadeId);
+    const { data, error } = await query;
     if (error) {
       console.error('Erro registos:', error);
       return;
     }
     setRegistos(data as unknown as RegistoProducao[]);
     setLoading(false);
-  }, []);
+  }, [unidadeId, isConsolidado]);
 
   useEffect(() => {
     fetchRegistos();

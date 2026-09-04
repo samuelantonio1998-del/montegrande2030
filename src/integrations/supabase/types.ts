@@ -54,6 +54,7 @@ export type Database = {
           ficha_tecnica_id: string | null
           id: string
           nome: string
+          unidade_id: string | null
           updated_at: string
           zona: string
         }
@@ -63,6 +64,7 @@ export type Database = {
           ficha_tecnica_id?: string | null
           id?: string
           nome: string
+          unidade_id?: string | null
           updated_at?: string
           zona?: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           ficha_tecnica_id?: string | null
           id?: string
           nome?: string
+          unidade_id?: string | null
           updated_at?: string
           zona?: string
         }
@@ -81,6 +84,13 @@ export type Database = {
             columns: ["ficha_tecnica_id"]
             isOneToOne: false
             referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buffet_items_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -205,6 +215,7 @@ export type Database = {
           notas: string | null
           quantidade_prevista: number
           recipiente_sugerido: string
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
@@ -218,6 +229,7 @@ export type Database = {
           notas?: string | null
           quantidade_prevista?: number
           recipiente_sugerido?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -231,6 +243,7 @@ export type Database = {
           notas?: string | null
           quantidade_prevista?: number
           recipiente_sugerido?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -239,6 +252,13 @@ export type Database = {
             columns: ["buffet_item_id"]
             isOneToOne: false
             referencedRelation: "buffet_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ementa_diaria_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -387,6 +407,39 @@ export type Database = {
           },
         ]
       }
+      ficha_origem: {
+        Row: {
+          ficha_tecnica_id: string
+          origem: string
+          unidade_id: string
+        }
+        Insert: {
+          ficha_tecnica_id: string
+          origem: string
+          unidade_id: string
+        }
+        Update: {
+          ficha_tecnica_id?: string
+          origem?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_origem_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_origem_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ficha_rotulos: {
         Row: {
           alergenios: string | null
@@ -523,6 +576,7 @@ export type Database = {
           nome: string
           pin_hash: string | null
           role: string
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
@@ -532,6 +586,7 @@ export type Database = {
           nome: string
           pin_hash?: string | null
           role?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -541,9 +596,18 @@ export type Database = {
           nome?: string
           pin_hash?: string | null
           role?: string
+          unidade_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mesas: {
         Row: {
@@ -599,6 +663,7 @@ export type Database = {
           produto_id: string
           quantidade: number
           tipo: string
+          unidade_id: string | null
         }
         Insert: {
           created_at?: string
@@ -611,6 +676,7 @@ export type Database = {
           produto_id: string
           quantidade: number
           tipo: string
+          unidade_id?: string | null
         }
         Update: {
           created_at?: string
@@ -623,6 +689,7 @@ export type Database = {
           produto_id?: string
           quantidade?: number
           tipo?: string
+          unidade_id?: string | null
         }
         Relationships: [
           {
@@ -639,7 +706,29 @@ export type Database = {
             referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "movimentacoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      permissoes: {
+        Row: {
+          chave: string
+          descricao: string
+        }
+        Insert: {
+          chave: string
+          descricao: string
+        }
+        Update: {
+          chave?: string
+          descricao?: string
+        }
+        Relationships: []
       }
       pin_attempts: {
         Row: {
@@ -860,6 +949,7 @@ export type Database = {
           registado_por: string
           sobra_acao: string | null
           sobra_kg: number | null
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
@@ -878,6 +968,7 @@ export type Database = {
           registado_por?: string
           sobra_acao?: string | null
           sobra_kg?: number | null
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -896,6 +987,7 @@ export type Database = {
           registado_por?: string
           sobra_acao?: string | null
           sobra_kg?: number | null
+          unidade_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -912,6 +1004,36 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fichas_tecnicas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registos_producao_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissoes: {
+        Row: {
+          permissao_chave: string
+          role: string
+        }
+        Insert: {
+          permissao_chave: string
+          role: string
+        }
+        Update: {
+          permissao_chave?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissoes_permissao_chave_fkey"
+            columns: ["permissao_chave"]
+            isOneToOne: false
+            referencedRelation: "permissoes"
+            referencedColumns: ["chave"]
           },
         ]
       }
@@ -952,6 +1074,7 @@ export type Database = {
           prioridade: string
           responsavel: string
           titulo: string
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
@@ -966,6 +1089,7 @@ export type Database = {
           prioridade?: string
           responsavel?: string
           titulo: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -980,7 +1104,87 @@ export type Database = {
           prioridade?: string
           responsavel?: string
           titulo?: string
+          unidade_id?: string | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidade_servicos: {
+        Row: {
+          ativo: boolean
+          servico: string
+          unidade_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          servico: string
+          unidade_id: string
+        }
+        Update: {
+          ativo?: boolean
+          servico?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unidade_servicos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidades: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          e_central: boolean
+          id: string
+          nome: string
+          slug: string
+          tem_cozinha_propria: boolean
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          e_central?: boolean
+          id?: string
+          nome: string
+          slug: string
+          tem_cozinha_propria?: boolean
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          e_central?: boolean
+          id?: string
+          nome?: string
+          slug?: string
+          tem_cozinha_propria?: boolean
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1052,6 +1256,7 @@ export type Database = {
         Args: { p_id: string; p_pin: string }
         Returns: undefined
       }
+      tem_permissao: { Args: { p_permissao: string }; Returns: boolean }
       verify_employee_pin: {
         Args: { p_pin: string }
         Returns: {

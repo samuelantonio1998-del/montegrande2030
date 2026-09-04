@@ -5,6 +5,7 @@ import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento 
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';
+import { useUnidade } from '@/contexts/UnidadeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 export default function Tarefas() {
   const { user } = useAuth();
   const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
+  const { isConsolidado, nomeUnidade } = useUnidade();
   const { employees } = useEmployees();
   const staffNames = employees.map(e => e.name);
   const [filter, setFilter] = useState<string>('all');
@@ -196,6 +198,7 @@ export default function Tarefas() {
                 <Circle className="h-6 w-6 shrink-0 mt-0.5 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-medium text-foreground leading-snug">{task.titulo}</p>
+                  {isConsolidado && <p className="text-xs text-muted-foreground">{nomeUnidade(task.unidade_id)}</p>}
                   {task.descricao && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{task.descricao}</p>}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {task.responsavel && <span className="text-xs text-muted-foreground">{task.responsavel}</span>}

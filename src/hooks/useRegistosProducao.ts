@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/lib/toast-with-sound';
 import type { RecipientSize } from '@/lib/buffet-data';
 import { useLaborCostPerHour } from '@/hooks/useFichasTecnicas';
+import { useUnidade } from '@/contexts/UnidadeContext';
 
 export type RegistoProducao = {
   id: string;
@@ -20,6 +21,7 @@ export type RegistoProducao = {
   registado_por: string;
   created_at: string;
   canal: 'buffet' | 'take_away';
+  unidade_id: string | null;
 };
 
 /** Cost per kg for a ficha técnica, computed from ingredients + labor */
@@ -33,6 +35,7 @@ const FALLBACK_COST_PER_KG = 5; // €5/kg when no ficha linked
 
 export function useRegistosProducao() {
   const laborCostPerHour = useLaborCostPerHour();
+  const { unidadeId, isConsolidado } = useUnidade();
   const [registos, setRegistos] = useState<RegistoProducao[]>([]);
   const [loading, setLoading] = useState(true);
   const [fichaCosts, setFichaCosts] = useState<Map<string, FichaCostInfo>>(new Map());
@@ -93,18 +96,20 @@ export function useRegistosProducao() {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - diffToMon);
     const weekStartStr = weekStart.toISOString().slice(0, 10);
-    const { data, error } = await supabase
+    let query = supabase
       .from('registos_producao')
       .select('*')
       .gte('enviado_at', `${weekStartStr}T00:00:00`)
       .order('enviado_at', { ascending: false });
+    if (!isConsolidado && unidadeId) query = query.eq('unidade_id', unidadeId);
+    const { data, error } = await query;
     if (error) {
       console.error('Erro registos:', error);
       return;
     }
     setRegistos(data as unknown as RegistoProducao[]);
     setLoading(false);
-  }, []);
+  }, [unidadeId, isConsolidado]);
 
   useEffect(() => {
     fetchRegistos();
@@ -150,12 +155,13 @@ export function useRegistosProducao() {
       registado_por: r.registado_por,
       estado: 'no_buffet',
       canal: r.canal || 'buffet',
+      unidade_id: unidadeId,
     });
     if (error) {
       toast.error('Erro ao registar produção');
       console.error(error);
     }
-  }, []);
+  }, [unidadeId]);
 
   const recolherRegisto = useCallback(async (id: string, sobra_kg: number, sobra_acao: 'aproveitamento' | 'desperdicio', nota: string | null) => {
     const { error } = await supabase.from('registos_producao').update({

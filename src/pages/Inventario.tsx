@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDialog';
 import { useActivityLog } from '@/hooks/useActivityLog';
+import { useUnidade } from '@/contexts/UnidadeContext';
 import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
 
 type Produto = {
@@ -130,6 +131,7 @@ const FUZZY_THRESHOLD = 0.45;
 export default function Inventario() {
   const { toast } = useToast();
   const { log } = useActivityLog();
+  const { unidadeId, isConsolidado } = useUnidade();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);

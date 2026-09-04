@@ -155,12 +155,13 @@ export function useRegistosProducao() {
       registado_por: r.registado_por,
       estado: 'no_buffet',
       canal: r.canal || 'buffet',
+      unidade_id: unidadeId,
     });
     if (error) {
       toast.error('Erro ao registar produção');
       console.error(error);
     }
-  }, []);
+  }, [unidadeId]);
 
   const recolherRegisto = useCallback(async (id: string, sobra_kg: number, sobra_acao: 'aproveitamento' | 'desperdicio', nota: string | null) => {
     const { error } = await supabase.from('registos_producao').update({

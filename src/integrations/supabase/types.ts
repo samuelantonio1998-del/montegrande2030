@@ -625,6 +625,7 @@ export type Database = {
           nome: string
           pin_hash: string | null
           role: string
+          role_id: string | null
           unidade_id: string | null
           updated_at: string
         }
@@ -635,6 +636,7 @@ export type Database = {
           nome: string
           pin_hash?: string | null
           role?: string
+          role_id?: string | null
           unidade_id?: string | null
           updated_at?: string
         }
@@ -645,10 +647,18 @@ export type Database = {
           nome?: string
           pin_hash?: string | null
           role?: string
+          role_id?: string | null
           unidade_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "funcionarios_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "funcionarios_unidade_id_fkey"
             columns: ["unidade_id"]
@@ -792,14 +802,17 @@ export type Database = {
         Row: {
           chave: string
           descricao: string
+          id: string | null
         }
         Insert: {
           chave: string
           descricao: string
+          id?: string | null
         }
         Update: {
           chave?: string
           descricao?: string
+          id?: string | null
         }
         Relationships: []
       }
@@ -1120,6 +1133,66 @@ export type Database = {
           },
         ]
       }
+      role_permissoes_v2: {
+        Row: {
+          permissao_id: string
+          role_id: string
+        }
+        Insert: {
+          permissao_id: string
+          role_id: string
+        }
+        Update: {
+          permissao_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissoes_v2_permissao_id_fkey"
+            columns: ["permissao_id"]
+            isOneToOne: false
+            referencedRelation: "permissoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissoes_v2_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          ativo: boolean
+          chave: string
+          created_at: string
+          descricao: string | null
+          id: string
+          is_base: boolean
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_base?: boolean
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_base?: boolean
+          nome?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1295,17 +1368,28 @@ export type Database = {
       user_roles: {
         Row: {
           role: string
+          role_id: string | null
           user_id: string
         }
         Insert: {
           role: string
+          role_id?: string | null
           user_id: string
         }
         Update: {
           role?: string
+          role_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendas_historico: {
         Row: {

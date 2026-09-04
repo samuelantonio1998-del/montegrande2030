@@ -27,15 +27,18 @@ export type EmentaItem = {
 
 export function useEmentaDiaria(date?: Date) {
   const dateStr = format(date || new Date(), 'yyyy-MM-dd');
+  const { unidadeId, isConsolidado } = useUnidade();
 
   return useQuery({
-    queryKey: ['ementa_diaria', dateStr],
+    queryKey: ['ementa_diaria', dateStr, isConsolidado ? 'todas' : unidadeId],
     queryFn: async (): Promise<EmentaItem[]> => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('ementa_diaria')
         .select('*, buffet_item:buffet_items(id, nome, zona, ativo, ficha_tecnica_id)')
         .in('data', [dateStr, PERMANENT_DATE])
         .order('created_at');
+      if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
+      const { data, error } = await q;
 
       if (error) throw error;
       

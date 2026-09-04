@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
   { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
+  { to: '/gestao-utilizadores', icon: ShieldCheck, label: 'Utilizadores', roles: ['gerencia'] },
 ];
 
 const roleLabels: Record<UserRole, string> = {

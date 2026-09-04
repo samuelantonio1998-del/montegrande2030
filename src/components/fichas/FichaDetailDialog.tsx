@@ -609,6 +609,45 @@ export function FichaDetailDialog({
           </div>
         )}
 
+        {/* Camada comercial por marca — receita e ingredientes mantêm-se partilhados */}
+        {marcas.length > 0 && (
+          <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Marcas (nome comercial e preço)</span>
+            </div>
+            {marcas.map(m => {
+              const row = fichaMarcas.find(f => f.marca_id === m.id);
+              return (
+                <div key={m.id} className="space-y-1">
+                  <span className="text-xs font-medium text-foreground">{m.nome}</span>
+                  {editing ? (
+                    <div className="grid grid-cols-[1fr_100px] gap-2">
+                      <Input
+                        value={editMarcas[m.id]?.nome_comercial ?? ''}
+                        onChange={e => setEditMarcas({ ...editMarcas, [m.id]: { ...(editMarcas[m.id] ?? { nome_comercial: '', preco_venda: '' }), nome_comercial: e.target.value } })}
+                        placeholder="Nome comercial"
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        inputMode="decimal"
+                        value={editMarcas[m.id]?.preco_venda ?? ''}
+                        onChange={e => setEditMarcas({ ...editMarcas, [m.id]: { ...(editMarcas[m.id] ?? { nome_comercial: '', preco_venda: '' }), preco_venda: e.target.value } })}
+                        placeholder="€ / kg"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {row?.nome_comercial || ficha.nome}
+                      {row?.preco_venda != null ? ` — €${Number(row.preco_venda).toFixed(2)}` : ''}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
 
         {!editing && tempo > 0 && (

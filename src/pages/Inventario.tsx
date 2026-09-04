@@ -411,7 +411,7 @@ export default function Inventario() {
           await supabase.from('movimentacoes').insert({
             produto_id: item.produto_id, tipo: 'entrada', quantidade: item.quantidade,
             custo_unitario: effectiveCost, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
-            fornecedor_id: fornecedorId,
+            fornecedor_id: fornecedorId, unidade_id: unidadeId,
           });
 
           // Save alias when item name differs from product name (manual association)
@@ -464,7 +464,7 @@ export default function Inventario() {
           await supabase.from('movimentacoes').insert({
             produto_id: existingProd.id, tipo: 'entrada', quantidade: item.quantidade,
             custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR',
-            fornecedor_id: fornecedorId,
+            fornecedor_id: fornecedorId, unidade_id: unidadeId,
           });
         } else {
           const { data: newProd } = await supabase.from('produtos').insert({
@@ -476,7 +476,7 @@ export default function Inventario() {
             await supabase.from('movimentacoes').insert({
               produto_id: newProd.id, tipo: 'entrada', quantidade: item.quantidade,
               custo_unitario: effectiveCost2, motivo: item.desconto > 0 ? `Fatura OCR - Novo produto (desc. -€${item.desconto.toFixed(2)})` : 'Fatura OCR - Novo produto',
-              fornecedor_id: fornecedorId,
+              fornecedor_id: fornecedorId, unidade_id: unidadeId,
             });
           }
         }
@@ -612,7 +612,7 @@ export default function Inventario() {
     await supabase.from('produtos').update({ stock_atual: newStock, custo_medio: newCustoMedio }).eq('id', manualForm.produto_id);
     await supabase.from('movimentacoes').insert({
       produto_id: manualForm.produto_id, tipo: 'entrada', quantidade: qty,
-      custo_unitario: cost, motivo: 'Entrada manual',
+      custo_unitario: cost, motivo: 'Entrada manual', unidade_id: unidadeId,
     });
     toast({ title: 'Entrada registada' });
     await log('Entrada stock (manual)', 'Inventário', `${produto.nome} +${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, custo_unitario: cost });
@@ -630,7 +630,7 @@ export default function Inventario() {
     await supabase.from('produtos').update({ stock_atual: newStock }).eq('id', exitForm.produto_id);
     await supabase.from('movimentacoes').insert({
       produto_id: exitForm.produto_id, tipo: exitForm.tipo, quantidade: qty,
-      motivo: exitForm.motivo || (exitForm.tipo === 'quebra' ? 'Desperdício/Estrago' : 'Saída manual'),
+      motivo: exitForm.motivo || (exitForm.tipo === 'quebra' ? 'Desperdício/Estrago' : 'Saída manual'), unidade_id: unidadeId,
     });
     toast({ title: exitForm.tipo === 'quebra' ? 'Quebra registada' : 'Saída registada' });
     await log(exitForm.tipo === 'quebra' ? 'Quebra stock' : 'Saída stock', 'Inventário', `${produto.nome} -${qty} ${produto.unidade}`, { produto_id: produto.id, quantidade: qty, motivo: exitForm.motivo });

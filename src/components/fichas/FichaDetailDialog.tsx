@@ -170,7 +170,20 @@ export function FichaDetailDialog({
     } : emptyRotulo);
   }, [rotulo]);
 
+  useEffect(() => {
+    const map: Record<string, { nome_comercial: string; preco_venda: string }> = {};
+    marcas.forEach(m => {
+      const row = fichaMarcas.find(f => f.marca_id === m.id);
+      map[m.id] = {
+        nome_comercial: row?.nome_comercial ?? '',
+        preco_venda: row?.preco_venda != null ? String(row.preco_venda) : '',
+      };
+    });
+    setEditMarcas(map);
+  }, [marcas, fichaMarcas]);
+
   const produtosMap = new Map(produtos.map(p => [p.id, p]));
+
 
 
   useEffect(() => {

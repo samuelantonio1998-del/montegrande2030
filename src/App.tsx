@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { UnidadeProvider } from "@/contexts/UnidadeContext";
 import { ProductionProvider } from "@/contexts/ProductionContext";
 import { SidebarCollapseProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -76,6 +77,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <AuthProvider>
+        <UnidadeProvider>
         <ProductionProvider>
         <SidebarCollapseProvider>
         <BrowserRouter>
@@ -88,6 +90,7 @@ const App = () => (
         </BrowserRouter>
         </SidebarCollapseProvider>
         </ProductionProvider>
+        </UnidadeProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

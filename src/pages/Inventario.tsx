@@ -195,12 +195,13 @@ export default function Inventario() {
     const allMovs: Movimentacao[] = [];
     const pageSize = 1000;
     for (let page = 0; page < 10; page++) {
-      const { data } = await supabase
+      let q = supabase
         .from('movimentacoes')
         .select('*, produtos(nome, unidade)')
         .order('created_at', { ascending: false })
-        .gte('created_at', weekAgoStr)
-        .range(page * pageSize, page * pageSize + pageSize - 1);
+        .gte('created_at', weekAgoStr);
+      if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
+      const { data } = await q.range(page * pageSize, page * pageSize + pageSize - 1);
 
       if (!data || data.length === 0) break;
       allMovs.push(...(data as unknown as Movimentacao[]));
@@ -211,7 +212,7 @@ export default function Inventario() {
     if (fornRes.data) setFornecedores(fornRes.data);
     setMovimentacoes(allMovs);
     setLoading(false);
-  }, []);
+  }, [unidadeId, isConsolidado]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

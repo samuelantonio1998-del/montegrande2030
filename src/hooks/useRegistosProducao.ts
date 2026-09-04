@@ -20,7 +20,7 @@ export type RegistoProducao = {
   aproveitamento_nota: string | null;
   registado_por: string;
   created_at: string;
-  canal: 'buffet' | 'take_away';
+  canal: 'buffet' | 'take_away' | 'delivery';
   unidade_id: string | null;
   marca_id: string | null;
 };
@@ -146,7 +146,7 @@ export function useRegistosProducao() {
     recipiente: string;
     peso_kg: number;
     registado_por: string;
-    canal?: 'buffet' | 'take_away';
+    canal?: 'buffet' | 'take_away' | 'delivery';
   }) => {
     const { error } = await supabase.from('registos_producao').insert({
       dish_name: r.dish_name,

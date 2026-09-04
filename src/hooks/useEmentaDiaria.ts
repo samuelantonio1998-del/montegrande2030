@@ -176,7 +176,7 @@ export function useBuffetItems() {
         .not('ficha_tecnica_id', 'is', null)
         .order('nome');
       if (!isConsolidado && unidadeId) q = q.eq('unidade_id', unidadeId);
-      if (marcaId) q = q.or(`marca_id.eq.${marcaId},marca_id.is.null`);
+
       const { data, error } = await q;
       if (error) throw error;
       return data || [];

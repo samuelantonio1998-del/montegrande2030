@@ -46,6 +46,7 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 export default function Tarefas() {
   const { user } = useAuth();
   const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
+  const { isConsolidado, nomeUnidade } = useUnidade();
   const { employees } = useEmployees();
   const staffNames = employees.map(e => e.name);
   const [filter, setFilter] = useState<string>('all');

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/lib/toast-with-sound';
 import type { RecipientSize } from '@/lib/buffet-data';
 import { useLaborCostPerHour } from '@/hooks/useFichasTecnicas';
+import { useUnidade } from '@/contexts/UnidadeContext';
 
 export type RegistoProducao = {
   id: string;

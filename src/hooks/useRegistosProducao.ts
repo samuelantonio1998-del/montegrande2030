@@ -21,6 +21,7 @@ export type RegistoProducao = {
   registado_por: string;
   created_at: string;
   canal: 'buffet' | 'take_away';
+  unidade_id: string | null;
 };
 
 /** Cost per kg for a ficha técnica, computed from ingredients + labor */
@@ -34,6 +35,7 @@ const FALLBACK_COST_PER_KG = 5; // €5/kg when no ficha linked
 
 export function useRegistosProducao() {
   const laborCostPerHour = useLaborCostPerHour();
+  const { unidadeId, isConsolidado } = useUnidade();
   const [registos, setRegistos] = useState<RegistoProducao[]>([]);
   const [loading, setLoading] = useState(true);
   const [fichaCosts, setFichaCosts] = useState<Map<string, FichaCostInfo>>(new Map());

@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
+import { useFichaMarcas, useSaveFichaMarca } from '@/hooks/useFichaMarca';
+import { useUnidade } from '@/contexts/UnidadeContext';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -137,6 +139,10 @@ export function FichaDetailDialog({
   const laborCostPerHour = useLaborCostPerHour();
   const { data: rotulo } = useFichaRotulo(ficha?.id);
   const saveRotulo = useSaveFichaRotulo();
+  const { marcas } = useUnidade();
+  const { data: fichaMarcas = [] } = useFichaMarcas(ficha?.id);
+  const saveFichaMarca = useSaveFichaMarca();
+  const [editMarcas, setEditMarcas] = useState<Record<string, { nome_comercial: string; preco_venda: string }>>({});
   const [editing, setEditing] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -242,6 +248,22 @@ export function FichaDetailDialog({
       ingredientes: editIngredientes.filter(i => i.produto_id && i.quantidade > 0),
     });
     await saveRotulo.mutateAsync({ fichaId: ficha.id, rotulo: editRotulo });
+    for (const m of marcas) {
+      const v = editMarcas[m.id];
+      if (!v) continue;
+      const preco = v.preco_venda === '' ? null : parseFloat(v.preco_venda);
+      const nome = v.nome_comercial.trim() || null;
+      const original = fichaMarcas.find(f => f.marca_id === m.id);
+      const mudou = (original?.nome_comercial ?? null) !== nome || (original?.preco_venda ?? null) !== preco;
+      if (!mudou) continue;
+      await saveFichaMarca.mutateAsync({
+        ficha_tecnica_id: ficha.id,
+        marca_id: m.id,
+        nome_comercial: nome,
+        preco_venda: preco,
+        ativo: true,
+      });
+    }
     setEditing(false);
     onClose();
   };

@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { type UserRole } from '@/contexts/AuthContext';
 import { toast } from '@/lib/toast-with-sound';
 
 export type Employee = {
   id: string;
   name: string;
-  role: UserRole;
+  role: string;
 };
 
 export function useEmployees() {
@@ -15,10 +14,12 @@ export function useEmployees() {
   const fetchEmployees = useCallback(async () => {
     try {
       const { data, error } = await supabase.functions.invoke('manage-employees', {
-        body: { action: 'list' },
+        body: { action: 'pessoas_list' },
       });
       if (!error && data?.data) {
-        setEmployees(data.data.map((d: any) => ({ id: d.id, name: d.nome, role: d.role as UserRole })));
+        setEmployees(data.data
+          .filter((d: any) => d.ativo)
+          .map((d: any) => ({ id: d.funcionario_id ?? d.user_id, name: d.nome, role: d.role_nome ?? '' })));
       }
     } catch {
       // silent
@@ -29,7 +30,7 @@ export function useEmployees() {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  const addEmployee = useCallback(async (emp: { name: string; pin: string; role: UserRole }): Promise<boolean> => {
+  const addEmployee = useCallback(async (emp: { name: string; pin: string; role: string }): Promise<boolean> => {
     const { data, error } = await supabase.functions.invoke('manage-employees', {
       body: { action: 'add', nome: emp.name, pin: emp.pin, role: emp.role },
     });
@@ -48,7 +49,7 @@ export function useEmployees() {
     await fetchEmployees();
   }, [fetchEmployees]);
 
-  const updateRole = useCallback(async (id: string, role: UserRole) => {
+  const updateRole = useCallback(async (id: string, role: string) => {
     await supabase.functions.invoke('manage-employees', {
       body: { action: 'update_role', id, role },
     });

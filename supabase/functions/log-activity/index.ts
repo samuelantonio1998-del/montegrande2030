@@ -39,18 +39,9 @@ Deno.serve(async (req) => {
       role?: string;
     };
 
-    // Identity is derived server-side. Admin (gerencia + no funcionario_id) → "Administrador".
-    let user_name: string;
-    let user_role: string;
-    if (appMeta.funcionario_id && appMeta.role) {
-      user_name = appMeta.nome || "Funcionário";
-      user_role = appMeta.role;
-    } else if (appMeta.role === "gerencia") {
-      user_name = "Administrador";
-      user_role = "gerencia";
-    } else {
-      return json({ error: "Forbidden" }, 403);
-    }
+    // Identity is derived server-side; authorization is handled by permissions elsewhere.
+    const user_name = appMeta.nome || (appMeta.funcionario_id ? "Funcionário" : "Utilizador");
+    const user_role = appMeta.role || "utilizador";
 
     const { action, module, details, metadata } = await req.json();
     if (!action || typeof action !== "string") {

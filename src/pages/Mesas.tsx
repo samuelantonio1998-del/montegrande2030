@@ -15,6 +15,7 @@ import { PinDialog } from '@/components/mesas/PinDialog';
 import { useMesas } from '@/hooks/useMesas';
 import { usePrecario, getAdultPrice, isWeekdayLunch, calcMesaTotal, type MealPrices, type BeverageCategory, type BeverageItem } from '@/hooks/usePrecario';
 import { useActivityLog } from '@/hooks/useActivityLog';
+import { PERMISSOES } from '@/lib/permissoes';
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   livre: { label: 'Livre', color: 'text-success', bg: 'bg-success/10 border-success/30' },
@@ -356,7 +357,7 @@ function MesaDetail({ mesa, onUpdate, onCancel, beverageMenu, beverageMenuFlat, 
       </div>
 
       <PinDialog open={pinAction === 'cancel'} onOpenChange={(o) => !o && setPinAction(null)} title="Cancelar Mesa"
-        description={`Cancelar mesa ${mesa.number}? Todos os consumos serão revertidos.`} allowedRoles={['gerencia']}
+        description={`Cancelar mesa ${mesa.number}? Todos os consumos serão revertidos.`} requiredPermission={PERMISSOES.mesasCancelar}
         onAuthorized={() => { setPinAction(null); onCancel(); }} />
     </div>
   );

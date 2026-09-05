@@ -2,11 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
-export type UserRole = 'sala' | 'cozinha' | 'gerencia';
-
 export type AppUser = {
   name: string;
-  role: UserRole;
+  role: string;
   funcionarioId?: string;
 };
 
@@ -26,20 +24,19 @@ function deriveUser(session: Session | null): AppUser | null {
   const meta = (session.user.app_metadata ?? {}) as Record<string, unknown>;
   const umeta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
   const funcionarioId = meta.funcionario_id as string | undefined;
-  const role = meta.role as UserRole | undefined;
+  const role = typeof meta.role === 'string' ? meta.role : undefined;
 
-  // Case 1: PIN-based employee session — must have funcionario_id + role
-  if (funcionarioId && role) {
+  // Case 1: PIN-based employee session. Authorization is always permission-based.
+  if (funcionarioId) {
     const name = (meta.nome as string) ?? (umeta.nome as string) ?? 'Funcionário';
-    return { name, role, funcionarioId };
+    return { name, role: role ?? 'utilizador', funcionarioId };
   }
 
   // Case 2: conta de gestão (sem funcionario_id) — o perfil vem do metadata
   if (!funcionarioId && session.user.email) {
     const emailName = session.user.email.split('@')[0];
     const name = (meta.nome as string) ?? (umeta.nome as string) ?? emailName ?? 'Administrador';
-    const perfil: UserRole = role === 'gerencia' || role === 'cozinha' || role === 'sala' ? role : 'gerencia';
-    return { name, role: perfil };
+    return { name, role: role ?? 'utilizador' };
   }
 
   // Sessão inválida
@@ -57,8 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handle = (session: Session | null) => {
       const derived = deriveUser(session);
       if (session && !derived) {
-        // Invalid session (no funcionario_id and not gerencia) — force logout
-        console.error('Sessão inválida: sem funcionario_id e sem role=gerencia. A terminar sessão.');
+        console.error('Sessão inválida. A terminar sessão.');
         supabase.auth.signOut();
         setUser(null);
         return;

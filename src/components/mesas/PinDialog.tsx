@@ -3,18 +3,17 @@ import { ShieldAlert, Delete } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import type { UserRole } from '@/contexts/AuthContext';
 
 type PinDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  allowedRoles?: ('sala' | 'cozinha' | 'gerencia')[];
+  requiredPermission?: string;
   onAuthorized: (userName: string) => void;
 };
 
-export function PinDialog({ open, onOpenChange, title, description, allowedRoles, onAuthorized }: PinDialogProps) {
+export function PinDialog({ open, onOpenChange, title, description, requiredPermission, onAuthorized }: PinDialogProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
 
@@ -26,7 +25,7 @@ export function PinDialog({ open, onOpenChange, title, description, allowedRoles
     if (next.length === 4) {
       try {
         const { data } = await supabase.functions.invoke('verify-employee-role', {
-          body: { pin: next, allowedRoles },
+          body: { pin: next, requiredPermission },
         });
         if (data?.success) {
           setPin('');

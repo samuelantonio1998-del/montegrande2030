@@ -103,7 +103,13 @@ Deno.serve(async (req) => {
 
     const funcionarioId: string = employee.id;
     const nome: string = employee.nome;
-    const role: string = employee.role;
+    const { data: funcionario } = await supabase
+      .from("funcionarios")
+      .select("role_id, roles(chave)")
+      .eq("id", funcionarioId)
+      .maybeSingle();
+    const papel = Array.isArray(funcionario?.roles) ? funcionario.roles[0] : funcionario?.roles;
+    const role: string = (papel as { chave?: string } | null)?.chave ?? "utilizador";
     const email = `staff-${funcionarioId}@restogest.internal`;
 
     // Ensure synthetic auth user exists
@@ -183,12 +189,7 @@ Deno.serve(async (req) => {
     // Sincroniza o papel (roles) do funcionário para user_roles, para que a RPC
     // tem_permissao funcione também nas sessões iniciadas por PIN.
     try {
-      const { data: func } = await supabase
-        .from("funcionarios")
-        .select("role_id")
-        .eq("id", funcionarioId)
-        .maybeSingle();
-      const roleId = (func as { role_id?: string } | null)?.role_id ?? null;
+      const roleId = (funcionario as { role_id?: string } | null)?.role_id ?? null;
       if (roleId) {
         const { data: papel } = await supabase
           .from("roles")

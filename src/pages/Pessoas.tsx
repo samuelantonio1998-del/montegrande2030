@@ -24,6 +24,13 @@ const SEM_PAPEL = '__sem_papel__';
 
 const pinValido = (pin: string) => /^\d{4,6}$/.test(pin);
 
+const AREAS_PERMISSAO = [
+  { chave: 'sala', label: 'Sala' },
+  { chave: 'cozinha', label: 'Cozinha' },
+  { chave: 'gestao', label: 'Gestão' },
+  { chave: 'app', label: 'Geral' },
+] as const;
+
 export default function Pessoas() {
   const { unidades } = useUnidade();
   const { data, isLoading } = usePessoas();
@@ -376,6 +383,23 @@ function PainelPapeis() {
   const alternar = (id: string) =>
     setSelecionadas(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
 
+  const permissoesConhecidas = new Set(AREAS_PERMISSAO.map(area => area.chave));
+  const permissoesPorArea = [...AREAS_PERMISSAO.map(area => ({
+    ...area,
+    permissoes: permissoes.filter(perm => perm.chave.split('.')[0] === area.chave),
+  })), {
+    chave: 'outras',
+    label: 'Outras',
+    permissoes: permissoes.filter(perm => !permissoesConhecidas.has(perm.chave.split('.')[0] as typeof AREAS_PERMISSAO[number]['chave'])),
+  }].filter(area => area.permissoes.length > 0);
+
+  const alternarArea = (ids: string[]) => {
+    const todasMarcadas = ids.every(id => selecionadas.includes(id));
+    setSelecionadas(atuais => todasMarcadas
+      ? atuais.filter(id => !ids.includes(id))
+      : Array.from(new Set([...atuais, ...ids])));
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -453,16 +477,31 @@ function PainelPapeis() {
             <div><Label>Descrição</Label><Textarea value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} rows={2} /></div>
             <div className="space-y-2">
               <Label>Permissões</Label>
-              <div className="space-y-2 rounded-lg border border-border p-3">
-                {permissoes.map(perm => (
-                  <label key={perm.id} className="flex items-start gap-2 text-sm">
-                    <Checkbox checked={selecionadas.includes(perm.id)} onCheckedChange={() => alternar(perm.id)} />
-                    <span>
-                      <span className="text-foreground">{perm.descricao}</span>
-                      <span className="ml-1.5 text-xs text-muted-foreground">{perm.chave}</span>
-                    </span>
-                  </label>
-                ))}
+              <div className="space-y-3">
+                {permissoesPorArea.map(area => {
+                  const ids = area.permissoes.map(perm => perm.id);
+                  const todasMarcadas = ids.every(id => selecionadas.includes(id));
+                  return (
+                    <section key={area.chave} className="rounded-lg border border-border p-3">
+                      <label className="mb-3 flex items-center gap-2 border-b border-border pb-2 text-sm font-semibold text-foreground">
+                        <Checkbox checked={todasMarcadas} onCheckedChange={() => alternarArea(ids)} />
+                        {area.label}
+                        <span className="ml-auto text-xs font-normal text-muted-foreground">Marcar toda a área</span>
+                      </label>
+                      <div className="space-y-2">
+                        {area.permissoes.map(perm => (
+                          <label key={perm.id} className="flex items-start gap-2 text-sm">
+                            <Checkbox checked={selecionadas.includes(perm.id)} onCheckedChange={() => alternar(perm.id)} />
+                            <span>
+                              <span className="text-foreground">{perm.descricao}</span>
+                              <span className="ml-1.5 text-xs text-muted-foreground">{perm.chave}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
               </div>
             </div>
           </div>

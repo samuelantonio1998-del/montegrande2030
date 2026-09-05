@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Plus, CheckCircle2, Circle, AlertTriangle, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
 import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento } from '@/hooks/useTarefas';
-import { useAuth } from '@/contexts/AuthContext';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';
 import { useUnidade } from '@/contexts/UnidadeContext';
@@ -15,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { useMinhasPermissoes } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 
 const categories = [
   { key: 'all', label: 'Todas' },
@@ -44,7 +45,7 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 };
 
 export default function Tarefas() {
-  const { user } = useAuth();
+  const { tem } = useMinhasPermissoes();
   const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
   const { isConsolidado, nomeUnidade } = useUnidade();
   const { employees } = useEmployees();
@@ -52,6 +53,9 @@ export default function Tarefas() {
   const [filter, setFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
+  const departamentoPermitido: TarefaDepartamento = tem(PERMISSOES.mesasVer) && !tem(PERMISSOES.producaoVer)
+    ? 'sala'
+    : tem(PERMISSOES.producaoVer) && !tem(PERMISSOES.mesasVer) ? 'cozinha' : 'todos';
   const [newTask, setNewTask] = useState({
     titulo: '',
     descricao: '',
@@ -60,11 +64,10 @@ export default function Tarefas() {
     prioridade: 'media' as Tarefa['prioridade'],
     critica: false,
     periodicidade: 'unica' as TaskPeriodicity,
-    departamento: (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento,
+    departamento: departamentoPermitido,
   });
 
-  const userRole = user?.role;
-  const myTarefas = tarefas.filter(t => t.departamento === 'todos' || t.departamento === userRole);
+  const myTarefas = tarefas.filter(t => t.departamento === 'todos' || departamentoPermitido === 'todos' || t.departamento === departamentoPermitido);
   const activeTasks = myTarefas.filter(t => !t.concluida);
   const filtered = filter === 'all' ? activeTasks : activeTasks.filter(t => t.categoria === filter);
   const doneCount = myTarefas.filter(t => t.concluida).length;
@@ -93,8 +96,7 @@ export default function Tarefas() {
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
     await addTarefa({ ...newTask, descricao: newTask.descricao || null });
-    const defaultDept = (user?.role === 'cozinha' ? 'cozinha' : user?.role === 'sala' ? 'sala' : 'todos') as TarefaDepartamento;
-    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: defaultDept });
+    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido });
     setShowForm(false);
     toast({ title: 'Tarefa criada' });
   };

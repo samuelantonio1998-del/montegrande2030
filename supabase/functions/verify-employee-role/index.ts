@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { pin, allowedRoles } = await req.json();
+    const { pin, requiredPermission } = await req.json();
 
     if (typeof pin !== "string" || !/^\d{4,6}$/.test(pin)) {
       return new Response(
@@ -36,11 +36,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(row.role)) {
-      return new Response(
-        JSON.stringify({ success: false }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (requiredPermission) {
+      const { data: funcionario } = await supabase
+        .from("funcionarios")
+        .select("role_id")
+        .eq("id", row.id)
+        .eq("ativo", true)
+        .maybeSingle();
+      const { data: permissao } = await supabase
+        .from("permissoes")
+        .select("id")
+        .eq("chave", requiredPermission)
+        .maybeSingle();
+      const { count } = funcionario?.role_id && permissao?.id
+        ? await supabase
+          .from("role_permissoes_v2")
+          .select("role_id", { count: "exact", head: true })
+          .eq("role_id", funcionario.role_id)
+          .eq("permissao_id", permissao.id)
+        : { count: 0 };
+      if (!count) {
+        return new Response(
+          JSON.stringify({ success: false }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     return new Response(

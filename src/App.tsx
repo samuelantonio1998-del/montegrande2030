@@ -8,6 +8,8 @@ import { ProductionProvider } from "@/contexts/ProductionContext";
 import { SidebarCollapseProvider } from "@/contexts/SidebarContext";
 import { AppLayout } from "@/components/AppLayout";
 import { RotaProtegida } from "@/components/RotaProtegida";
+import { useMinhasPermissoes } from "@/hooks/usePermissao";
+import { PERMISSOES } from "@/lib/permissoes";
 
 import Login from "./pages/Login";
 import DashboardSala from "./pages/DashboardSala";
@@ -34,13 +36,18 @@ const queryClient = new QueryClient();
 
 function DashboardRouter() {
   const { user } = useAuth();
+  const { tem, loading } = useMinhasPermissoes();
   if (!user) return <Navigate to="/login" />;
-  switch (user.role) {
-    case 'sala': return <DashboardSala />;
-    case 'cozinha': return <DashboardCozinha />;
-    case 'gerencia': return <DashboardGerencia />;
-  }
+  if (loading) return null;
+  if (tem(PERMISSOES.pessoasGerir) || tem(PERMISSOES.inventarioGerir) || tem(PERMISSOES.unidadesGerir)) return <DashboardGerencia />;
+  if (tem(PERMISSOES.producaoVer)) return <DashboardCozinha />;
+  if (tem(PERMISSOES.mesasVer)) return <DashboardSala />;
+  return <Navigate to="/tarefas" replace />;
 }
+
+const protegida = (permissao: string, pagina: React.ReactNode) => (
+  <RotaProtegida permissao={permissao}>{pagina}</RotaProtegida>
+);
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -50,15 +57,15 @@ function ProtectedRoutes() {
   return (
     <AppLayout>
       <Routes>
-        <Route path="/" element={<DashboardRouter />} />
-        <Route path="/tarefas" element={<Tarefas />} />
-        <Route path="/inventario" element={<Inventario />} />
-        <Route path="/fichas-tecnicas" element={<FichasTecnicas />} />
-        <Route path="/mesas" element={<Mesas />} />
-        <Route path="/producao" element={<Producao />} />
-        <Route path="/desperdicio" element={<Desperdicio />} />
-        <Route path="/fornecedores" element={<Fornecedores />} />
-        <Route path="/precario" element={<Precario />} />
+        <Route path="/" element={protegida(PERMISSOES.dashboardVer, <DashboardRouter />)} />
+        <Route path="/tarefas" element={protegida(PERMISSOES.tarefasVer, <Tarefas />)} />
+        <Route path="/inventario" element={protegida(PERMISSOES.inventarioVer, <Inventario />)} />
+        <Route path="/fichas-tecnicas" element={protegida(PERMISSOES.fichasVer, <FichasTecnicas />)} />
+        <Route path="/mesas" element={protegida(PERMISSOES.mesasVer, <Mesas />)} />
+        <Route path="/producao" element={protegida(PERMISSOES.producaoVer, <Producao />)} />
+        <Route path="/desperdicio" element={protegida(PERMISSOES.desperdicioVer, <Desperdicio />)} />
+        <Route path="/fornecedores" element={protegida(PERMISSOES.fornecedoresVer, <Fornecedores />)} />
+        <Route path="/precario" element={protegida(PERMISSOES.precarioVer, <Precario />)} />
         <Route
           path="/pessoas"
           element={
@@ -79,7 +86,7 @@ function ProtectedRoutes() {
         />
 
 
-        <Route path="/previsao" element={<Previsao />} />
+        <Route path="/previsao" element={protegida(PERMISSOES.previsaoVer, <Previsao />)} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>

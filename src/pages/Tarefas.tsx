@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Plus, CheckCircle2, Circle, AlertTriangle, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
 import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento } from '@/hooks/useTarefas';
-import { useAuth } from '@/contexts/AuthContext';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';
 import { useUnidade } from '@/contexts/UnidadeContext';
@@ -46,7 +45,6 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 };
 
 export default function Tarefas() {
-  useAuth();
   const { tem } = useMinhasPermissoes();
   const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
   const { isConsolidado, nomeUnidade } = useUnidade();

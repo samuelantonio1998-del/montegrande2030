@@ -58,21 +58,16 @@ function ProtectedRoutes() {
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/precario" element={<Precario />} />
         <Route
-          path="/funcionarios"
+          path="/pessoas"
           element={
             <RotaProtegida permissao="gestao.funcionarios.gerir">
-              <Funcionarios />
+              <Pessoas />
             </RotaProtegida>
           }
         />
-        <Route
-          path="/gestao-utilizadores"
-          element={
-            <RotaProtegida permissao="gestao.funcionarios.gerir">
-              <GestaoFuncionarios />
-            </RotaProtegida>
-          }
-        />
+        <Route path="/funcionarios" element={<Navigate to="/pessoas" replace />} />
+        <Route path="/gestao-utilizadores" element={<Navigate to="/pessoas" replace />} />
+
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

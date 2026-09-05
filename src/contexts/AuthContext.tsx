@@ -26,10 +26,10 @@ function deriveUser(session: Session | null): AppUser | null {
   const funcionarioId = meta.funcionario_id as string | undefined;
   const role = typeof meta.role === 'string' ? meta.role : undefined;
 
-  // Case 1: PIN-based employee session — must have funcionario_id + role
-  if (funcionarioId && role) {
+  // Case 1: PIN-based employee session. Authorization is always permission-based.
+  if (funcionarioId) {
     const name = (meta.nome as string) ?? (umeta.nome as string) ?? 'Funcionário';
-    return { name, role, funcionarioId };
+    return { name, role: role ?? 'utilizador', funcionarioId };
   }
 
   // Case 2: conta de gestão (sem funcionario_id) — o perfil vem do metadata
@@ -54,8 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handle = (session: Session | null) => {
       const derived = deriveUser(session);
       if (session && !derived) {
-        // Invalid session (no funcionario_id and not gerencia) — force logout
-        console.error('Sessão inválida: sem funcionario_id e sem role=gerencia. A terminar sessão.');
+        console.error('Sessão inválida. A terminar sessão.');
         supabase.auth.signOut();
         setUser(null);
         return;

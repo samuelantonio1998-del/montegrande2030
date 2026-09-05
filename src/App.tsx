@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -45,7 +46,7 @@ function DashboardRouter() {
   return <Navigate to="/tarefas" replace />;
 }
 
-const protegida = (permissao: string, pagina: React.ReactNode) => (
+const protegida = (permissao: string, pagina: ReactNode) => (
   <RotaProtegida permissao={permissao}>{pagina}</RotaProtegida>
 );
 

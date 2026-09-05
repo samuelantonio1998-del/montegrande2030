@@ -34,15 +34,17 @@ function deriveUser(session: Session | null): AppUser | null {
     return { name, role, funcionarioId };
   }
 
-  // Case 2: Admin session — role gerencia, NO funcionario_id
-  if (!funcionarioId && role === 'gerencia') {
-    const emailName = session.user.email?.split('@')[0];
+  // Case 2: conta de gestão (sem funcionario_id) — o perfil vem do metadata
+  if (!funcionarioId && session.user.email) {
+    const emailName = session.user.email.split('@')[0];
     const name = (meta.nome as string) ?? (umeta.nome as string) ?? emailName ?? 'Administrador';
-    return { name, role: 'gerencia' };
+    const perfil: UserRole = role === 'gerencia' || role === 'cozinha' || role === 'sala' ? role : 'gerencia';
+    return { name, role: perfil };
   }
 
-  // Invalid session — no fallback to first funcionario
+  // Sessão inválida
   return null;
+
 }
 
 

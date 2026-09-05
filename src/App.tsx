@@ -22,8 +22,8 @@ import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
-import Funcionarios from "./pages/Funcionarios";
-import GestaoFuncionarios from "./pages/GestaoFuncionarios";
+import Pessoas from "./pages/Pessoas";
+
 import Unsubscribe from "./pages/Unsubscribe";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";

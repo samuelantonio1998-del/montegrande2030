@@ -218,7 +218,16 @@ export default function Producao() {
         </div>
       </div>
 
+      {decisaoRegistoId && (
+        <DecisaoReposicaoCard
+          registoId={decisaoRegistoId}
+          onRepor={handleReporSugerido}
+          onDismiss={() => setDecisaoRegistoId(null)}
+        />
+      )}
+
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as Canal)}>
+
         <TabsList className="w-full sm:w-auto">
           {temBuffet && <TabsTrigger value="buffet" className="gap-2">
             <ChefHat className="h-4 w-4" />

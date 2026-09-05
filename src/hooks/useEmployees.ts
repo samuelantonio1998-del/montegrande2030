@@ -14,13 +14,13 @@ export function useEmployees() {
   const fetchEmployees = useCallback(async () => {
     try {
       const { data, error } = await supabase.functions.invoke('manage-employees', {
-        body: { action: 'pessoas_list' },
+        body: { action: 'lista_simples' },
       });
       if (!error && data?.data) {
         setEmployees(data.data
-          .filter((d: any) => d.ativo)
-          .map((d: any) => ({ id: d.funcionario_id ?? d.user_id, name: d.nome, role: d.role_nome ?? '' })));
+          .map((d: any) => ({ id: d.id, name: d.nome, role: d.role_nome ?? '' })));
       }
+
     } catch {
       // silent
     }

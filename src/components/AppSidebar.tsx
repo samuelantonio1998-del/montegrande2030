@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical, Settings } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
 import { useNavOrder } from '@/hooks/useNavOrder';
@@ -10,30 +10,22 @@ import { UnidadeSwitcher } from '@/components/UnidadeSwitcher';
 import { useMinhasPermissoes } from '@/hooks/usePermissao';
 import { PERMISSOES } from '@/lib/permissoes';
 
-type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[]; permissao?: string };
+type NavItem = { to: string; icon: React.ElementType; label: string; permissao: string };
 
 const navItems: NavItem[] = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['sala', 'cozinha', 'gerencia'] },
-  { to: '/mesas', icon: Grid3X3, label: 'Mesas', roles: ['sala', 'gerencia'] },
-  { to: '/tarefas', icon: ClipboardCheck, label: 'Tarefas', roles: ['sala', 'cozinha', 'gerencia'] },
-  { to: '/inventario', icon: Package, label: 'Inventário', roles: ['sala', 'cozinha', 'gerencia'] },
-  { to: '/producao', icon: UtensilsCrossed, label: 'Produção', roles: ['cozinha', 'gerencia'] },
-  { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas', roles: ['cozinha', 'gerencia'] },
-  { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['cozinha', 'gerencia'] },
-  { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
-  { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
-
-  { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
-  { to: '/pessoas', icon: Users, label: 'Pessoas', roles: ['sala', 'cozinha', 'gerencia'], permissao: PERMISSOES.pessoasGerir },
-  { to: '/definicoes', icon: Settings, label: 'Definições', roles: ['sala', 'cozinha', 'gerencia'], permissao: PERMISSOES.unidadesGerir },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', permissao: PERMISSOES.dashboardVer },
+  { to: '/mesas', icon: Grid3X3, label: 'Mesas', permissao: PERMISSOES.mesasVer },
+  { to: '/tarefas', icon: ClipboardCheck, label: 'Tarefas', permissao: PERMISSOES.tarefasVer },
+  { to: '/inventario', icon: Package, label: 'Inventário', permissao: PERMISSOES.inventarioVer },
+  { to: '/producao', icon: UtensilsCrossed, label: 'Produção', permissao: PERMISSOES.producaoVer },
+  { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas', permissao: PERMISSOES.fichasVer },
+  { to: '/desperdicio', icon: Trash2, label: 'Desperdício', permissao: PERMISSOES.desperdicioVer },
+  { to: '/previsao', icon: TrendingUp, label: 'Previsão', permissao: PERMISSOES.previsaoVer },
+  { to: '/fornecedores', icon: Building2, label: 'Fornecedores', permissao: PERMISSOES.fornecedoresVer },
+  { to: '/precario', icon: Euro, label: 'Preçário', permissao: PERMISSOES.precarioVer },
+  { to: '/pessoas', icon: Users, label: 'Pessoas', permissao: PERMISSOES.pessoasGerir },
+  { to: '/definicoes', icon: Settings, label: 'Definições', permissao: PERMISSOES.unidadesGerir },
 ];
-
-
-const roleLabels: Record<UserRole, string> = {
-  sala: 'Sala',
-  cozinha: 'Cozinha',
-  gerencia: 'Gerência',
-};
 
 export function AppSidebar() {
   const location = useLocation();
@@ -45,14 +37,12 @@ export function AppSidebar() {
 
   if (!user) return null;
 
-  const filteredNav = navItems.filter(
-    item => item.roles.includes(user.role) && (!item.permissao || (!permsLoading && tem(item.permissao))),
-  );
-  const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.role);
+  const filteredNav = navItems.filter(item => !permsLoading && tem(item.permissao));
+  const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.funcionarioId ?? user.name);
 
   // Mobile/tablet: Sala uses bottom tabs, Cozinha uses lateral sidebar
-  const isSalaOnMobile = isMobile && user.role === 'sala';
-  const isCozinhaOnMobile = isMobile && user.role === 'cozinha';
+  const isSalaOnMobile = isMobile && tem(PERMISSOES.mesasVer) && !tem(PERMISSOES.producaoVer);
+  const isCozinhaOnMobile = isMobile && tem(PERMISSOES.producaoVer) && !tem(PERMISSOES.mesasVer);
 
   // Sala mobile: bottom tab bar
   if (isSalaOnMobile) {
@@ -106,7 +96,7 @@ export function AppSidebar() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
-                    <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                    <p className="text-xs text-sidebar-foreground/50">{user.role}</p>
                     <UnidadeSwitcher className="mt-0.5" />
                   </div>
                 </div>
@@ -225,7 +215,7 @@ export function AppSidebar() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">{user.name[0]}</div>
                   <div>
                     <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
-                    <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                    <p className="text-xs text-sidebar-foreground/50">{user.role}</p>
                     <UnidadeSwitcher className="mt-0.5" />
                   </div>
                 </div>
@@ -328,7 +318,7 @@ export function AppSidebar() {
             {!collapsed && (
               <div>
                 <p className="text-sm font-medium text-sidebar-accent-foreground">{user.name}</p>
-                <p className="text-xs text-sidebar-foreground/50">{roleLabels[user.role]}</p>
+                <p className="text-xs text-sidebar-foreground/50">{user.role}</p>
               </div>
             )}
           </div>

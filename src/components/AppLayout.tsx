@@ -2,15 +2,15 @@ import { AppSidebar } from './AppSidebar';
 import FloatingActionButton from './FloatingActionButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMinhasPermissoes } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 import { cn } from '@/lib/utils';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const { collapsed } = useSidebarCollapse();
-  const { user } = useAuth();
-
-  const isCozinhaMobile = isMobile && user?.role === 'cozinha';
+  const { tem } = useMinhasPermissoes();
+  const isCozinhaMobile = isMobile && tem(PERMISSOES.producaoVer) && !tem(PERMISSOES.mesasVer);
 
   return (
     <div className="flex min-h-screen">

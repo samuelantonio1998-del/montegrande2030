@@ -2,11 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
-export type UserRole = 'sala' | 'cozinha' | 'gerencia';
-
 export type AppUser = {
   name: string;
-  role: UserRole;
+  role: string;
   funcionarioId?: string;
 };
 
@@ -26,7 +24,7 @@ function deriveUser(session: Session | null): AppUser | null {
   const meta = (session.user.app_metadata ?? {}) as Record<string, unknown>;
   const umeta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
   const funcionarioId = meta.funcionario_id as string | undefined;
-  const role = meta.role as UserRole | undefined;
+  const role = typeof meta.role === 'string' ? meta.role : undefined;
 
   // Case 1: PIN-based employee session — must have funcionario_id + role
   if (funcionarioId && role) {
@@ -38,8 +36,7 @@ function deriveUser(session: Session | null): AppUser | null {
   if (!funcionarioId && session.user.email) {
     const emailName = session.user.email.split('@')[0];
     const name = (meta.nome as string) ?? (umeta.nome as string) ?? emailName ?? 'Administrador';
-    const perfil: UserRole = role === 'gerencia' || role === 'cozinha' || role === 'sala' ? role : 'gerencia';
-    return { name, role: perfil };
+    return { name, role: role ?? 'utilizador' };
   }
 
   // Sessão inválida

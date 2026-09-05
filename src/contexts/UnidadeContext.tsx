@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissao } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 
 export type Servico = 'buffet' | 'takeaway' | 'delivery' | 'mesa';
 
@@ -55,6 +57,7 @@ const UnidadeContext = createContext<UnidadeContextType | null>(null);
 
 export function UnidadeProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { permitido: podeGerirUnidades } = usePermissao(PERMISSOES.unidadesGerir);
   const [unidades, setUnidades] = useState<Unidade[]>([]);
   const [marcasAll, setMarcasAll] = useState<Marca[]>([]);
   const [servicoRows, setServicoRows] = useState<ServicoRow[]>([]);
@@ -64,7 +67,7 @@ export function UnidadeProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Funcionário (PIN) nunca escolhe local: gerência autenticada sim
-  const podeEscolher = !!user && user.role === 'gerencia' && !user.funcionarioId;
+  const podeEscolher = !!user && podeGerirUnidades && !user.funcionarioId;
 
   useEffect(() => {
     if (!user) {

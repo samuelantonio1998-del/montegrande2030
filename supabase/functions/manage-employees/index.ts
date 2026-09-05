@@ -296,6 +296,15 @@ Deno.serve(async (req) => {
 
     const GERENCIA_CHAVE = "gerencia";
 
+    // A coluna funcionarios.role continua a servir apenas de pista de layout
+    // (sala / cozinha / gerencia). As permissões vêm sempre do papel (role_id).
+    const layoutRole = (chave?: string | null): string => {
+      const c = (chave ?? "").toLowerCase();
+      if (c.includes("gerencia") || c.includes("gestao")) return "gerencia";
+      if (c.includes("cozinh") || c.includes("auxiliar") || c.includes("chef")) return "cozinha";
+      return "sala";
+    };
+
     const getRoleById = async (roleId: string) => {
       const { data } = await supabase.from("roles").select("id, nome, chave, is_base").eq("id", roleId).maybeSingle();
       return data as { id: string; nome: string; chave: string; is_base: boolean } | null;
@@ -427,7 +436,7 @@ Deno.serve(async (req) => {
           .from("funcionarios")
           .insert({
             nome,
-            role: papel?.chave ?? "sala",
+            role: layoutRole(papel?.chave),
             role_id: role_id ?? null,
             unidade_id: unidade_id ?? null,
             ativo: true,
@@ -483,7 +492,7 @@ Deno.serve(async (req) => {
           .from("funcionarios")
           .update({
             ...(nome ? { nome } : {}),
-            ...(role_id ? { role_id, role: papel?.chave ?? "sala" } : {}),
+            ...(role_id ? { role_id, role: layoutRole(papel?.chave) } : {}),
             unidade_id: unidade_id ?? null,
           })
           .eq("id", funcionario_id);
@@ -530,7 +539,7 @@ Deno.serve(async (req) => {
         const papel = role_id ? await getRoleById(role_id) : null;
         const { data: inserted, error: insErr } = await supabase
           .from("funcionarios")
-          .insert({ nome, role: papel?.chave ?? "sala", role_id: role_id ?? null, unidade_id: unidade_id ?? null, ativo: true })
+          .insert({ nome, role: layoutRole(papel?.chave), role_id: role_id ?? null, unidade_id: unidade_id ?? null, ativo: true })
           .select("id")
           .single();
         if (insErr || !inserted) return json({ error: "Erro ao criar acesso por PIN" }, 500);

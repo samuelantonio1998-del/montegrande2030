@@ -58,7 +58,7 @@ function ProtectedRoutes() {
   return (
     <AppLayout>
       <Routes>
-        <Route path="/" element={protegida(PERMISSOES.dashboardVer, <DashboardRouter />)} />
+        <Route path="/" element={<DashboardRouter />} />
         <Route path="/tarefas" element={protegida(PERMISSOES.tarefasVer, <Tarefas />)} />
         <Route path="/inventario" element={protegida(PERMISSOES.inventarioVer, <Inventario />)} />
         <Route path="/fichas-tecnicas" element={protegida(PERMISSOES.fichasVer, <FichasTecnicas />)} />

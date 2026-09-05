@@ -383,10 +383,15 @@ function PainelPapeis() {
   const alternar = (id: string) =>
     setSelecionadas(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
 
-  const permissoesPorArea = AREAS_PERMISSAO.map(area => ({
+  const permissoesConhecidas = new Set(AREAS_PERMISSAO.map(area => area.chave));
+  const permissoesPorArea = [...AREAS_PERMISSAO.map(area => ({
     ...area,
     permissoes: permissoes.filter(perm => perm.chave.split('.')[0] === area.chave),
-  })).filter(area => area.permissoes.length > 0);
+  })), {
+    chave: 'outras',
+    label: 'Outras',
+    permissoes: permissoes.filter(perm => !permissoesConhecidas.has(perm.chave.split('.')[0] as typeof AREAS_PERMISSAO[number]['chave'])),
+  }].filter(area => area.permissoes.length > 0);
 
   const alternarArea = (ids: string[]) => {
     const todasMarcadas = ids.every(id => selecionadas.includes(id));

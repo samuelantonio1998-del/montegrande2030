@@ -167,7 +167,9 @@ export default function Producao() {
       ? (isReporBuffet ? `Repor no buffet${aprovNote ? ' — ' + aprovNote : ''}` : aprovNote)
       : null;
     await recolherRegisto(checkoutTarget.id, kg, leftoverAction, note);
+    setDecisaoRegistoId(checkoutTarget.id);
     setCheckoutTarget(null);
+
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
     setIsReporBuffet(false);

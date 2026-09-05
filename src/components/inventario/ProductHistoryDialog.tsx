@@ -8,7 +8,8 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissao } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 
 type Produto = {
   id: string;
@@ -48,7 +49,7 @@ type Props = {
 };
 
 export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: Props) {
-  const { user } = useAuth();
+  const { permitido: podeGerirInventario } = usePermissao(PERMISSOES.inventarioGerir);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(false);
   const [fornecedor, setFornecedor] = useState<Fornecedor | null>(null);

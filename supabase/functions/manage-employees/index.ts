@@ -34,6 +34,35 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) {
       return json({ error: "Unauthorized" }, 401);
     }
+
+    const body = await req.json();
+    const { action } = body;
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Lista simples (nome + papel) disponível a qualquer sessão autenticada:
+    // usada em Tarefas/Ordens para escolher responsáveis.
+    if (action === "lista_simples") {
+      const { data: funcs } = await supabase
+        .from("funcionarios")
+        .select("id, nome, role_id, ativo")
+        .eq("ativo", true)
+        .order("nome");
+      const { data: rolesData } = await supabase.from("roles").select("id, nome");
+      const roleNome = new Map((rolesData ?? []).map((r: { id: string; nome: string }) => [r.id, r.nome]));
+      return json({
+        data: (funcs ?? []).map((f: { id: string; nome: string; role_id: string | null }) => ({
+          id: f.id,
+          nome: f.nome,
+          role_nome: f.role_id ? roleNome.get(f.role_id) ?? "" : "",
+          ativo: true,
+        })),
+      });
+    }
+
     const { data: temPerm, error: permErr } = await callerClient.rpc("tem_permissao", {
       p_permissao: "gestao.funcionarios.gerir",
     });
@@ -45,14 +74,6 @@ Deno.serve(async (req) => {
       return json({ error: "Sem permissão" }, 403);
     }
 
-
-    const body = await req.json();
-    const { action } = body;
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // Check if PIN is already in use by an active employee (compares against pin_hash via bcrypt)
     const pinInUse = async (pin: string, excludeId?: string): Promise<boolean> => {

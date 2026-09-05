@@ -78,6 +78,8 @@ export default function Producao() {
 
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
+  const [decisaoRegistoId, setDecisaoRegistoId] = useState<string | null>(null);
+
   const [newDish, setNewDish] = useState('');
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [newTakeawayKg, setNewTakeawayKg] = useState('');

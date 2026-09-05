@@ -144,7 +144,23 @@ export default function Producao() {
     setDiscountLeftover(true);
   }
 
+  async function handleReporSugerido(kg: number, recipiente: RecipientSize) {
+    if (!decisaoRegistoId) return;
+    const registo = registos.find(r => r.id === decisaoRegistoId);
+    if (!registo) return;
+    await addRegisto({
+      dish_name: registo.dish_name,
+      ficha_tecnica_id: registo.ficha_tecnica_id || undefined,
+      buffet_item_id: registo.buffet_item_id || undefined,
+      recipiente,
+      peso_kg: kg,
+      registado_por: user?.name || 'Gerente',
+      canal: (registo.canal || 'buffet') as Canal,
+    });
+  }
+
   async function handleCheckout() {
+
     if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
     const note = leftoverAction === 'aproveitamento'

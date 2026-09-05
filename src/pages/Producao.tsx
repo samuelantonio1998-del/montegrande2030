@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { MarcaSwitcher } from '@/components/MarcaSwitcher';
+import { DecisaoReposicaoCard } from '@/components/producao/DecisaoReposicaoCard';
+
 
 type Canal = 'buffet' | 'take_away' | 'delivery';
 

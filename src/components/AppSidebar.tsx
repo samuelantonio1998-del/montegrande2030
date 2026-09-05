@@ -8,7 +8,7 @@ import { useSidebarCollapse } from '@/contexts/SidebarContext';
 import { useNavOrder } from '@/hooks/useNavOrder';
 import { UnidadeSwitcher } from '@/components/UnidadeSwitcher';
 
-type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[] };
+type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[]; permissao?: string };
 
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['sala', 'cozinha', 'gerencia'] },
@@ -20,11 +20,11 @@ const navItems: NavItem[] = [
   { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['cozinha', 'gerencia'] },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
-  
+
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
-  { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
-  { to: '/gestao-utilizadores', icon: ShieldCheck, label: 'Utilizadores', roles: ['gerencia'] },
+  { to: '/pessoas', icon: Users, label: 'Pessoas', roles: ['sala', 'cozinha', 'gerencia'], permissao: PERMISSOES.pessoasGerir },
 ];
+
 
 const roleLabels: Record<UserRole, string> = {
   sala: 'Sala',

@@ -463,7 +463,7 @@ Deno.serve(async (req) => {
           app_metadata: {
             nome,
             unidade_id: unidade_id ?? null,
-            ...(funcionarioId ? { funcionario_id: funcionarioId, role: papel?.chave ?? null } : { role: papel?.chave ?? null }),
+            ...(funcionarioId ? { funcionario_id: funcionarioId, role: layoutRole(papel?.chave) } : { role: layoutRole(papel?.chave) }),
           },
           user_metadata: { nome },
         });
@@ -511,7 +511,7 @@ Deno.serve(async (req) => {
             ...meta,
             nome: nome ?? meta.nome ?? null,
             unidade_id: unidade_id ?? null,
-            ...(papel ? { role: papel.chave } : {}),
+            ...(papel ? { role: layoutRole(papel.chave) } : {}),
           },
           user_metadata: { nome: nome ?? null },
         });
@@ -570,7 +570,7 @@ Deno.serve(async (req) => {
         email,
         password,
         email_confirm: true,
-        app_metadata: { nome: nome ?? null, unidade_id: unidade_id ?? null, funcionario_id, role: papel?.chave ?? null },
+        app_metadata: { nome: nome ?? null, unidade_id: unidade_id ?? null, funcionario_id, role: layoutRole(papel?.chave) },
         user_metadata: { nome: nome ?? null },
       });
       if (error || !created?.user) return json({ error: error?.message ?? "Erro ao criar conta" }, 400);

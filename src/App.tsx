@@ -23,6 +23,8 @@ import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
 import Pessoas from "./pages/Pessoas";
+import Definicoes from "./pages/Definicoes";
+
 
 import Unsubscribe from "./pages/Unsubscribe";
 import ResetPassword from "./pages/ResetPassword";
@@ -67,6 +69,15 @@ function ProtectedRoutes() {
         />
         <Route path="/funcionarios" element={<Navigate to="/pessoas" replace />} />
         <Route path="/gestao-utilizadores" element={<Navigate to="/pessoas" replace />} />
+        <Route
+          path="/definicoes"
+          element={
+            <RotaProtegida permissao="gestao.unidades.gerir">
+              <Definicoes />
+            </RotaProtegida>
+          }
+        />
+
 
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />

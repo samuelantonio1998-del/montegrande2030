@@ -1193,6 +1193,60 @@ export type Database = {
         }
         Relationships: []
       }
+      servico_horarios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          dia_semana: number | null
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          marca_id: string
+          periodo: string
+          servico: string
+          unidade_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          dia_semana?: number | null
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          marca_id: string
+          periodo: string
+          servico: string
+          unidade_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          dia_semana?: number | null
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          marca_id?: string
+          periodo?: string
+          servico?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servico_horarios_marca_id_fkey"
+            columns: ["marca_id"]
+            isOneToOne: false
+            referencedRelation: "marcas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servico_horarios_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string

@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { MarcaSwitcher } from '@/components/MarcaSwitcher';
+import { DecisaoReposicaoCard } from '@/components/producao/DecisaoReposicaoCard';
+
 
 type Canal = 'buffet' | 'take_away' | 'delivery';
 
@@ -78,6 +80,8 @@ export default function Producao() {
 
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
+  const [decisaoRegistoId, setDecisaoRegistoId] = useState<string | null>(null);
+
   const [newDish, setNewDish] = useState('');
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [newTakeawayKg, setNewTakeawayKg] = useState('');
@@ -144,14 +148,32 @@ export default function Producao() {
     setDiscountLeftover(true);
   }
 
+  async function handleReporSugerido(kg: number, recipiente: RecipientSize) {
+    if (!decisaoRegistoId) return;
+    const registo = registos.find(r => r.id === decisaoRegistoId);
+    if (!registo) return;
+    await addRegisto({
+      dish_name: registo.dish_name,
+      ficha_tecnica_id: registo.ficha_tecnica_id || undefined,
+      buffet_item_id: registo.buffet_item_id || undefined,
+      recipiente,
+      peso_kg: kg,
+      registado_por: user?.name || 'Gerente',
+      canal: (registo.canal || 'buffet') as Canal,
+    });
+  }
+
   async function handleCheckout() {
+
     if (!checkoutTarget) return;
     const kg = parseFloat(leftoverKg) || 0;
     const note = leftoverAction === 'aproveitamento'
       ? (isReporBuffet ? `Repor no buffet${aprovNote ? ' — ' + aprovNote : ''}` : aprovNote)
       : null;
     await recolherRegisto(checkoutTarget.id, kg, leftoverAction, note);
+    setDecisaoRegistoId(checkoutTarget.id);
     setCheckoutTarget(null);
+
     setLeftoverKg('');
     setLeftoverAction('aproveitamento');
     setIsReporBuffet(false);
@@ -196,7 +218,16 @@ export default function Producao() {
         </div>
       </div>
 
+      {decisaoRegistoId && (
+        <DecisaoReposicaoCard
+          registoId={decisaoRegistoId}
+          onRepor={handleReporSugerido}
+          onDismiss={() => setDecisaoRegistoId(null)}
+        />
+      )}
+
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as Canal)}>
+
         <TabsList className="w-full sm:w-auto">
           {temBuffet && <TabsTrigger value="buffet" className="gap-2">
             <ChefHat className="h-4 w-4" />

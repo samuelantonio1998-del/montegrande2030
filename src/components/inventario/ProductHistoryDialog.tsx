@@ -163,7 +163,7 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
   }, [movs, produto]);
 
   if (!produto) return null;
-  const isGerencia = user?.role === 'gerencia';
+  const isGerencia = podeGerirInventario;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

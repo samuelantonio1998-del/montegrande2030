@@ -180,6 +180,33 @@ Deno.serve(async (req) => {
       user_metadata: { nome },
     });
 
+    // Sincroniza o papel (roles) do funcionário para user_roles, para que a RPC
+    // tem_permissao funcione também nas sessões iniciadas por PIN.
+    try {
+      const { data: func } = await supabase
+        .from("funcionarios")
+        .select("role_id")
+        .eq("id", funcionarioId)
+        .maybeSingle();
+      const roleId = (func as { role_id?: string } | null)?.role_id ?? null;
+      if (roleId) {
+        const { data: papel } = await supabase
+          .from("roles")
+          .select("chave")
+          .eq("id", roleId)
+          .maybeSingle();
+        await supabase.from("user_roles").delete().eq("user_id", userId);
+        await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: (papel as { chave?: string } | null)?.chave ?? role,
+          role_id: roleId,
+        });
+      }
+    } catch (syncErr) {
+      console.error("sync user_roles error:", syncErr);
+    }
+
+
     // Generate a magiclink and return the hashed token for verifyOtp on client
     const { data: link, error: linkErr } = await admin.generateLink({
       type: "magiclink",

@@ -1,16 +1,15 @@
 import { useState, useMemo } from 'react';
 import { TrendingUp, Users, Calendar, BarChart3, Sun, Moon, AlertTriangle, ChefHat } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissao } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 import { useVendasHistorico, calcularPrevisao, calcularTendenciaSemanal } from '@/hooks/useVendasHistorico';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function Previsao() {
-  const { user } = useAuth();
-  const isGerencia = user?.role === 'gerencia';
-  const isCozinha = user?.role === 'cozinha';
-  const showOrdem = isCozinha || isGerencia;
+  const { permitido: isGerencia } = usePermissao(PERMISSOES.inventarioGerir);
+  const { permitido: showOrdem } = usePermissao(PERMISSOES.producaoRegistar);
 
   const { data: vendas = [], isLoading } = useVendasHistorico();
 

@@ -22,8 +22,8 @@ import Producao from "./pages/Producao";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
 import Precario from "./pages/Precario";
-import Funcionarios from "./pages/Funcionarios";
-import GestaoFuncionarios from "./pages/GestaoFuncionarios";
+import Pessoas from "./pages/Pessoas";
+
 import Unsubscribe from "./pages/Unsubscribe";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -58,21 +58,16 @@ function ProtectedRoutes() {
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/precario" element={<Precario />} />
         <Route
-          path="/funcionarios"
+          path="/pessoas"
           element={
             <RotaProtegida permissao="gestao.funcionarios.gerir">
-              <Funcionarios />
+              <Pessoas />
             </RotaProtegida>
           }
         />
-        <Route
-          path="/gestao-utilizadores"
-          element={
-            <RotaProtegida permissao="gestao.funcionarios.gerir">
-              <GestaoFuncionarios />
-            </RotaProtegida>
-          }
-        />
+        <Route path="/funcionarios" element={<Navigate to="/pessoas" replace />} />
+        <Route path="/gestao-utilizadores" element={<Navigate to="/pessoas" replace />} />
+
         <Route path="/previsao" element={<Previsao />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

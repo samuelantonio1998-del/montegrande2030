@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, ClipboardCheck, Package, ChefHat, Grid3X3, TrendingUp, UtensilsCrossed, Trash2, LogOut, Building2, Menu, X, Euro, Users, GripVertical } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
@@ -7,8 +7,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebarCollapse } from '@/contexts/SidebarContext';
 import { useNavOrder } from '@/hooks/useNavOrder';
 import { UnidadeSwitcher } from '@/components/UnidadeSwitcher';
+import { useMinhasPermissoes } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
 
-type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[] };
+type NavItem = { to: string; icon: React.ElementType; label: string; roles: UserRole[]; permissao?: string };
 
 const navItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['sala', 'cozinha', 'gerencia'] },
@@ -20,11 +22,11 @@ const navItems: NavItem[] = [
   { to: '/desperdicio', icon: Trash2, label: 'Desperdício', roles: ['cozinha', 'gerencia'] },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', roles: ['sala', 'cozinha', 'gerencia'] },
   { to: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['gerencia'] },
-  
+
   { to: '/precario', icon: Euro, label: 'Preçário', roles: ['gerencia'] },
-  { to: '/funcionarios', icon: Users, label: 'Funcionários', roles: ['gerencia'] },
-  { to: '/gestao-utilizadores', icon: ShieldCheck, label: 'Utilizadores', roles: ['gerencia'] },
+  { to: '/pessoas', icon: Users, label: 'Pessoas', roles: ['sala', 'cozinha', 'gerencia'], permissao: PERMISSOES.pessoasGerir },
 ];
+
 
 const roleLabels: Record<UserRole, string> = {
   sala: 'Sala',
@@ -38,10 +40,13 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebarCollapse();
+  const { tem, loading: permsLoading } = useMinhasPermissoes();
 
   if (!user) return null;
 
-  const filteredNav = navItems.filter(item => item.roles.includes(user.role));
+  const filteredNav = navItems.filter(
+    item => item.roles.includes(user.role) && (!item.permissao || (!permsLoading && tem(item.permissao))),
+  );
   const { orderedItems: desktopNav, dragStart, dragOver, dragEnd, dragOverIndex } = useNavOrder(filteredNav, user.role);
 
   // Mobile/tablet: Sala uses bottom tabs, Cozinha uses lateral sidebar

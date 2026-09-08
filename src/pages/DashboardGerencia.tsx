@@ -335,6 +335,7 @@ export default function DashboardGerencia() {
             {purchaseAlerts.length === 0 && <div className="text-center py-6 text-sm text-muted-foreground sm:col-span-2">Stock dentro dos limites ✓</div>}
           </div>
         </motion.div>
+        </Permitido>
       </div>
 
       {/* Closure Days & Receipt History */}

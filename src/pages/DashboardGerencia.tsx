@@ -286,6 +286,7 @@ export default function DashboardGerencia() {
             <span className="text-muted-foreground">Total poupado: <span className="text-success font-medium">€{totalWeeklySavings.toFixed(0)}</span></span>
           </div>
         </motion.div>
+        </Permitido>
 
         {/* Menu engineering */}
         <Permitido chave={PERMISSOES.fichasVer}>

@@ -338,14 +338,17 @@ export default function DashboardGerencia() {
       </div>
 
       {/* Closure Days & Receipt History */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="rounded-xl border border-border bg-card p-6">
-          <ClosureDaysPanel />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
-          <ReceiptHistoryPanel />
-        </motion.div>
-      </div>
+      <Permitido chave={PERMISSOES.unidadesGerir}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="rounded-xl border border-border bg-card p-6">
+            <ClosureDaysPanel />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
+            <ReceiptHistoryPanel />
+          </motion.div>
+        </div>
+      </Permitido>
+
 
       {/* Activity Feed */}
       <Permitido chave={PERMISSOES.pessoasGerir}>

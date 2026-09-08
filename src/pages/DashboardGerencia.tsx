@@ -441,6 +441,8 @@ export default function DashboardGerencia() {
           })()}
         </div>
       </motion.div>
+      </Permitido>
+
 
       {/* Feedback Inbox */}
       <Permitido chave={PERMISSOES.pessoasGerir}>

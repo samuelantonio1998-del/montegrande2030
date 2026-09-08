@@ -312,6 +312,7 @@ export default function DashboardGerencia() {
             )}
           </div>
         </motion.div>
+        </Permitido>
 
         {/* Purchase alerts */}
         <Permitido chave={PERMISSOES.inventarioVer}>

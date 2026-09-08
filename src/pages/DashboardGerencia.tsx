@@ -239,30 +239,39 @@ export default function DashboardGerencia() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Permitido chave={PERMISSOES.mesasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Em Sala</p>
           <p className="text-2xl font-bold text-foreground">{totalPax}</p>
           <p className="text-xs text-muted-foreground">{occupiedCount} mesas ocupadas</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.producaoVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Tabuleiros Ativos</p>
           <p className="text-2xl font-bold text-primary">{activeTrays.length}</p>
           <p className="text-xs text-muted-foreground">no buffet agora</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.desperdicioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Desperdício Hoje</p>
           <p className="text-2xl font-bold text-destructive">{totalWeeklyWaste.toFixed(1)}kg</p>
           <p className="text-xs text-muted-foreground">€{totalWeeklyLoss.toFixed(0)} perdidos</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.tarefasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Tarefas</p>
           <p className="text-2xl font-bold text-foreground">{doneCount}/{totalTasks}</p>
           <p className="text-xs text-muted-foreground">concluídas</p>
         </motion.div>
+        </Permitido>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Waste chart */}
+        <Permitido chave={PERMISSOES.desperdicioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício</h2>
           <p className="text-xs text-muted-foreground mt-1">Desperdício vs. Aproveitamento (kg/hoje)</p>

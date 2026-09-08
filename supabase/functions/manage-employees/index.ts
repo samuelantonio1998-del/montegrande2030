@@ -441,11 +441,32 @@ Deno.serve(async (req) => {
         .select("id, nome, chave, descricao, ativo, is_base")
         .order("is_base", { ascending: false })
         .order("nome");
-      if (error) return json({ error: "Erro ao listar papéis" }, 500);
-      const { data: perms } = await supabase.from("permissoes").select("id, chave, descricao").order("chave");
-      const { data: rp } = await supabase.from("role_permissoes_v2").select("role_id, permissao_id");
-      return json({ data: rolesData ?? [], permissoes: perms ?? [], role_permissoes: rp ?? [] });
+      if (error) {
+        console.error("roles_list roles error:", error);
+        return json({ error: `Erro ao listar papéis: ${error.message}` }, 500);
+      }
+      const { data: perms, error: permsErr } = await supabase
+        .from("permissoes")
+        .select("id, chave, descricao")
+        .order("chave");
+      if (permsErr) {
+        console.error("roles_list permissoes error:", permsErr);
+        return json({ error: `Erro ao listar permissões: ${permsErr.message}` }, 500);
+      }
+      const { data: rp, error: rpErr } = await supabase
+        .from("role_permissoes_v2")
+        .select("role_id, permissao_id");
+      if (rpErr) {
+        console.error("roles_list role_permissoes_v2 error:", rpErr);
+        return json({ error: `Erro ao listar ligações de permissões: ${rpErr.message}` }, 500);
+      }
+      return json({
+        data: rolesData ?? [],
+        permissoes: (perms ?? []).filter((p: { id: string | null }) => !!p.id),
+        role_permissoes: rp ?? [],
+      });
     }
+
 
     if (action === "role_create") {
       const { nome, chave, descricao, permissoes } = body;

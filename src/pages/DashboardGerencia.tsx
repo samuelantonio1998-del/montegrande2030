@@ -17,6 +17,8 @@ import { pt } from 'date-fns/locale';
 import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';
 import ClosureDaysPanel from '@/components/gerencia/ClosureDaysPanel';
 import ReceiptHistoryPanel from '@/components/gerencia/ReceiptHistoryPanel';
+import Permitido from '@/components/Permitido';
+import { PERMISSOES } from '@/lib/permissoes';
 
 type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };
@@ -237,30 +239,39 @@ export default function DashboardGerencia() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Permitido chave={PERMISSOES.mesasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Em Sala</p>
           <p className="text-2xl font-bold text-foreground">{totalPax}</p>
           <p className="text-xs text-muted-foreground">{occupiedCount} mesas ocupadas</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.producaoVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Tabuleiros Ativos</p>
           <p className="text-2xl font-bold text-primary">{activeTrays.length}</p>
           <p className="text-xs text-muted-foreground">no buffet agora</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.desperdicioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Desperdício Hoje</p>
           <p className="text-2xl font-bold text-destructive">{totalWeeklyWaste.toFixed(1)}kg</p>
           <p className="text-xs text-muted-foreground">€{totalWeeklyLoss.toFixed(0)} perdidos</p>
         </motion.div>
+        </Permitido>
+        <Permitido chave={PERMISSOES.tarefasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs text-muted-foreground">Tarefas</p>
           <p className="text-2xl font-bold text-foreground">{doneCount}/{totalTasks}</p>
           <p className="text-xs text-muted-foreground">concluídas</p>
         </motion.div>
+        </Permitido>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Waste chart */}
+        <Permitido chave={PERMISSOES.desperdicioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><Trash2 className="h-5 w-5 text-destructive" /> Análise de Desperdício</h2>
           <p className="text-xs text-muted-foreground mt-1">Desperdício vs. Aproveitamento (kg/hoje)</p>
@@ -284,8 +295,10 @@ export default function DashboardGerencia() {
             <span className="text-muted-foreground">Total poupado: <span className="text-success font-medium">€{totalWeeklySavings.toFixed(0)}</span></span>
           </div>
         </motion.div>
+        </Permitido>
 
         {/* Menu engineering */}
+        <Permitido chave={PERMISSOES.fichasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu</h2>
           <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas nos dados de produção</p>
@@ -310,8 +323,10 @@ export default function DashboardGerencia() {
             )}
           </div>
         </motion.div>
+        </Permitido>
 
         {/* Purchase alerts */}
+        <Permitido chave={PERMISSOES.inventarioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6 lg:col-span-2">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras</h2>
           <p className="text-xs text-muted-foreground mt-1">Produtos com stock abaixo do mínimo</p>
@@ -333,19 +348,24 @@ export default function DashboardGerencia() {
             {purchaseAlerts.length === 0 && <div className="text-center py-6 text-sm text-muted-foreground sm:col-span-2">Stock dentro dos limites ✓</div>}
           </div>
         </motion.div>
+        </Permitido>
       </div>
 
       {/* Closure Days & Receipt History */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="rounded-xl border border-border bg-card p-6">
-          <ClosureDaysPanel />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
-          <ReceiptHistoryPanel />
-        </motion.div>
-      </div>
+      <Permitido chave={PERMISSOES.unidadesGerir}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="rounded-xl border border-border bg-card p-6">
+            <ClosureDaysPanel />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
+            <ReceiptHistoryPanel />
+          </motion.div>
+        </div>
+      </Permitido>
+
 
       {/* Activity Feed */}
+      <Permitido chave={PERMISSOES.pessoasGerir}>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">
@@ -439,11 +459,16 @@ export default function DashboardGerencia() {
           })()}
         </div>
       </motion.div>
+      </Permitido>
+
 
       {/* Feedback Inbox */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="rounded-xl border border-border bg-card p-6">
-        <FeedbackInbox />
-      </motion.div>
+      <Permitido chave={PERMISSOES.pessoasGerir}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="rounded-xl border border-border bg-card p-6">
+          <FeedbackInbox />
+        </motion.div>
+      </Permitido>
+
 
       <EditInventoryEntryDialog
         entry={editingEntry}

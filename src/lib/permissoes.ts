@@ -11,6 +11,7 @@ export const PERMISSOES = {
   previsaoVer: 'cozinha.previsao.ver',
   fornecedoresVer: 'gestao.fornecedores.ver',
   precarioVer: 'gestao.precario.ver',
+  ementaVer: 'cozinha.ementa.ver',
   ementaDefinir: 'cozinha.ementa.definir',
   producaoRegistar: 'cozinha.producao.registar',
   tarefasDefinir: 'cozinha.tarefas.definir',

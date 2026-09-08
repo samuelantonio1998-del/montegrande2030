@@ -360,7 +360,7 @@ export default function Pessoas() {
 /* ================= Papéis ================= */
 
 function PainelPapeis() {
-  const { data, isLoading } = usePapeis();
+  const { data, isLoading, error: erro } = usePapeis();
   const m = usePessoaMutations();
   const papeis = data?.papeis ?? [];
   const permissoes = data?.permissoes ?? [];

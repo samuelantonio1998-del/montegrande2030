@@ -348,6 +348,7 @@ export default function DashboardGerencia() {
       </div>
 
       {/* Activity Feed */}
+      <Permitido chave={PERMISSOES.pessoasGerir}>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2">

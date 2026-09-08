@@ -35,16 +35,42 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const PRIMEIRA_AREA: { permissao: string; rota: string }[] = [
+  { permissao: PERMISSOES.mesasVer, rota: '/mesas' },
+  { permissao: PERMISSOES.producaoVer, rota: '/producao' },
+  { permissao: PERMISSOES.tarefasVer, rota: '/tarefas' },
+  { permissao: PERMISSOES.inventarioVer, rota: '/inventario' },
+  { permissao: PERMISSOES.fichasVer, rota: '/fichas-tecnicas' },
+  { permissao: PERMISSOES.desperdicioVer, rota: '/desperdicio' },
+  { permissao: PERMISSOES.previsaoVer, rota: '/previsao' },
+  { permissao: PERMISSOES.fornecedoresVer, rota: '/fornecedores' },
+  { permissao: PERMISSOES.precarioVer, rota: '/precario' },
+  { permissao: PERMISSOES.pessoasGerir, rota: '/pessoas' },
+  { permissao: PERMISSOES.unidadesGerir, rota: '/definicoes' },
+];
+
+function SemAcessos() {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 text-center">
+      <h1 className="font-serif text-2xl text-foreground">Ainda não tem acessos</h1>
+      <p className="text-sm text-muted-foreground">
+        A sua conta ainda não tem áreas atribuídas. Contacte a gerência.
+      </p>
+    </div>
+  );
+}
+
 function DashboardRouter() {
   const { user } = useAuth();
   const { tem, loading } = useMinhasPermissoes();
   if (!user) return <Navigate to="/login" />;
   if (loading) return null;
-  if (tem(PERMISSOES.pessoasGerir) || tem(PERMISSOES.inventarioGerir) || tem(PERMISSOES.unidadesGerir)) return <DashboardGerencia />;
-  if (tem(PERMISSOES.producaoVer)) return <DashboardCozinha />;
-  if (tem(PERMISSOES.mesasVer)) return <DashboardSala />;
-  return <Navigate to="/tarefas" replace />;
+  if (tem(PERMISSOES.dashboardVer)) return <DashboardGerencia />;
+  const destino = PRIMEIRA_AREA.find(a => tem(a.permissao));
+  if (destino) return <Navigate to={destino.rota} replace />;
+  return <SemAcessos />;
 }
+
 
 const protegida = (permissao: string, pagina: ReactNode) => (
   <RotaProtegida permissao={permissao}>{pagina}</RotaProtegida>

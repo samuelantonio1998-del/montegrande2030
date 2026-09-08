@@ -502,7 +502,13 @@ function PainelPapeis() {
                     </section>
                   );
                 })}
+                {permissoesPorArea.length === 0 && (
+                  <p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                    {erro ? `Não foi possível carregar as permissões: ${erro.message}` : 'Ainda não há permissões disponíveis.'}
+                  </p>
+                )}
               </div>
+
             </div>
           </div>
           <DialogFooter>

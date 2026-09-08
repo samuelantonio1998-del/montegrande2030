@@ -314,6 +314,7 @@ export default function DashboardGerencia() {
         </motion.div>
 
         {/* Purchase alerts */}
+        <Permitido chave={PERMISSOES.inventarioVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="rounded-xl border border-border bg-card p-6 lg:col-span-2">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-warning" /> Alertas de Compras</h2>
           <p className="text-xs text-muted-foreground mt-1">Produtos com stock abaixo do mínimo</p>

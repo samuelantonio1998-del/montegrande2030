@@ -288,6 +288,7 @@ export default function DashboardGerencia() {
         </motion.div>
 
         {/* Menu engineering */}
+        <Permitido chave={PERMISSOES.fichasVer}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-lg text-card-foreground flex items-center gap-2"><ChefHat className="h-5 w-5 text-primary" /> Engenharia de Menu</h2>
           <p className="text-xs text-muted-foreground mt-1">Sugestões baseadas nos dados de produção</p>

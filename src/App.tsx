@@ -13,8 +13,6 @@ import { useMinhasPermissoes } from "@/hooks/usePermissao";
 import { PERMISSOES } from "@/lib/permissoes";
 
 import Login from "./pages/Login";
-import DashboardSala from "./pages/DashboardSala";
-import DashboardCozinha from "./pages/DashboardCozinha";
 import DashboardGerencia from "./pages/DashboardGerencia";
 import Tarefas from "./pages/Tarefas";
 import Inventario from "./pages/Inventario";

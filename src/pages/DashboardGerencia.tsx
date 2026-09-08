@@ -17,6 +17,8 @@ import { pt } from 'date-fns/locale';
 import { EditInventoryEntryDialog } from '@/components/gerencia/EditInventoryEntryDialog';
 import ClosureDaysPanel from '@/components/gerencia/ClosureDaysPanel';
 import ReceiptHistoryPanel from '@/components/gerencia/ReceiptHistoryPanel';
+import Permitido from '@/components/Permitido';
+import { PERMISSOES } from '@/lib/permissoes';
 
 type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };

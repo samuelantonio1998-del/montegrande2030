@@ -234,7 +234,14 @@ export default function DashboardGerencia() {
           <h1 className="text-2xl font-display text-foreground">Painel de Gerência</h1>
           <p className="text-sm text-muted-foreground capitalize">Olá, {user?.name} · {dayLabel}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
+        <div className="flex items-center gap-2">
+          <Permitido chave={PERMISSOES.ementaDefinir}>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/ementa')}>
+              <CalendarPlus className="h-4 w-4" /> Definir Ementa
+            </Button>
+          </Permitido>
+          <Button variant="ghost" size="icon" onClick={logout}><LogOut className="h-5 w-5" /></Button>
+        </div>
       </div>
 
       {/* KPIs */}

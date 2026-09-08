@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2, Edit3 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Package, UtensilsCrossed, Trash2, Recycle, TrendingUp, Users, BarChart3, ShoppingCart, ChefHat, LogOut, Activity, Clock, Undo2, Edit3, CalendarPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import FeedbackInbox from '@/components/feedback/FeedbackInbox';
 import { useMesas } from '@/hooks/useMesas';

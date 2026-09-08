@@ -26,6 +26,7 @@ type ActivityLog = { id: string; user_name: string; user_role: string; action: s
 
 export default function DashboardGerencia() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { mesas } = useMesas();
   const { activeTrays, wasteSummary } = useRegistosProducao();
   const { tarefas } = useTarefas();

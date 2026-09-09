@@ -598,8 +598,8 @@ export default function Inventario() {
         nome: newProductForm.nome.trim(),
         unidade: newProductForm.unidade,
         categoria: newProductForm.categoria,
-        stock_minimo: parseFloat(newProductForm.stock_minimo) || 0,
-        stock_maximo: parseFloat(newProductForm.stock_maximo) || 100,
+        stock_minimo: newProductForm.stock_minimo.trim() === '' ? null : parseFloat(newProductForm.stock_minimo),
+        stock_maximo: newProductForm.stock_maximo.trim() === '' ? null : parseFloat(newProductForm.stock_maximo),
         stock_atual: 0,
         custo_medio: 0,
       }).select('id').single();
@@ -705,7 +705,7 @@ export default function Inventario() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="entrada" className="flex items-center gap-2">
             <ArrowDownCircle className="h-4 w-4" />
             Entrada
@@ -1394,7 +1394,7 @@ export default function Inventario() {
                 {exitProduct && (
                   <div className="rounded-lg bg-muted/50 p-2.5 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Existências atuais:</span>
-                    <span className={cn('text-sm font-bold', exitProduct.stock_atual <= exitProduct.stock_minimo ? 'text-destructive' : 'text-foreground')}>
+                    <span className={cn('text-sm font-bold', isLow(exitProduct) ? 'text-destructive' : 'text-foreground')}>
                       {exitProduct.stock_atual} {exitProduct.unidade}
                     </span>
                   </div>
@@ -1472,10 +1472,11 @@ export default function Inventario() {
                         </div>
                         <span className={cn(
                           'inline-flex items-center justify-center h-6 w-6 rounded-full',
-                          p.stock_atual <= p.stock_minimo ? 'bg-destructive/10 text-destructive' :
+                          semNiveis(p) ? 'bg-muted text-muted-foreground' :
+                          isLow(p) ? 'bg-destructive/10 text-destructive' :
                           level.label === 'Baixo' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
                         )}>
-                          {p.stock_atual <= p.stock_minimo ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                          {semNiveis(p) ? <Info className="h-3.5 w-3.5" /> : isLow(p) ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                         </span>
                       </div>
                     </div>
@@ -1483,7 +1484,7 @@ export default function Inventario() {
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                         <div
                           className={cn('h-full rounded-full transition-all', level.color)}
-                          style={{ width: `${Math.min((p.stock_atual / p.stock_maximo) * 100, 100)}%` }}
+                          style={{ width: `${stockPct(p)}%` }}
                         />
                       </div>
                     </div>
@@ -1561,7 +1562,7 @@ export default function Inventario() {
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
                             <div
                               className={cn('h-full rounded-full transition-all', level.color)}
-                              style={{ width: `${Math.min((p.stock_atual / p.stock_maximo) * 100, 100)}%` }}
+                              style={{ width: `${stockPct(p)}%` }}
                             />
                           </div>
                         </div>
@@ -1569,10 +1570,11 @@ export default function Inventario() {
                       <td className="px-4 py-3">
                         <span className={cn(
                           'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                          p.stock_atual <= p.stock_minimo ? 'bg-destructive/10 text-destructive' :
+                          semNiveis(p) ? 'bg-muted text-muted-foreground' :
+                          isLow(p) ? 'bg-destructive/10 text-destructive' :
                           level.label === 'Baixo' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
                         )}>
-                          {p.stock_atual <= p.stock_minimo ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                          {semNiveis(p) ? <Info className="h-3 w-3" /> : isLow(p) ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
                           {level.label}
                         </span>
                       </td>
@@ -1655,7 +1657,7 @@ export default function Inventario() {
                             </p>
                           </div>
                           <span className="text-sm font-medium text-primary">
-                            Pedir: {p.stock_maximo - p.stock_atual}{p.unidade}
+                            Pedir: {Math.max(0, (p.stock_maximo ?? 0) - p.stock_atual)}{p.unidade}
                           </span>
                         </div>
                       ))}

@@ -215,7 +215,12 @@ Deno.serve(async (req) => {
       if (!nome) return json({ error: "Nome obrigatório" }, 400);
       if (!pin && !email) return json({ error: "Indique um PIN de cozinha ou um email de conta" }, 400);
       if (pin && !validatePin(pin)) return json({ error: "PIN deve ter 4-6 dígitos" }, 400);
-      if (pin && (await pinInUse(pin))) return json({ error: "Já existe alguém com este PIN" }, 409);
+      if (pin) {
+        const check = await pinInUse(pin);
+        if (check.erro) return json({ error: "Não foi possível validar o PIN. Tente novamente." }, 500);
+        if (check.emUso) return json({ error: `Este PIN já está em uso por ${check.nome ?? "outra pessoa"}` }, 409);
+      }
+
       if (email && (!password || String(password).length < 8)) {
         return json({ error: "Password de pelo menos 8 caracteres" }, 400);
       }
@@ -326,7 +331,10 @@ Deno.serve(async (req) => {
       const { funcionario_id, nome, role_id, unidade_id, pin } = body;
       if (!validatePin(pin)) return json({ error: "PIN deve ter 4-6 dígitos" }, 400);
       let fid = funcionario_id as string | undefined;
-      if (await pinInUse(pin, fid)) return json({ error: "Já existe alguém com este PIN" }, 409);
+      const check = await pinInUse(pin, fid);
+      if (check.erro) return json({ error: "Não foi possível validar o PIN. Tente novamente." }, 500);
+      if (check.emUso) return json({ error: `Este PIN já está em uso por ${check.nome ?? "outra pessoa"}` }, 409);
+
 
       if (!fid) {
         const papel = role_id ? await getRoleById(role_id) : null;

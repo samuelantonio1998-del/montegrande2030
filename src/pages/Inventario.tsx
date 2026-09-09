@@ -1683,6 +1683,74 @@ export default function Inventario() {
             </>
           )}
         </TabsContent>
+
+        {/* ===== PRODUTOS SEM NÍVEIS DEFINIDOS ===== */}
+        <TabsContent value="niveis" className="space-y-4">
+          {produtosSemNiveis.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-3" />
+              <p className="text-foreground font-medium">Todos os produtos têm níveis definidos</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Info className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-semibold text-foreground">{produtosSemNiveis.length} produtos sem níveis definidos</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Estes produtos não geram alertas de compra até terem mínimo e máximo definidos. Defina os valores aqui.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar produto..."
+                    value={searchNiveis}
+                    onChange={e => setSearchNiveis(e.target.value)}
+                    className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                  />
+                </div>
+                <div className="divide-y divide-border">
+                  {produtosSemNiveis
+                    .filter(p => p.nome.toLowerCase().includes(searchNiveis.toLowerCase()))
+                    .map(p => {
+                      const draft = nivelDrafts[p.id] || { min: '', max: '' };
+                      return (
+                        <div key={p.id} className="px-4 py-3 space-y-2">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                            <p className="text-xs text-muted-foreground">Stock actual: {p.stock_atual}{p.unidade} · {p.categoria}</p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Mínimo"
+                              value={draft.min}
+                              onChange={e => setNivelDrafts(d => ({ ...d, [p.id]: { ...draft, min: e.target.value } }))}
+                              className="h-9 w-28 text-sm"
+                            />
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Máximo"
+                              value={draft.max}
+                              onChange={e => setNivelDrafts(d => ({ ...d, [p.id]: { ...draft, max: e.target.value } }))}
+                              className="h-9 w-28 text-sm"
+                            />
+                            <Button size="sm" onClick={() => saveNiveis(p, draft.min, draft.max)}>Guardar</Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
 
       <ProductHistoryDialog

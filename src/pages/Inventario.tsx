@@ -22,8 +22,8 @@ type Produto = {
   categoria: string;
   unidade: string;
   stock_atual: number;
-  stock_minimo: number;
-  stock_maximo: number;
+  stock_minimo: number | null;
+  stock_maximo: number | null;
   custo_medio: number;
   fornecedor_id: string | null;
   sku: string | null;
@@ -208,7 +208,7 @@ export default function Inventario() {
       if (data.length < pageSize) break;
     }
 
-    if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
+    if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: p.stock_minimo == null ? null : parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: p.stock_maximo == null ? null : parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     setMovimentacoes(allMovs);
     setLoading(false);
@@ -216,7 +216,12 @@ export default function Inventario() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const lowStock = produtos.filter(p => p.stock_atual <= p.stock_minimo);
+  const semNiveis = (p: Produto) => p.stock_minimo == null || p.stock_maximo == null;
+  const isLow = (p: Produto) => p.stock_minimo != null && p.stock_atual <= p.stock_minimo;
+  const stockPct = (p: Produto) => (p.stock_maximo && p.stock_maximo > 0 ? Math.min((p.stock_atual / p.stock_maximo) * 100, 100) : 0);
+
+  const lowStock = produtos.filter(isLow);
+  const produtosSemNiveis = produtos.filter(semNiveis);
   const filteredProdutos = produtos.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
 
   const faltasByFornecedor = lowStock.reduce((acc, p) => {
@@ -227,9 +232,9 @@ export default function Inventario() {
   }, {} as Record<string, Produto[]>);
 
   const getStockLevel = (p: Produto) => {
-    const pct = (p.stock_atual / p.stock_maximo) * 100;
-    if (p.stock_atual <= p.stock_minimo) return { color: 'bg-destructive', label: 'Crítico' };
-    if (pct < 40) return { color: 'bg-warning', label: 'Baixo' };
+    if (semNiveis(p)) return { color: 'bg-muted-foreground/40', label: 'Sem níveis' };
+    if (isLow(p)) return { color: 'bg-destructive', label: 'Crítico' };
+    if (stockPct(p) < 40) return { color: 'bg-warning', label: 'Baixo' };
     return { color: 'bg-success', label: 'OK' };
   };
 

@@ -48,6 +48,14 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   const [tab, setTab] = useState('entradas');
   const [calendarMonth, setCalendarMonth] = useState<Date>(initialDate);
   const [isPermanent, setIsPermanent] = useState(false);
+  const [quantidades, setQuantidades] = useState<Record<string, string>>({});
+  const { sugestoes, diasMinimos } = useSugestaoQuantidade();
+
+  const quantidadeDe = (id: string) => {
+    if (quantidades[id] !== undefined) return quantidades[id];
+    const s = sugestoes[id];
+    return s?.suficiente ? String(s.mediaKg) : '';
+  };
 
   const filteredItems = useMemo(() => {
     return allItems
@@ -89,11 +97,14 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
 
   const handleConfirm = () => {
     if (selected.size === 0) return;
-    const items = Array.from(selected).map(id => ({
-      buffet_item_id: id,
-      quantidade_prevista: 3,
-      recipiente_sugerido: 'couvete_media',
-    }));
+    const items = Array.from(selected).map(id => {
+      const valor = parseFloat(quantidadeDe(id).replace(',', '.'));
+      return {
+        buffet_item_id: id,
+        quantidade_prevista: valor > 0 ? valor : 3,
+        recipiente_sugerido: 'couvete_media',
+      };
+    });
 
     if (isPermanent) {
       onConfirmPermanent?.(items);
@@ -108,6 +119,7 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   const resetState = () => {
     setSelected(new Set());
     setSelectedDates([]);
+    setQuantidades({});
     setStep('items');
     setSearch('');
     setTab('entradas');

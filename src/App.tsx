@@ -19,7 +19,6 @@ import Inventario from "./pages/Inventario";
 import FichasTecnicas from "./pages/FichasTecnicas";
 import Mesas from "./pages/Mesas";
 import Previsao from "./pages/Previsao";
-import Producao from "./pages/Producao";
 import Ementa from "./pages/Ementa";
 import Desperdicio from "./pages/Desperdicio";
 import Fornecedores from "./pages/Fornecedores";
@@ -37,7 +36,6 @@ const queryClient = new QueryClient();
 const PRIMEIRA_AREA: { permissao: string; rota: string }[] = [
   { permissao: PERMISSOES.mesasVer, rota: '/mesas' },
   { permissao: PERMISSOES.ementaVer, rota: '/ementa' },
-  { permissao: PERMISSOES.producaoVer, rota: '/producao' },
   { permissao: PERMISSOES.tarefasVer, rota: '/tarefas' },
   { permissao: PERMISSOES.inventarioVer, rota: '/inventario' },
   { permissao: PERMISSOES.fichasVer, rota: '/fichas-tecnicas' },
@@ -90,7 +88,7 @@ function ProtectedRoutes() {
         <Route path="/fichas-tecnicas" element={protegida(PERMISSOES.fichasVer, <FichasTecnicas />)} />
         <Route path="/mesas" element={protegida(PERMISSOES.mesasVer, <Mesas />)} />
         <Route path="/ementa" element={protegida(PERMISSOES.ementaVer, <Ementa />)} />
-        <Route path="/producao" element={protegida(PERMISSOES.producaoVer, <Producao />)} />
+        <Route path="/producao" element={<Navigate to="/ementa" replace />} />
         <Route path="/desperdicio" element={protegida(PERMISSOES.desperdicioVer, <Desperdicio />)} />
         <Route path="/fornecedores" element={protegida(PERMISSOES.fornecedoresVer, <Fornecedores />)} />
         <Route path="/precario" element={protegida(PERMISSOES.precarioVer, <Precario />)} />

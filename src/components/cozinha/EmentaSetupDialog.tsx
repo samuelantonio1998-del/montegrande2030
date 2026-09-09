@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { PERMANENT_DATE } from '@/hooks/useEmentaDiaria';
+import { useSugestaoQuantidade } from '@/hooks/useSugestaoQuantidade';
 
 type BuffetItemRow = {
   id: string;
@@ -47,6 +48,14 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   const [tab, setTab] = useState('entradas');
   const [calendarMonth, setCalendarMonth] = useState<Date>(initialDate);
   const [isPermanent, setIsPermanent] = useState(false);
+  const [quantidades, setQuantidades] = useState<Record<string, string>>({});
+  const { sugestoes, diasMinimos } = useSugestaoQuantidade();
+
+  const quantidadeDe = (id: string) => {
+    if (quantidades[id] !== undefined) return quantidades[id];
+    const s = sugestoes[id];
+    return s?.suficiente ? String(s.mediaKg) : '';
+  };
 
   const filteredItems = useMemo(() => {
     return allItems
@@ -88,11 +97,14 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
 
   const handleConfirm = () => {
     if (selected.size === 0) return;
-    const items = Array.from(selected).map(id => ({
-      buffet_item_id: id,
-      quantidade_prevista: 3,
-      recipiente_sugerido: 'couvete_media',
-    }));
+    const items = Array.from(selected).map(id => {
+      const valor = parseFloat(quantidadeDe(id).replace(',', '.'));
+      return {
+        buffet_item_id: id,
+        quantidade_prevista: valor > 0 ? valor : 3,
+        recipiente_sugerido: 'couvete_media',
+      };
+    });
 
     if (isPermanent) {
       onConfirmPermanent?.(items);
@@ -107,6 +119,7 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
   const resetState = () => {
     setSelected(new Set());
     setSelectedDates([]);
+    setQuantidades({});
     setStep('items');
     setSearch('');
     setTab('entradas');
@@ -234,6 +247,38 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
                   );
                 })}
               </div>
+            </div>
+
+            {/* Quantidades previstas, sugeridas pelo histórico */}
+            <div className="rounded-lg border border-border p-3 space-y-2 max-h-[28vh] overflow-y-auto">
+              <p className="text-xs font-medium text-foreground">Quantidade prevista (kg)</p>
+              {Array.from(selected).map(id => {
+                const item = allItems.find(i => i.id === id);
+                if (!item) return null;
+                const s = sugestoes[id];
+                return (
+                  <div key={id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-foreground">{item.nome}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {s?.suficiente
+                          ? `Sugerido pelo histórico: ${s.mediaKg} kg (${s.dias} dias)`
+                          : `Sem histórico suficiente (mínimo ${diasMinimos} dias) — indique a quantidade`}
+                      </p>
+                    </div>
+                    <Input
+                      className="w-24 shrink-0"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      min="0"
+                      placeholder="kg"
+                      value={quantidadeDe(id)}
+                      onChange={e => setQuantidades(prev => ({ ...prev, [id]: e.target.value }))}
+                    />
+                  </div>
+                );
+              })}
             </div>
 
             {/* Permanent toggle */}

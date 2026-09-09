@@ -330,6 +330,10 @@ export default function FichasTecnicas() {
           })}
         </AnimatePresence>
       </div>
+        </TabsContent>
+      </Tabs>
+
+
 
       {/* Dialogs */}
       <FichaDetailDialog ficha={selectedFicha} onClose={() => setSelectedFicha(null)} />

@@ -238,6 +238,21 @@ export default function Inventario() {
     return { color: 'bg-success', label: 'OK' };
   };
 
+  const saveNiveis = async (p: Produto, min: string, max: string) => {
+    const nMax = parseFloat(max);
+    const nMin = parseFloat(min);
+    if (!isFinite(nMax) || !isFinite(nMin) || nMax <= 0 || nMin < 0 || nMin > nMax) {
+      toast({ title: 'Valores inválidos', description: 'Indique um máximo maior que zero e um mínimo menor ou igual ao máximo.', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.from('produtos').update({ stock_minimo: nMin, stock_maximo: nMax }).eq('id', p.id);
+    if (error) { toast({ title: 'Erro ao guardar níveis', variant: 'destructive' }); return; }
+    toast({ title: `Níveis definidos para ${p.nome}` });
+    setNivelDrafts(d => { const n = { ...d }; delete n[p.id]; return n; });
+    await fetchData();
+  };
+
+
   // Step 1: File selected → show preview
   const handleFileSelected = (file: File) => {
     const url = URL.createObjectURL(file);

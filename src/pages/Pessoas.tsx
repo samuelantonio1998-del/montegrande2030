@@ -309,9 +309,15 @@ export default function Pessoas() {
             <DialogDescription>{pinAlvo?.nome}</DialogDescription>
           </DialogHeader>
           <div>
-            <Label>Novo PIN (4 a 6 dígitos)</Label>
-            <Input value={pinNovo} inputMode="numeric" maxLength={6} type="password"
-              onChange={e => setPinNovo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+            <Label>Novo PIN ({PIN_LENGTH} dígitos)</Label>
+            <div className="flex gap-2">
+              <Input value={pinNovo} inputMode="numeric" maxLength={PIN_LENGTH} type="password"
+                onChange={e => setPinNovo(e.target.value.replace(/\D/g, '').slice(0, PIN_LENGTH))} />
+              <Button type="button" variant="outline" onClick={() => setPinNovo(gerarPin())}>Gerar</Button>
+            </div>
+            {pinNovo.length === PIN_LENGTH && pinFraco(pinNovo) && (
+              <p className="mt-1.5 text-sm text-destructive">{pinFraco(pinNovo)}</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPinAlvo(null)}>Cancelar</Button>

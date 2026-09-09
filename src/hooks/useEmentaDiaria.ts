@@ -16,6 +16,7 @@ export type EmentaItem = {
   historico_sobra_kg: number[];
   notas: string | null;
   criado_por: string | null;
+  oculto?: boolean;
   buffet_item?: {
     id: string;
     nome: string;

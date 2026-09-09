@@ -1021,6 +1021,38 @@ export type Database = {
           },
         ]
       }
+      produtos_stock_backup: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          stock_maximo_antigo: number
+          stock_minimo_antigo: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          stock_maximo_antigo: number
+          stock_minimo_antigo: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          stock_maximo_antigo?: number
+          stock_minimo_antigo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_stock_backup_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registos_producao: {
         Row: {
           aproveitamento_nota: string | null

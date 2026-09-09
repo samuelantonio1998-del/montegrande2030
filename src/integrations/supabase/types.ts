@@ -976,8 +976,8 @@ export type Database = {
           nome: string
           sku: string | null
           stock_atual: number
-          stock_maximo: number
-          stock_minimo: number
+          stock_maximo: number | null
+          stock_minimo: number | null
           unidade: string
           updated_at: string
         }
@@ -991,8 +991,8 @@ export type Database = {
           nome: string
           sku?: string | null
           stock_atual?: number
-          stock_maximo?: number
-          stock_minimo?: number
+          stock_maximo?: number | null
+          stock_minimo?: number | null
           unidade?: string
           updated_at?: string
         }
@@ -1006,8 +1006,8 @@ export type Database = {
           nome?: string
           sku?: string | null
           stock_atual?: number
-          stock_maximo?: number
-          stock_minimo?: number
+          stock_maximo?: number | null
+          stock_minimo?: number | null
           unidade?: string
           updated_at?: string
         }

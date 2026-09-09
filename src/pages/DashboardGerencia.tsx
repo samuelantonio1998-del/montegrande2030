@@ -21,7 +21,7 @@ import ReceiptHistoryPanel from '@/components/gerencia/ReceiptHistoryPanel';
 import Permitido from '@/components/Permitido';
 import { PERMISSOES } from '@/lib/permissoes';
 
-type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number; stock_maximo: number; custo_medio: number; unidade: string; fornecedor_id: string | null };
+type ProdutoStock = { id: string; nome: string; stock_atual: number; stock_minimo: number | null; stock_maximo: number | null; custo_medio: number; unidade: string; fornecedor_id: string | null };
 type ActivityLog = { id: string; user_name: string; user_role: string; action: string; module: string; details: string; created_at: string; metadata: Record<string, any> | null };
 
 export default function DashboardGerencia() {
@@ -39,7 +39,7 @@ export default function DashboardGerencia() {
   useEffect(() => {
     supabase.from('produtos').select('id, nome, stock_atual, stock_minimo, stock_maximo, custo_medio, unidade, fornecedor_id')
       .then(({ data }) => {
-        if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_atual <= p.stock_minimo));
+        if (data) setLowStock((data as unknown as ProdutoStock[]).filter(p => p.stock_minimo != null && p.stock_atual <= p.stock_minimo));
       });
     // Fetch recent activity logs (paginated to bypass 1000-row Supabase default)
     (async () => {
@@ -75,7 +75,7 @@ export default function DashboardGerencia() {
   const totalTasks = tarefas.length;
 
   const purchaseAlerts = lowStock.map(item => {
-    const avgDailyUsage = item.stock_maximo * 0.1;
+    const avgDailyUsage = (item.stock_maximo ?? 0) * 0.1;
     const daysLeft = avgDailyUsage > 0 ? Math.ceil(item.stock_atual / avgDailyUsage) : 99;
     return { ...item, daysLeft, urgency: daysLeft <= 1 ? 'critico' as const : 'aviso' as const };
   });
@@ -344,13 +344,13 @@ export default function DashboardGerencia() {
               <div key={item.id} className={cn('flex items-center justify-between rounded-lg p-3', item.urgency === 'critico' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20')}>
                 <div>
                   <p className="text-sm font-medium text-foreground">{item.nome}</p>
-                  <p className="text-xs text-muted-foreground">{item.stock_atual} {item.unidade} em stock · mín: {item.stock_minimo} {item.unidade}</p>
+                  <p className="text-xs text-muted-foreground">{item.stock_atual} {item.unidade} em stock · mín: {item.stock_minimo ?? '—'} {item.unidade}</p>
                 </div>
                 <div className="text-right">
                   <Badge variant="outline" className={cn('text-[10px]', item.urgency === 'critico' ? 'text-destructive border-destructive/30' : 'text-warning border-warning/30')}>
                     {item.daysLeft <= 1 ? 'Encomendar HOJE' : `~${item.daysLeft} dias`}
                   </Badge>
-                  <p className="text-xs text-muted-foreground mt-0.5">€{(item.stock_minimo * item.custo_medio).toFixed(2)} estimado</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">€{((item.stock_minimo ?? 0) * item.custo_medio).toFixed(2)} estimado</p>
                 </div>
               </div>
             ))}

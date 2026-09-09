@@ -22,8 +22,8 @@ type Produto = {
   categoria: string;
   unidade: string;
   stock_atual: number;
-  stock_minimo: number;
-  stock_maximo: number;
+  stock_minimo: number | null;
+  stock_maximo: number | null;
   custo_medio: number;
   fornecedor_id: string | null;
   sku: string | null;
@@ -158,6 +158,8 @@ export default function Inventario() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProductForm, setNewProductForm] = useState({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
   const [creatingProduct, setCreatingProduct] = useState(false);
+  const [nivelDrafts, setNivelDrafts] = useState<Record<string, { min: string; max: string }>>({});
+  const [searchNiveis, setSearchNiveis] = useState('');
 
   // Exit state
   const [showExit, setShowExit] = useState(false);
@@ -208,7 +210,7 @@ export default function Inventario() {
       if (data.length < pageSize) break;
     }
 
-    if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
+    if (prodRes.data) setProdutos(prodRes.data.map(p => ({ ...p, stock_atual: parseFloat(p.stock_atual.toFixed(2)), stock_minimo: p.stock_minimo == null ? null : parseFloat(p.stock_minimo.toFixed(2)), stock_maximo: p.stock_maximo == null ? null : parseFloat(p.stock_maximo.toFixed(2)), custo_medio: parseFloat(p.custo_medio.toFixed(4)) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     setMovimentacoes(allMovs);
     setLoading(false);
@@ -216,7 +218,12 @@ export default function Inventario() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const lowStock = produtos.filter(p => p.stock_atual <= p.stock_minimo);
+  const semNiveis = (p: Produto) => p.stock_minimo == null || p.stock_maximo == null;
+  const isLow = (p: Produto) => p.stock_minimo != null && p.stock_atual <= p.stock_minimo;
+  const stockPct = (p: Produto) => (p.stock_maximo && p.stock_maximo > 0 ? Math.min((p.stock_atual / p.stock_maximo) * 100, 100) : 0);
+
+  const lowStock = produtos.filter(isLow);
+  const produtosSemNiveis = produtos.filter(semNiveis);
   const filteredProdutos = produtos.filter(p => p.nome.toLowerCase().includes(search.toLowerCase()));
 
   const faltasByFornecedor = lowStock.reduce((acc, p) => {
@@ -227,11 +234,26 @@ export default function Inventario() {
   }, {} as Record<string, Produto[]>);
 
   const getStockLevel = (p: Produto) => {
-    const pct = (p.stock_atual / p.stock_maximo) * 100;
-    if (p.stock_atual <= p.stock_minimo) return { color: 'bg-destructive', label: 'Crítico' };
-    if (pct < 40) return { color: 'bg-warning', label: 'Baixo' };
+    if (semNiveis(p)) return { color: 'bg-muted-foreground/40', label: 'Sem níveis' };
+    if (isLow(p)) return { color: 'bg-destructive', label: 'Crítico' };
+    if (stockPct(p) < 40) return { color: 'bg-warning', label: 'Baixo' };
     return { color: 'bg-success', label: 'OK' };
   };
+
+  const saveNiveis = async (p: Produto, min: string, max: string) => {
+    const nMax = parseFloat(max);
+    const nMin = parseFloat(min);
+    if (!isFinite(nMax) || !isFinite(nMin) || nMax <= 0 || nMin < 0 || nMin > nMax) {
+      toast({ title: 'Valores inválidos', description: 'Indique um máximo maior que zero e um mínimo menor ou igual ao máximo.', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.from('produtos').update({ stock_minimo: nMin, stock_maximo: nMax }).eq('id', p.id);
+    if (error) { toast({ title: 'Erro ao guardar níveis', variant: 'destructive' }); return; }
+    toast({ title: `Níveis definidos para ${p.nome}` });
+    setNivelDrafts(d => { const n = { ...d }; delete n[p.id]; return n; });
+    await fetchData();
+  };
+
 
   // Step 1: File selected → show preview
   const handleFileSelected = (file: File) => {
@@ -576,8 +598,8 @@ export default function Inventario() {
         nome: newProductForm.nome.trim(),
         unidade: newProductForm.unidade,
         categoria: newProductForm.categoria,
-        stock_minimo: parseFloat(newProductForm.stock_minimo) || 0,
-        stock_maximo: parseFloat(newProductForm.stock_maximo) || 100,
+        stock_minimo: newProductForm.stock_minimo.trim() === '' ? null : parseFloat(newProductForm.stock_minimo),
+        stock_maximo: newProductForm.stock_maximo.trim() === '' ? null : parseFloat(newProductForm.stock_maximo),
         stock_atual: 0,
         custo_medio: 0,
       }).select('id').single();
@@ -683,7 +705,7 @@ export default function Inventario() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="entrada" className="flex items-center gap-2">
             <ArrowDownCircle className="h-4 w-4" />
             Entrada
@@ -695,6 +717,10 @@ export default function Inventario() {
           <TabsTrigger value="faltas" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
             Faltas ({lowStock.length})
+          </TabsTrigger>
+          <TabsTrigger value="niveis" className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Sem níveis ({produtosSemNiveis.length})
           </TabsTrigger>
         </TabsList>
 
@@ -1372,7 +1398,7 @@ export default function Inventario() {
                 {exitProduct && (
                   <div className="rounded-lg bg-muted/50 p-2.5 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Existências atuais:</span>
-                    <span className={cn('text-sm font-bold', exitProduct.stock_atual <= exitProduct.stock_minimo ? 'text-destructive' : 'text-foreground')}>
+                    <span className={cn('text-sm font-bold', isLow(exitProduct) ? 'text-destructive' : 'text-foreground')}>
                       {exitProduct.stock_atual} {exitProduct.unidade}
                     </span>
                   </div>
@@ -1450,10 +1476,11 @@ export default function Inventario() {
                         </div>
                         <span className={cn(
                           'inline-flex items-center justify-center h-6 w-6 rounded-full',
-                          p.stock_atual <= p.stock_minimo ? 'bg-destructive/10 text-destructive' :
+                          semNiveis(p) ? 'bg-muted text-muted-foreground' :
+                          isLow(p) ? 'bg-destructive/10 text-destructive' :
                           level.label === 'Baixo' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
                         )}>
-                          {p.stock_atual <= p.stock_minimo ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                          {semNiveis(p) ? <Info className="h-3.5 w-3.5" /> : isLow(p) ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                         </span>
                       </div>
                     </div>
@@ -1461,7 +1488,7 @@ export default function Inventario() {
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                         <div
                           className={cn('h-full rounded-full transition-all', level.color)}
-                          style={{ width: `${Math.min((p.stock_atual / p.stock_maximo) * 100, 100)}%` }}
+                          style={{ width: `${stockPct(p)}%` }}
                         />
                       </div>
                     </div>
@@ -1539,7 +1566,7 @@ export default function Inventario() {
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
                             <div
                               className={cn('h-full rounded-full transition-all', level.color)}
-                              style={{ width: `${Math.min((p.stock_atual / p.stock_maximo) * 100, 100)}%` }}
+                              style={{ width: `${stockPct(p)}%` }}
                             />
                           </div>
                         </div>
@@ -1547,10 +1574,11 @@ export default function Inventario() {
                       <td className="px-4 py-3">
                         <span className={cn(
                           'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                          p.stock_atual <= p.stock_minimo ? 'bg-destructive/10 text-destructive' :
+                          semNiveis(p) ? 'bg-muted text-muted-foreground' :
+                          isLow(p) ? 'bg-destructive/10 text-destructive' :
                           level.label === 'Baixo' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
                         )}>
-                          {p.stock_atual <= p.stock_minimo ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                          {semNiveis(p) ? <Info className="h-3 w-3" /> : isLow(p) ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
                           {level.label}
                         </span>
                       </td>
@@ -1584,6 +1612,17 @@ export default function Inventario() {
 
         {/* ===== FALTAS E ENCOMENDAS ===== */}
         <TabsContent value="faltas" className="space-y-4">
+          {produtosSemNiveis.length > 0 && (
+            <button
+              onClick={() => setActiveTab('niveis')}
+              className="w-full text-left rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-2"
+            >
+              <Info className="h-4 w-4 text-warning shrink-0" />
+              <span className="text-sm text-foreground">
+                <strong>{produtosSemNiveis.length} produtos sem níveis definidos</strong> — não entram nos alertas de compra. Toque para definir.
+              </span>
+            </button>
+          )}
           {lowStock.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-3" />
@@ -1633,7 +1672,7 @@ export default function Inventario() {
                             </p>
                           </div>
                           <span className="text-sm font-medium text-primary">
-                            Pedir: {p.stock_maximo - p.stock_atual}{p.unidade}
+                            Pedir: {Math.max(0, (p.stock_maximo ?? 0) - p.stock_atual)}{p.unidade}
                           </span>
                         </div>
                       ))}
@@ -1641,6 +1680,74 @@ export default function Inventario() {
                   </motion.div>
                 );
               })}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ===== PRODUTOS SEM NÍVEIS DEFINIDOS ===== */}
+        <TabsContent value="niveis" className="space-y-4">
+          {produtosSemNiveis.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-3" />
+              <p className="text-foreground font-medium">Todos os produtos têm níveis definidos</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Info className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-semibold text-foreground">{produtosSemNiveis.length} produtos sem níveis definidos</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Estes produtos não geram alertas de compra até terem mínimo e máximo definidos. Defina os valores aqui.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar produto..."
+                    value={searchNiveis}
+                    onChange={e => setSearchNiveis(e.target.value)}
+                    className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                  />
+                </div>
+                <div className="divide-y divide-border">
+                  {produtosSemNiveis
+                    .filter(p => p.nome.toLowerCase().includes(searchNiveis.toLowerCase()))
+                    .map(p => {
+                      const draft = nivelDrafts[p.id] || { min: '', max: '' };
+                      return (
+                        <div key={p.id} className="px-4 py-3 space-y-2">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                            <p className="text-xs text-muted-foreground">Stock actual: {p.stock_atual}{p.unidade} · {p.categoria}</p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Mínimo"
+                              value={draft.min}
+                              onChange={e => setNivelDrafts(d => ({ ...d, [p.id]: { ...draft, min: e.target.value } }))}
+                              className="h-9 w-28 text-sm"
+                            />
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Máximo"
+                              value={draft.max}
+                              onChange={e => setNivelDrafts(d => ({ ...d, [p.id]: { ...draft, max: e.target.value } }))}
+                              className="h-9 w-28 text-sm"
+                            />
+                            <Button size="sm" onClick={() => saveNiveis(p, draft.min, draft.max)}>Guardar</Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
             </>
           )}
         </TabsContent>

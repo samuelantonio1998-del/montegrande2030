@@ -35,8 +35,8 @@ type Fornecedor = {
   nome: string;
   unidade: string;
   stock_atual: number;
-  stock_minimo: number;
-  stock_maximo: number;
+  stock_minimo: number | null;
+  stock_maximo: number | null;
   custo_medio: number;
   fornecedor_id: string | null;
 };
@@ -150,7 +150,7 @@ export default function Fornecedores() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(f => {
           const prods = getProductsForSupplier(f.id);
-          const lowStock = prods.filter(p => p.stock_atual <= p.stock_minimo);
+          const lowStock = prods.filter(p => p.stock_minimo != null && p.stock_atual <= p.stock_minimo);
           return (
             <motion.div
               key={f.id}
@@ -313,7 +313,7 @@ export default function Fornecedores() {
                     <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
                       <div>
                         <p className="text-sm text-foreground">{p.nome}</p>
-                        <p className="text-xs text-muted-foreground">Stock: {p.stock_atual}{p.unidade} · Mín: {p.stock_minimo}{p.unidade}</p>
+                        <p className="text-xs text-muted-foreground">Stock: {p.stock_atual}{p.unidade} · Mín: {p.stock_minimo ?? '—'}{p.unidade}</p>
                       </div>
                       <span className="text-xs font-medium text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</span>
                     </div>

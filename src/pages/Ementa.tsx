@@ -284,13 +284,27 @@ export default function Ementa() {
                           )}
                         </div>
                         <Permitido chave={PERMISSOES.ementaDefinir}>
-                          <button
-                            onClick={() => removeItem.mutate(item.id)}
-                            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-                            aria-label="Remover da ementa"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+                                aria-label="Remover da ementa"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => removerHoje.mutate(item)}>
+                                Remover só hoje
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setConfirmSempre({ id: item.buffet_item_id, nome: item.buffet_item?.nome || 'este prato' })}
+                              >
+                                Remover sempre
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </Permitido>
                       </div>
 

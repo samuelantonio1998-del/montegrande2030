@@ -13,6 +13,11 @@ import { toast } from '@/hooks/use-toast';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
+import { CartaMarcaPanel } from '@/components/fichas/CartaMarcaPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePermissao } from '@/hooks/usePermissao';
+import { PERMISSOES } from '@/lib/permissoes';
+
 
 const categoryLabels: Record<string, string> = {
   entrada: 'Entrada',
@@ -49,9 +54,12 @@ function calcCost(ficha: FichaComIngredientes, laborCostPerHour: number) {
 
 export default function FichasTecnicas() {
   const { data: fichas = [], isLoading } = useFichasTecnicas();
+  const { permitido: podeEditar } = usePermissao(PERMISSOES.fichasEditar);
+  const [tab, setTab] = useState('fichas');
   const updateFoto = useUpdateFichaFoto();
   const laborCostPerHour = useLaborCostPerHour();
   const [search, setSearch] = useState('');
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFicha, setSelectedFicha] = useState<FichaComIngredientes | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -138,8 +146,23 @@ export default function FichasTecnicas() {
         </div>
       </div>
 
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="fichas">Fichas</TabsTrigger>
+          {podeEditar && <TabsTrigger value="carta">Carta por marca</TabsTrigger>}
+        </TabsList>
+
+        {podeEditar && (
+          <TabsContent value="carta" className="mt-6">
+            <CartaMarcaPanel />
+          </TabsContent>
+        )}
+
+        <TabsContent value="fichas" className="space-y-6 mt-6">
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Procurar prato..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -307,6 +330,10 @@ export default function FichasTecnicas() {
           })}
         </AnimatePresence>
       </div>
+        </TabsContent>
+      </Tabs>
+
+
 
       {/* Dialogs */}
       <FichaDetailDialog ficha={selectedFicha} onClose={() => setSelectedFicha(null)} />

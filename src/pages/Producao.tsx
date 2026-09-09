@@ -18,6 +18,8 @@ import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { MarcaSwitcher } from '@/components/MarcaSwitcher';
 import { DecisaoReposicaoCard } from '@/components/producao/DecisaoReposicaoCard';
+import { useCartaMarca } from '@/hooks/useCartaMarca';
+
 
 
 type Canal = 'buffet' | 'take_away' | 'delivery';
@@ -38,7 +40,9 @@ export default function Producao() {
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
-  const { servicos, marca } = useUnidade();
+  const { servicos, marca, marcaId } = useUnidade();
+  const { data: carta } = useCartaMarca(marcaId);
+
   // Abas geradas a partir de unidade_marca_servicos (local activo × marca activa)
   const temBuffet = servicos.includes('buffet');
   const temTakeaway = servicos.includes('takeaway');
@@ -81,8 +85,10 @@ export default function Producao() {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
   const [decisaoRegistoId, setDecisaoRegistoId] = useState<string | null>(null);
+  const [dishSearch, setDishSearch] = useState('');
 
   const [newDish, setNewDish] = useState('');
+
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [newTakeawayKg, setNewTakeawayKg] = useState('');
   const [discountLeftover, setDiscountLeftover] = useState(true);
@@ -110,6 +116,7 @@ export default function Producao() {
   async function handleSendTray() {
     if (!newDish) return;
     const dish = allEmentaDishes.find(d => d.nome === newDish);
+    const cartaDish = (carta?.itens ?? []).find(c => (c.nome_comercial || c.nome) === newDish);
 
     const leftoverDiscount = (discountLeftover && previousLeftover) ? previousLeftover.totalKg : 0;
 
@@ -119,7 +126,7 @@ export default function Producao() {
       const realKg = Math.max(0.1, kg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
+        ficha_tecnica_id: cartaDish?.ficha_tecnica_id || dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
         peso_kg: realKg,
@@ -127,6 +134,7 @@ export default function Producao() {
         canal: activeTab,
       });
     } else {
+
       const cap = recipientCapacity[newRecipient];
       const pesoKg = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
       const realKg = Math.max(0.1, pesoKg - leftoverDiscount);
@@ -310,18 +318,65 @@ export default function Producao() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Prato</Label>
-              <Select value={newDish} onValueChange={(v) => { setNewDish(v); const dish = allEmentaDishes.find(d => d.nome === v); if (dish && recipientCapacity[dish.recipiente]) setNewRecipient(dish.recipiente); }}>
-                <SelectTrigger><SelectValue placeholder="Selecionar prato da ementa" /></SelectTrigger>
-                <SelectContent>
-                  {ementaByZone.entradas.length > 0 && <SelectGroup><SelectLabel>Entradas</SelectLabel>{ementaByZone.entradas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
-                  {ementaByZone.pratos_principais.length > 0 && <SelectGroup><SelectLabel>Pratos Quentes</SelectLabel>{ementaByZone.pratos_principais.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
-                  {ementaByZone.sobremesas.length > 0 && <SelectGroup><SelectLabel>Sobremesas</SelectLabel>{ementaByZone.sobremesas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
-                  {allEmentaDishes.length === 0 && <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>}
-                </SelectContent>
-              </Select>
-            </div>
+            {activeTab === 'buffet' ? (
+              <div>
+                <Label>Prato</Label>
+                <Select value={newDish} onValueChange={(v) => { setNewDish(v); const dish = allEmentaDishes.find(d => d.nome === v); if (dish && recipientCapacity[dish.recipiente]) setNewRecipient(dish.recipiente); }}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar prato da ementa" /></SelectTrigger>
+                  <SelectContent>
+                    {ementaByZone.entradas.length > 0 && <SelectGroup><SelectLabel>Entradas</SelectLabel>{ementaByZone.entradas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                    {ementaByZone.pratos_principais.length > 0 && <SelectGroup><SelectLabel>Pratos Quentes</SelectLabel>{ementaByZone.pratos_principais.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                    {ementaByZone.sobremesas.length > 0 && <SelectGroup><SelectLabel>Sobremesas</SelectLabel>{ementaByZone.sobremesas.map(d => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}</SelectGroup>}
+                    {allEmentaDishes.length === 0 && <SelectItem value="_empty" disabled>Nenhum prato na ementa de hoje</SelectItem>}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Prato da carta{marca ? ` — ${marca.nome}` : ''}</Label>
+                  {carta && !carta.definida && (
+                    <span className="text-[11px] text-muted-foreground">Carta da marca ainda não definida — a mostrar todas as fichas</span>
+                  )}
+                </div>
+                <Input
+                  placeholder="Procurar prato..."
+                  value={dishSearch}
+                  onChange={e => setDishSearch(e.target.value)}
+                />
+                <div className="max-h-56 overflow-y-auto rounded-lg border border-border">
+                  {(() => {
+                    const termo = dishSearch.trim().toLowerCase();
+                    const lista = (carta?.itens ?? []).filter(c =>
+                      (c.nome_comercial || c.nome).toLowerCase().includes(termo)
+                    );
+                    if (lista.length === 0) {
+                      return <p className="p-3 text-sm text-muted-foreground">Nenhum prato encontrado</p>;
+                    }
+                    return lista.map(c => {
+                      const nome = c.nome_comercial || c.nome;
+                      return (
+                        <button
+                          key={c.ficha_tecnica_id}
+                          type="button"
+                          onClick={() => setNewDish(nome)}
+                          className={cn(
+                            'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors',
+                            newDish === nome ? 'bg-primary/10 font-medium text-primary' : 'hover:bg-muted'
+                          )}
+                        >
+                          <span className="truncate">{nome}</span>
+                          {c.preco_venda != null && (
+                            <span className="ml-2 shrink-0 text-xs text-muted-foreground">€{Number(c.preco_venda).toFixed(2)}</span>
+                          )}
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
 
             {activeTab === 'buffet' ? (
               <div className="space-y-3">

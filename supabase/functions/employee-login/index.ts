@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   try {
     const { pin } = await req.json();
 
-    if (!pin || typeof pin !== "string" || pin.length < 4 || pin.length > 6) {
+    if (!pin || typeof pin !== "string" || pin.length !== 4) {
       return new Response(
         JSON.stringify({ error: "PIN inválido" }),
         {

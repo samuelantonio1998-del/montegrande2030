@@ -12,7 +12,23 @@ const json = (body: unknown, status = 200) =>
   });
 
 const validatePin = (pin: unknown): pin is string =>
-  typeof pin === "string" && /^\d{4,6}$/.test(pin);
+  typeof pin === "string" && /^\d{4}$/.test(pin);
+
+const OBVIOS = new Set(["1234", "4321", "0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1122", "2211", "1212", "2121", "1010", "0101", "2580", "0852", "1379"]);
+
+/** Devolve a razão de recusa, ou null se o PIN for aceitável. */
+const pinFraco = (pin: string): string | null => {
+  if (OBVIOS.has(pin)) return "Este PIN é demasiado óbvio. Escolha outra combinação.";
+  const d = pin.split("").map(Number);
+  if (d.every((n) => n === d[0])) return "O PIN não pode ter todos os dígitos iguais.";
+  const passo = d[1] - d[0];
+  if ((passo === 1 || passo === -1) && d.every((n, i) => i === 0 || n - d[i - 1] === passo)) {
+    return "O PIN não pode ser uma sequência simples de dígitos.";
+  }
+  if (d[0] === d[1] && d[2] === d[3]) return "O PIN não pode ser um padrão repetido.";
+  if (d[0] === d[2] && d[1] === d[3]) return "O PIN não pode ser um padrão repetido.";
+  return null;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -214,7 +230,11 @@ Deno.serve(async (req) => {
       const { nome, role_id, unidade_id, pin, email, password } = body;
       if (!nome) return json({ error: "Nome obrigatório" }, 400);
       if (!pin && !email) return json({ error: "Indique um PIN de cozinha ou um email de conta" }, 400);
-      if (pin && !validatePin(pin)) return json({ error: "PIN deve ter 4-6 dígitos" }, 400);
+      if (pin && !validatePin(pin)) return json({ error: "O PIN deve ter exatamente 4 dígitos" }, 400);
+      if (pin) {
+        const fraco = pinFraco(pin as string);
+        if (fraco) return json({ error: fraco }, 400);
+      }
       if (pin) {
         const check = await pinInUse(pin);
         if (check.erro) return json({ error: "Não foi possível validar o PIN. Tente novamente." }, 500);
@@ -329,7 +349,9 @@ Deno.serve(async (req) => {
 
     if (action === "pessoa_set_pin") {
       const { funcionario_id, nome, role_id, unidade_id, pin } = body;
-      if (!validatePin(pin)) return json({ error: "PIN deve ter 4-6 dígitos" }, 400);
+      if (!validatePin(pin)) return json({ error: "O PIN deve ter exatamente 4 dígitos" }, 400);
+      const fraco = pinFraco(pin);
+      if (fraco) return json({ error: fraco }, 400);
       let fid = funcionario_id as string | undefined;
       const check = await pinInUse(pin, fid);
       if (check.erro) return json({ error: "Não foi possível validar o PIN. Tente novamente." }, 500);

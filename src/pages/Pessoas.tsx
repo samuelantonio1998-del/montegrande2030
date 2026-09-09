@@ -22,7 +22,7 @@ import {
 const SEM_UNIDADE = '__nenhuma__';
 const SEM_PAPEL = '__sem_papel__';
 
-const pinValido = (pin: string) => /^\d{4,6}$/.test(pin);
+const pinValido = (pin: string) => pinFormatoValido(pin) && !pinFraco(pin);
 
 const AREAS_PERMISSAO = [
   { chave: 'sala', label: 'Sala' },

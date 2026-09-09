@@ -222,14 +222,20 @@ export default function Pessoas() {
             {dialogoPessoa === 'nova' && (
               <>
                 <div>
-                  <Label>PIN de cozinha (opcional, 4 a 6 dígitos)</Label>
-                  <Input
-                    value={form.pin}
-                    inputMode="numeric"
-                    maxLength={6}
-                    onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                    placeholder="Ex: 1234"
-                  />
+                  <Label>PIN de cozinha (opcional, {PIN_LENGTH} dígitos)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.pin}
+                      inputMode="numeric"
+                      maxLength={PIN_LENGTH}
+                      onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '').slice(0, PIN_LENGTH) })}
+                      placeholder="Ex: 5837"
+                    />
+                    <Button type="button" variant="outline" onClick={() => setForm({ ...form, pin: gerarPin() })}>Gerar</Button>
+                  </div>
+                  {form.pin.length === PIN_LENGTH && pinFraco(form.pin) && (
+                    <p className="mt-1.5 text-sm text-destructive">{pinFraco(form.pin)}</p>
+                  )}
                 </div>
                 <div><Label>Email da conta de gestão (opcional)</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
                 {form.email && (

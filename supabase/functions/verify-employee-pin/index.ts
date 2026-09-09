@@ -27,7 +27,14 @@ Deno.serve(async (req) => {
 
     // Compare against bcrypt hash (pin_hash) via SECURITY DEFINER function
     const { data, error } = await supabase.rpc("verify_employee_pin", { p_pin: pin });
-    const row = Array.isArray(data) ? data[0] : data;
+    const rows = Array.isArray(data) ? data : data ? [data] : [];
+    if (rows.length > 1) {
+      return new Response(
+        JSON.stringify({ success: false, error: "PIN ambíguo" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const row = rows[0];
 
     if (error || !row?.id) {
       return new Response(

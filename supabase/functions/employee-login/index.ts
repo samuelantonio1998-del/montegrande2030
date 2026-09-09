@@ -87,7 +87,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const employee = Array.isArray(verified) ? verified[0] : verified;
+    const matches = Array.isArray(verified) ? verified : verified ? [verified] : [];
+    if (matches.length > 1) {
+      console.error("PIN ambíguo: múltiplos funcionários correspondem");
+      await logAttempt(false);
+      return new Response(
+        JSON.stringify({ success: false, error: "PIN ambíguo. Contacte a gerência." }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    const employee = matches[0];
     if (!employee?.id) {
       await logAttempt(false);
       return new Response(
@@ -98,6 +110,7 @@ Deno.serve(async (req) => {
         }
       );
     }
+
 
     await logAttempt(true);
 

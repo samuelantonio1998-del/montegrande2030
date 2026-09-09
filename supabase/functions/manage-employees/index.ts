@@ -75,13 +75,23 @@ Deno.serve(async (req) => {
     }
 
 
-    // Check if PIN is already in use by an active employee (compares against pin_hash via bcrypt)
-    const pinInUse = async (pin: string, excludeId?: string): Promise<boolean> => {
-      const { data } = await supabase.rpc("verify_employee_pin", { p_pin: pin });
+    // Verifica se o PIN já pertence a outro funcionário ativo (bcrypt contra pin_hash).
+    // Em caso de erro técnico recusa a operação em vez de deixar passar.
+    const pinInUse = async (
+      pin: string,
+      excludeId?: string
+    ): Promise<{ emUso: boolean; nome?: string; erro?: boolean }> => {
+      const { data, error } = await supabase.rpc("verify_employee_pin", { p_pin: pin });
+      if (error) {
+        console.error("verify_employee_pin error:", error);
+        return { emUso: false, erro: true };
+      }
       const row = Array.isArray(data) ? data[0] : data;
-      if (!row?.id) return false;
-      return excludeId ? row.id !== excludeId : true;
+      if (!row?.id) return { emUso: false };
+      if (excludeId && row.id === excludeId) return { emUso: false };
+      return { emUso: true, nome: row.nome };
     };
+
 
     // ================= Pessoas (funcionário PIN + conta de gestão) =================
 

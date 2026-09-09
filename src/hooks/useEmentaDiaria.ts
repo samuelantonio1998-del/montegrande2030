@@ -16,6 +16,7 @@ export type EmentaItem = {
   historico_sobra_kg: number[];
   notas: string | null;
   criado_por: string | null;
+  oculto?: boolean;
   buffet_item?: {
     id: string;
     nome: string;
@@ -53,18 +54,18 @@ export function useEmentaDiaria(date?: Date) {
         buffet_item: d.buffet_item as unknown as EmentaItem['buffet_item'],
       }));
       
-      // First pass: today's items
+      // First pass: today's items (an "oculto" row hides the dish just for today)
       for (const item of allItems) {
         if (item.data !== PERMANENT_DATE) {
           seen.add(item.buffet_item_id);
-          result.push(item);
+          if (!item.oculto) result.push(item);
         }
       }
       // Second pass: permanent items not already covered by today
       for (const item of allItems) {
         if (item.data === PERMANENT_DATE && !seen.has(item.buffet_item_id)) {
           seen.add(item.buffet_item_id);
-          result.push(item);
+          if (!item.oculto) result.push(item);
         }
       }
       
@@ -123,15 +124,82 @@ export function useAddToEmenta() {
   });
 }
 
+/** Remove uma linha concreta da ementa (um dia específico ou a linha permanente). */
 export function useRemoveFromEmenta() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('ementa_diaria').delete().eq('id', id);
+      const { data, error } = await supabase.from('ementa_diaria').delete().eq('id', id).select('id');
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error('Sem permissão para remover pratos da ementa.');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Não foi possível remover', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+/** Remove definitivamente um prato da ementa desta marca: linha permanente + dias futuros. */
+export function useRemoveEmentaSempre() {
+  const qc = useQueryClient();
+  const { unidadeId, marcaId } = useUnidade();
+  return useMutation({
+    mutationFn: async (buffetItemId: string) => {
+      const hoje = format(new Date(), 'yyyy-MM-dd');
+      let q = supabase
+        .from('ementa_diaria')
+        .delete()
+        .eq('buffet_item_id', buffetItemId)
+        .gte('data', hoje);
+      if (unidadeId) q = q.eq('unidade_id', unidadeId);
+      if (marcaId) q = q.eq('marca_id', marcaId);
+      const { data, error } = await q.select('id');
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error('Sem permissão para remover pratos da ementa.');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+      toast({ title: 'Prato removido da ementa' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Não foi possível remover', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+/** Esconde um prato apenas no dia de hoje, mantendo-o nos restantes dias. */
+export function useRemoverSoHoje() {
+  const qc = useQueryClient();
+  const { unidadeId, marcaId } = useUnidade();
+  return useMutation({
+    mutationFn: async (item: { id: string; data: string; buffet_item_id: string; recipiente_sugerido: string }) => {
+      const hoje = format(new Date(), 'yyyy-MM-dd');
+      if (item.data !== PERMANENT_DATE) {
+        const { data, error } = await supabase.from('ementa_diaria').delete().eq('id', item.id).select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Sem permissão para remover pratos da ementa.');
+        return;
+      }
+      const { error } = await supabase.from('ementa_diaria').insert({
+        data: hoje,
+        buffet_item_id: item.buffet_item_id,
+        quantidade_prevista: 0,
+        recipiente_sugerido: item.recipiente_sugerido,
+        oculto: true,
+        unidade_id: unidadeId,
+        marca_id: marcaId,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ementa_diaria'] });
+      toast({ title: 'Prato retirado da ementa de hoje' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Não foi possível remover', description: err.message, variant: 'destructive' });
     },
   });
 }

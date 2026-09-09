@@ -13,6 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { Permitido } from '@/components/Permitido';
 import { PERMISSOES } from '@/lib/permissoes';
@@ -28,7 +33,8 @@ import {
   useBuffetItems,
   useBulkAddEmenta,
   usePermanentEmentaItems,
-  useRemoveFromEmenta,
+  useRemoveEmentaSempre,
+  useRemoverSoHoje,
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
@@ -59,7 +65,9 @@ export default function Ementa() {
   const { data: allBuffetItems = [] } = useBuffetItems();
   const { data: permanentItems = [] } = usePermanentEmentaItems();
   const bulkAdd = useBulkAddEmenta();
-  const removeItem = useRemoveFromEmenta();
+  const removerHoje = useRemoverSoHoje();
+  const removerSempre = useRemoveEmentaSempre();
+  const [confirmSempre, setConfirmSempre] = useState<{ id: string; nome: string } | null>(null);
   const { registos, addRegisto, recolherRegisto, activeTrays } = useRegistosProducao();
 
   // relógio para o tempo decorrido
@@ -284,13 +292,27 @@ export default function Ementa() {
                           )}
                         </div>
                         <Permitido chave={PERMISSOES.ementaDefinir}>
-                          <button
-                            onClick={() => removeItem.mutate(item.id)}
-                            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-                            aria-label="Remover da ementa"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+                                aria-label="Remover da ementa"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => removerHoje.mutate(item)}>
+                                Remover só hoje
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setConfirmSempre({ id: item.buffet_item_id, nome: item.buffet_item?.nome || 'este prato' })}
+                              >
+                                Remover sempre
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </Permitido>
                       </div>
 
@@ -453,6 +475,25 @@ export default function Ementa() {
         date={today}
         userName={user?.name || ''}
       />
+
+      <AlertDialog open={!!confirmSempre} onOpenChange={o => { if (!o) setConfirmSempre(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover sempre?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmSempre?.nome} deixa de aparecer na ementa desta marca, hoje e nos próximos dias. Esta acção não pode ser anulada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (confirmSempre) removerSempre.mutate(confirmSempre.id); setConfirmSempre(null); }}
+            >
+              Remover sempre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

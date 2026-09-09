@@ -214,6 +214,7 @@ export type Database = {
           id: string
           marca_id: string | null
           notas: string | null
+          oculto: boolean
           quantidade_prevista: number
           recipiente_sugerido: string
           unidade_id: string | null
@@ -229,6 +230,7 @@ export type Database = {
           id?: string
           marca_id?: string | null
           notas?: string | null
+          oculto?: boolean
           quantidade_prevista?: number
           recipiente_sugerido?: string
           unidade_id?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           id?: string
           marca_id?: string | null
           notas?: string | null
+          oculto?: boolean
           quantidade_prevista?: number
           recipiente_sugerido?: string
           unidade_id?: string | null

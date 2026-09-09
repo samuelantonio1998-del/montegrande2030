@@ -1483,7 +1483,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      app_role: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

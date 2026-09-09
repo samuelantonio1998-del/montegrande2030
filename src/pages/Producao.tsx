@@ -18,6 +18,8 @@ import { useProductionIntelligence } from '@/hooks/useProductionIntelligence';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { MarcaSwitcher } from '@/components/MarcaSwitcher';
 import { DecisaoReposicaoCard } from '@/components/producao/DecisaoReposicaoCard';
+import { useCartaMarca } from '@/hooks/useCartaMarca';
+
 
 
 type Canal = 'buffet' | 'take_away' | 'delivery';
@@ -38,7 +40,9 @@ export default function Producao() {
   const today = new Date();
   const { data: ementaItems = [] } = useEmentaDiaria(today);
 
-  const { servicos, marca } = useUnidade();
+  const { servicos, marca, marcaId } = useUnidade();
+  const { data: carta } = useCartaMarca(marcaId);
+
   // Abas geradas a partir de unidade_marca_servicos (local activo × marca activa)
   const temBuffet = servicos.includes('buffet');
   const temTakeaway = servicos.includes('takeaway');

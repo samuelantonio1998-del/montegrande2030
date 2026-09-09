@@ -32,12 +32,24 @@ export type Permissao = { id: string; chave: string; descricao: string };
 export async function invocar<T = unknown>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('manage-employees', { body });
   if (error) {
-    const detalhe = (data as { error?: string } | null)?.error;
+    // Em respostas 4xx/5xx o corpo não vem em `data`; é preciso lê-lo do contexto
+    // do erro, senão só se vê "Edge Function returned a non-2xx status code".
+    let detalhe = (data as { error?: string } | null)?.error;
+    const ctx = (error as { context?: Response }).context;
+    if (!detalhe && ctx && typeof ctx.json === 'function') {
+      try {
+        const corpo = await ctx.clone().json();
+        detalhe = (corpo as { error?: string })?.error;
+      } catch {
+        /* corpo não é JSON */
+      }
+    }
     throw new Error(detalhe || error.message);
   }
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
   return data as T;
 }
+
 
 export function usePessoas() {
   return useQuery({

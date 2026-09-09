@@ -475,6 +475,25 @@ export default function Ementa() {
         date={today}
         userName={user?.name || ''}
       />
+
+      <AlertDialog open={!!confirmSempre} onOpenChange={o => { if (!o) setConfirmSempre(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover sempre?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmSempre?.nome} deixa de aparecer na ementa desta marca, hoje e nos próximos dias. Esta acção não pode ser anulada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (confirmSempre) removerSempre.mutate(confirmSempre.id); setConfirmSempre(null); }}
+            >
+              Remover sempre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -158,6 +158,8 @@ export default function Inventario() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProductForm, setNewProductForm] = useState({ nome: '', unidade: 'kg', categoria: 'geral', stock_minimo: '0', stock_maximo: '100' });
   const [creatingProduct, setCreatingProduct] = useState(false);
+  const [nivelDrafts, setNivelDrafts] = useState<Record<string, { min: string; max: string }>>({});
+  const [searchNiveis, setSearchNiveis] = useState('');
 
   // Exit state
   const [showExit, setShowExit] = useState(false);

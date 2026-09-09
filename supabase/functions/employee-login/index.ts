@@ -118,26 +118,28 @@ Deno.serve(async (req) => {
 
     let userId: string | null = null;
 
-    // Try to find existing user via listUsers (paged); fallback to createUser
-    // and treat "already registered" as success by re-fetching.
-    const { data: existing, error: getErr } = await admin.getUserById(
-      // Not applicable here; instead we use listUsers by email via filter
-      "" as unknown as string
-    ).catch(() => ({ data: null, error: null as any }));
-
-    // Prefer listUsers with email filter (supported in supabase-js v2)
-    try {
-      // @ts-ignore
-      const { data: list } = await admin.listUsers({
-        page: 1,
-        perPage: 1,
+    // IMPORTANTE: admin.listUsers() NÃO suporta filtro por email. Filtrar tem de
+    // ser feito em código, percorrendo as páginas e comparando o email exacto.
+    const findUserIdByEmail = async (target: string): Promise<string | null> => {
+      const perPage = 200;
+      for (let page = 1; page <= 25; page++) {
         // @ts-ignore
-        email,
-      });
-      if (list?.users?.length) userId = list.users[0].id;
-    } catch (_) {
-      // ignore, will try create
-    }
+        const { data: list, error } = await admin.listUsers({ page, perPage });
+        if (error) {
+          console.error("listUsers error:", error);
+          return null;
+        }
+        const match = list?.users?.find(
+          (u: { id: string; email?: string }) =>
+            (u.email ?? "").toLowerCase() === target.toLowerCase()
+        );
+        if (match) return match.id;
+        if (!list?.users?.length || list.users.length < perPage) return null;
+      }
+      return null;
+    };
+
+    userId = await findUserIdByEmail(email);
 
     if (!userId) {
       const { data: created, error: createErr } = await admin.createUser({
@@ -157,17 +159,7 @@ Deno.serve(async (req) => {
         );
       }
       if (created?.user) userId = created.user.id;
-      // If already existed (race), re-list
-      if (!userId) {
-        // @ts-ignore
-        const { data: list2 } = await admin.listUsers({
-          page: 1,
-          perPage: 1,
-          // @ts-ignore
-          email,
-        });
-        if (list2?.users?.length) userId = list2.users[0].id;
-      }
+      if (!userId) userId = await findUserIdByEmail(email);
     }
 
     if (!userId) {
@@ -180,11 +172,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Salvaguarda: o utilizador encontrado tem de corresponder ao email do funcionário.
+    const { data: check } = await admin.getUserById(userId);
+    if ((check?.user?.email ?? "").toLowerCase() !== email.toLowerCase()) {
+      console.error("identity mismatch", { userId, email, found: check?.user?.email });
+      return new Response(
+        JSON.stringify({ success: false, error: "Falha de identidade" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Refresh app_metadata to reflect current role/nome (in case they changed)
+    const roleIdAtual = (funcionario as { role_id?: string } | null)?.role_id ?? null;
     await admin.updateUserById(userId, {
-      app_metadata: { funcionario_id: funcionarioId, role, nome },
+      app_metadata: { funcionario_id: funcionarioId, role, role_id: roleIdAtual, nome },
       user_metadata: { nome },
     });
+
 
     // Sincroniza o papel (roles) do funcionário para user_roles, para que a RPC
     // tem_permissao funcione também nas sessões iniciadas por PIN.

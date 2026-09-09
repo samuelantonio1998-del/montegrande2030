@@ -230,7 +230,11 @@ Deno.serve(async (req) => {
       const { nome, role_id, unidade_id, pin, email, password } = body;
       if (!nome) return json({ error: "Nome obrigatório" }, 400);
       if (!pin && !email) return json({ error: "Indique um PIN de cozinha ou um email de conta" }, 400);
-      if (pin && !validatePin(pin)) return json({ error: "PIN deve ter 4-6 dígitos" }, 400);
+      if (pin && !validatePin(pin)) return json({ error: "O PIN deve ter exatamente 4 dígitos" }, 400);
+      if (pin) {
+        const fraco = pinFraco(pin as string);
+        if (fraco) return json({ error: fraco }, 400);
+      }
       if (pin) {
         const check = await pinInUse(pin);
         if (check.erro) return json({ error: "Não foi possível validar o PIN. Tente novamente." }, 500);

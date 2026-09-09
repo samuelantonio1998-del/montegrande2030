@@ -65,7 +65,9 @@ export default function Ementa() {
   const { data: allBuffetItems = [] } = useBuffetItems();
   const { data: permanentItems = [] } = usePermanentEmentaItems();
   const bulkAdd = useBulkAddEmenta();
-  const removeItem = useRemoveFromEmenta();
+  const removerHoje = useRemoverSoHoje();
+  const removerSempre = useRemoveEmentaSempre();
+  const [confirmSempre, setConfirmSempre] = useState<{ id: string; nome: string } | null>(null);
   const { registos, addRegisto, recolherRegisto, activeTrays } = useRegistosProducao();
 
   // relógio para o tempo decorrido

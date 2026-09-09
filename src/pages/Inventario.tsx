@@ -718,6 +718,10 @@ export default function Inventario() {
             <ShoppingCart className="h-4 w-4" />
             Faltas ({lowStock.length})
           </TabsTrigger>
+          <TabsTrigger value="niveis" className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Sem níveis ({produtosSemNiveis.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* ===== ENTRADA DE STOCK ===== */}

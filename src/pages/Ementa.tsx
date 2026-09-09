@@ -33,7 +33,8 @@ import {
   useBuffetItems,
   useBulkAddEmenta,
   usePermanentEmentaItems,
-  useRemoveFromEmenta,
+  useRemoveEmentaSempre,
+  useRemoverSoHoje,
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';

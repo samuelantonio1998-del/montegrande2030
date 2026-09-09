@@ -1612,6 +1612,17 @@ export default function Inventario() {
 
         {/* ===== FALTAS E ENCOMENDAS ===== */}
         <TabsContent value="faltas" className="space-y-4">
+          {produtosSemNiveis.length > 0 && (
+            <button
+              onClick={() => setActiveTab('niveis')}
+              className="w-full text-left rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-center gap-2"
+            >
+              <Info className="h-4 w-4 text-warning shrink-0" />
+              <span className="text-sm text-foreground">
+                <strong>{produtosSemNiveis.length} produtos sem níveis definidos</strong> — não entram nos alertas de compra. Toque para definir.
+              </span>
+            </button>
+          )}
           {lowStock.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-3" />

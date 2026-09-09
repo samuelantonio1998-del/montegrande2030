@@ -18,6 +18,7 @@ import { useUnidade } from '@/contexts/UnidadeContext';
 import {
   usePessoas, usePapeis, usePessoaMutations, type Pessoa, type Papel,
 } from '@/hooks/usePessoas';
+import { PIN_LENGTH, gerarPin, pinFormatoValido, pinFraco } from '@/lib/pin';
 
 const SEM_UNIDADE = '__nenhuma__';
 const SEM_PAPEL = '__sem_papel__';

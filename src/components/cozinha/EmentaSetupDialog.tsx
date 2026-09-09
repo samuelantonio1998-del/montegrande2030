@@ -249,6 +249,38 @@ export default function EmentaSetupDialog({ open, onOpenChange, allItems, existi
               </div>
             </div>
 
+            {/* Quantidades previstas, sugeridas pelo histórico */}
+            <div className="rounded-lg border border-border p-3 space-y-2 max-h-[28vh] overflow-y-auto">
+              <p className="text-xs font-medium text-foreground">Quantidade prevista (kg)</p>
+              {Array.from(selected).map(id => {
+                const item = allItems.find(i => i.id === id);
+                if (!item) return null;
+                const s = sugestoes[id];
+                return (
+                  <div key={id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-foreground">{item.nome}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {s?.suficiente
+                          ? `Sugerido pelo histórico: ${s.mediaKg} kg (${s.dias} dias)`
+                          : `Sem histórico suficiente (mínimo ${diasMinimos} dias) — indique a quantidade`}
+                      </p>
+                    </div>
+                    <Input
+                      className="w-24 shrink-0"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      min="0"
+                      placeholder="kg"
+                      value={quantidadeDe(id)}
+                      onChange={e => setQuantidades(prev => ({ ...prev, [id]: e.target.value }))}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Permanent toggle */}
             <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
               <div className="flex items-center gap-2">

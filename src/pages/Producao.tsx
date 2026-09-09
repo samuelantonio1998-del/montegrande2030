@@ -116,6 +116,7 @@ export default function Producao() {
   async function handleSendTray() {
     if (!newDish) return;
     const dish = allEmentaDishes.find(d => d.nome === newDish);
+    const cartaDish = (carta?.itens ?? []).find(c => (c.nome_comercial || c.nome) === newDish);
 
     const leftoverDiscount = (discountLeftover && previousLeftover) ? previousLeftover.totalKg : 0;
 
@@ -125,7 +126,7 @@ export default function Producao() {
       const realKg = Math.max(0.1, kg - leftoverDiscount);
       await addRegisto({
         dish_name: newDish,
-        ficha_tecnica_id: dish?.ficha_tecnica_id || undefined,
+        ficha_tecnica_id: cartaDish?.ficha_tecnica_id || dish?.ficha_tecnica_id || undefined,
         buffet_item_id: dish?.id,
         recipiente: 'unitario',
         peso_kg: realKg,
@@ -133,6 +134,7 @@ export default function Producao() {
         canal: activeTab,
       });
     } else {
+
       const cap = recipientCapacity[newRecipient];
       const pesoKg = newRecipient === 'unitario' ? (parseFloat(newTakeawayKg) || cap.capacityKg) : cap.capacityKg;
       const realKg = Math.max(0.1, pesoKg - leftoverDiscount);

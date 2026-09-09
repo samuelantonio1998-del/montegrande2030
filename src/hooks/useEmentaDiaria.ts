@@ -54,18 +54,18 @@ export function useEmentaDiaria(date?: Date) {
         buffet_item: d.buffet_item as unknown as EmentaItem['buffet_item'],
       }));
       
-      // First pass: today's items
+      // First pass: today's items (an "oculto" row hides the dish just for today)
       for (const item of allItems) {
         if (item.data !== PERMANENT_DATE) {
           seen.add(item.buffet_item_id);
-          result.push(item);
+          if (!item.oculto) result.push(item);
         }
       }
       // Second pass: permanent items not already covered by today
       for (const item of allItems) {
         if (item.data === PERMANENT_DATE && !seen.has(item.buffet_item_id)) {
           seen.add(item.buffet_item_id);
-          result.push(item);
+          if (!item.oculto) result.push(item);
         }
       }
       

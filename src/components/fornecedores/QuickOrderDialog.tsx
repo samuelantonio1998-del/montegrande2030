@@ -13,8 +13,8 @@ type Produto = {
   nome: string;
   unidade: string;
   stock_atual: number;
-  stock_minimo: number;
-  stock_maximo: number;
+  stock_minimo: number | null;
+  stock_maximo: number | null;
   custo_medio: number;
 };
 
@@ -43,9 +43,9 @@ export function QuickOrderDialog({ open, onOpenChange, fornecedor, produtos }: Q
 
   const initialLines = useMemo(() => {
     return produtos.map(p => {
-      const needsRestock = p.stock_atual <= p.stock_minimo;
+      const needsRestock = p.stock_minimo != null && p.stock_atual <= p.stock_minimo;
       const suggestedQty = needsRestock
-        ? Math.max(1, Math.round((p.stock_maximo - p.stock_atual) * 10) / 10)
+        ? Math.max(1, Math.round(((p.stock_maximo ?? p.stock_atual) - p.stock_atual) * 10) / 10)
         : 0;
       return {
         produto: p,
@@ -155,7 +155,7 @@ export function QuickOrderDialog({ open, onOpenChange, fornecedor, produtos }: Q
             {/* Product lines */}
             <div className="space-y-2">
               {lines.map((line, idx) => {
-                const isLow = line.produto.stock_atual <= line.produto.stock_minimo;
+                const isLow = line.produto.stock_minimo != null && line.produto.stock_atual <= line.produto.stock_minimo;
                 return (
                   <div
                     key={line.produto.id}
@@ -179,7 +179,7 @@ export function QuickOrderDialog({ open, onOpenChange, fornecedor, produtos }: Q
                         {isLow && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Stock: {line.produto.stock_atual}{line.produto.unidade} · Mín: {line.produto.stock_minimo}{line.produto.unidade}
+                        Stock: {line.produto.stock_atual}{line.produto.unidade} · Mín: {line.produto.stock_minimo ?? '—'}{line.produto.unidade}
                       </p>
                     </div>
                     {line.selected && (

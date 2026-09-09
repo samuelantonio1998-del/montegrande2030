@@ -17,8 +17,8 @@ type Produto = {
   categoria: string;
   unidade: string;
   stock_atual: number;
-  stock_minimo: number;
-  stock_maximo: number;
+  stock_minimo: number | null;
+  stock_maximo: number | null;
   custo_medio: number;
   fornecedor_id: string | null;
 };
@@ -63,8 +63,8 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
   useEffect(() => {
     if (!produto || !open) return;
     setLoading(true);
-    setStockMin(produto.stock_minimo.toString());
-    setStockMax(produto.stock_maximo.toString());
+    setStockMin(produto.stock_minimo?.toString() ?? '');
+    setStockMax(produto.stock_maximo?.toString() ?? '');
     setNome(produto.nome);
     setEditingName(false);
 
@@ -83,8 +83,8 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
   const handleSaveStock = async () => {
     if (!produto) return;
     await supabase.from('produtos').update({
-      stock_minimo: parseFloat(stockMin) || 0,
-      stock_maximo: parseFloat(stockMax) || 100,
+      stock_minimo: stockMin.trim() === '' ? null : parseFloat(stockMin),
+      stock_maximo: stockMax.trim() === '' ? null : parseFloat(stockMax),
     }).eq('id', produto.id);
     setEditingStock(false);
     onUpdate?.();
@@ -269,15 +269,15 @@ export function ProductHistoryDialog({ produto, open, onOpenChange, onUpdate }: 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">Mínimo</p>
-                    <p className="text-sm font-bold text-destructive">{produto.stock_minimo}{produto.unidade}</p>
+                    <p className="text-sm font-bold text-destructive">{produto.stock_minimo == null ? 'Sem nível' : `${produto.stock_minimo}${produto.unidade}`}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">Atual</p>
-                    <p className={cn("text-sm font-bold", produto.stock_atual <= produto.stock_minimo ? "text-destructive" : "text-foreground")}>{produto.stock_atual}{produto.unidade}</p>
+                    <p className={cn("text-sm font-bold", produto.stock_minimo != null && produto.stock_atual <= produto.stock_minimo ? "text-destructive" : "text-foreground")}>{produto.stock_atual}{produto.unidade}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">Máximo</p>
-                    <p className="text-sm font-bold text-foreground">{produto.stock_maximo}{produto.unidade}</p>
+                    <p className="text-sm font-bold text-foreground">{produto.stock_maximo == null ? 'Sem nível' : `${produto.stock_maximo}${produto.unidade}`}</p>
                   </div>
                 </div>
               )}

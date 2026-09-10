@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown, Pencil, Check } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown, Pencil, Check, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDial
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
+import { ChangeUnitDialog } from '@/components/inventario/ChangeUnitDialog';
 
 type Produto = {
   id: string;
@@ -171,6 +172,8 @@ export default function Inventario() {
   const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editProductName, setEditProductName] = useState('');
+  const [unitProduct, setUnitProduct] = useState<Produto | null>(null);
+  const [unitDialogOpen, setUnitDialogOpen] = useState(false);
 
   // Movimentações "ver mais"
   const [movLimit, setMovLimit] = useState(10);
@@ -1472,7 +1475,12 @@ export default function Inventario() {
                       <div className="flex items-center gap-2 shrink-0 ml-3">
                         <div className="text-right">
                           <p className="text-sm font-bold text-foreground">{p.stock_atual}{p.unidade}</p>
-                          <p className="text-[10px] text-muted-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</p>
+                          <button
+                            className="text-[10px] text-primary underline underline-offset-2"
+                            onClick={e => { e.stopPropagation(); setUnitProduct(p); setUnitDialogOpen(true); }}
+                          >
+                            Unidade: {p.unidade}
+                          </button>
                         </div>
                         <span className={cn(
                           'inline-flex items-center justify-center h-6 w-6 rounded-full',
@@ -1584,8 +1592,15 @@ export default function Inventario() {
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <History className="h-4 w-4 text-muted-foreground" />
+                         <div className="flex items-center gap-1">
+                           <History className="h-4 w-4 text-muted-foreground" />
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setUnitProduct(p); setUnitDialogOpen(true); }}
+                             className="p-1 rounded hover:bg-primary/10 transition-colors"
+                             title="Alterar unidade"
+                           >
+                             <Scale className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeletingProduct(p); }}
                             className="p-1 rounded hover:bg-destructive/10 transition-colors"
@@ -1759,6 +1774,15 @@ export default function Inventario() {
         onOpenChange={setHistoryOpen}
         onUpdate={fetchData}
       />
+
+      <ChangeUnitDialog
+        produto={unitProduct}
+        open={unitDialogOpen}
+        onOpenChange={(o) => { setUnitDialogOpen(o); if (!o) setUnitProduct(null); }}
+        unidadesExistentes={Array.from(new Set(produtos.map(p => p.unidade).filter(Boolean)))}
+        onSaved={fetchData}
+      />
+
 
       <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
         <AlertDialogContent>

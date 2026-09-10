@@ -1045,6 +1045,10 @@ export type Database = {
           stock_maximo: number | null
           stock_minimo: number | null
           unidade: string
+          unidade_alterada_em: string | null
+          unidade_alterada_por: string | null
+          unidade_anterior: string | null
+          unidade_fator_conversao: number | null
           updated_at: string
         }
         Insert: {
@@ -1060,6 +1064,10 @@ export type Database = {
           stock_maximo?: number | null
           stock_minimo?: number | null
           unidade?: string
+          unidade_alterada_em?: string | null
+          unidade_alterada_por?: string | null
+          unidade_anterior?: string | null
+          unidade_fator_conversao?: number | null
           updated_at?: string
         }
         Update: {
@@ -1075,6 +1083,10 @@ export type Database = {
           stock_maximo?: number | null
           stock_minimo?: number | null
           unidade?: string
+          unidade_alterada_em?: string | null
+          unidade_alterada_por?: string | null
+          unidade_anterior?: string | null
+          unidade_fator_conversao?: number | null
           updated_at?: string
         }
         Relationships: [

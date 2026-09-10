@@ -47,6 +47,72 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_saladas_fichas: {
+        Row: {
+          ativo: boolean | null
+          categoria: string | null
+          created_at: string
+          ficha_id: string
+          id: string
+          nome: string
+          notas_preparacao: string | null
+          porcoes: number | null
+          preco_venda: number | null
+          tempo_preparacao: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string
+          ficha_id: string
+          id?: string
+          nome: string
+          notas_preparacao?: string | null
+          porcoes?: number | null
+          preco_venda?: number | null
+          tempo_preparacao?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string
+          ficha_id?: string
+          id?: string
+          nome?: string
+          notas_preparacao?: string | null
+          porcoes?: number | null
+          preco_venda?: number | null
+          tempo_preparacao?: number | null
+        }
+        Relationships: []
+      }
+      backup_saladas_ingredientes: {
+        Row: {
+          created_at: string
+          ficha_id: string
+          id: string
+          produto_id: string
+          quantidade: number
+          unidade: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_id: string
+          id?: string
+          produto_id: string
+          quantidade: number
+          unidade: string
+        }
+        Update: {
+          created_at?: string
+          ficha_id?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          unidade?: string
+        }
+        Relationships: []
+      }
       buffet_items: {
         Row: {
           ativo: boolean

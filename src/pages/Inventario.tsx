@@ -15,6 +15,7 @@ import { ProductHistoryDialog } from '@/components/inventario/ProductHistoryDial
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
+import { ChangeUnitDialog } from '@/components/inventario/ChangeUnitDialog';
 
 type Produto = {
   id: string;
@@ -171,6 +172,8 @@ export default function Inventario() {
   const [deletingProduct, setDeletingProduct] = useState<Produto | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editProductName, setEditProductName] = useState('');
+  const [unitProduct, setUnitProduct] = useState<Produto | null>(null);
+  const [unitDialogOpen, setUnitDialogOpen] = useState(false);
 
   // Movimentações "ver mais"
   const [movLimit, setMovLimit] = useState(10);
@@ -1472,7 +1475,12 @@ export default function Inventario() {
                       <div className="flex items-center gap-2 shrink-0 ml-3">
                         <div className="text-right">
                           <p className="text-sm font-bold text-foreground">{p.stock_atual}{p.unidade}</p>
-                          <p className="text-[10px] text-muted-foreground">€{p.custo_medio.toFixed(2)}/{p.unidade}</p>
+                          <button
+                            className="text-[10px] text-primary underline underline-offset-2"
+                            onClick={e => { e.stopPropagation(); setUnitProduct(p); setUnitDialogOpen(true); }}
+                          >
+                            Unidade: {p.unidade}
+                          </button>
                         </div>
                         <span className={cn(
                           'inline-flex items-center justify-center h-6 w-6 rounded-full',

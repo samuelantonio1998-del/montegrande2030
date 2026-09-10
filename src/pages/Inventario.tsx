@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown, Pencil, Check } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ShoppingCart, Camera, Package, ArrowDownCircle, ArrowUpCircle, Trash2, Upload, Plus, Search, X, Edit3, Eye, Loader2, ImageIcon, History, Info, ChevronDown, Pencil, Check, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -1774,6 +1774,15 @@ export default function Inventario() {
         onOpenChange={setHistoryOpen}
         onUpdate={fetchData}
       />
+
+      <ChangeUnitDialog
+        produto={unitProduct}
+        open={unitDialogOpen}
+        onOpenChange={(o) => { setUnitDialogOpen(o); if (!o) setUnitProduct(null); }}
+        unidadesExistentes={Array.from(new Set(produtos.map(p => p.unidade).filter(Boolean)))}
+        onSaved={fetchData}
+      />
+
 
       <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
         <AlertDialogContent>

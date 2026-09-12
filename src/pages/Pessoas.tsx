@@ -19,6 +19,7 @@ import {
   usePessoas, usePapeis, usePessoaMutations, type Pessoa, type Papel,
 } from '@/hooks/usePessoas';
 import { PIN_LENGTH, gerarPin, pinFormatoValido, pinFraco } from '@/lib/pin';
+import HorariosPanel from '@/components/pessoas/HorariosPanel';
 
 const SEM_UNIDADE = '__nenhuma__';
 const SEM_PAPEL = '__sem_papel__';

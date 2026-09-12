@@ -19,6 +19,7 @@ import {
   usePessoas, usePapeis, usePessoaMutations, type Pessoa, type Papel,
 } from '@/hooks/usePessoas';
 import { PIN_LENGTH, gerarPin, pinFormatoValido, pinFraco } from '@/lib/pin';
+import HorariosPanel from '@/components/pessoas/HorariosPanel';
 
 const SEM_UNIDADE = '__nenhuma__';
 const SEM_PAPEL = '__sem_papel__';
@@ -94,7 +95,12 @@ export default function Pessoas() {
         <TabsList>
           <TabsTrigger value="pessoas">Pessoas</TabsTrigger>
           <TabsTrigger value="papeis">Papéis</TabsTrigger>
+          <TabsTrigger value="horarios">Horários</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="horarios">
+          <HorariosPanel />
+        </TabsContent>
 
         {/* ---------------- Pessoas ---------------- */}
         <TabsContent value="pessoas" className="space-y-4 pt-4">

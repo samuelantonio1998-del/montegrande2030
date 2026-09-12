@@ -342,6 +342,51 @@ export type Database = {
           },
         ]
       }
+      escala_alternancia: {
+        Row: {
+          created_at: string
+          funcionario_id: string
+          id: string
+          semana_inicio: string
+          turno: string
+          unidade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          semana_inicio: string
+          turno: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          semana_inicio?: string
+          turno?: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escala_alternancia_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escala_alternancia_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faturas_processadas: {
         Row: {
           created_at: string
@@ -730,6 +775,117 @@ export type Database = {
           },
           {
             foreignKeyName: "funcionarios_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horario_excepcoes: {
+        Row: {
+          ausente: boolean
+          created_at: string
+          data: string
+          funcionario_id: string
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          motivo: string | null
+          unidade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ausente?: boolean
+          created_at?: string
+          data: string
+          funcionario_id: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          motivo?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ausente?: boolean
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          motivo?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horario_excepcoes_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horario_excepcoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horarios_trabalho: {
+        Row: {
+          alternado: boolean
+          ativo: boolean
+          created_at: string
+          dia_semana: number
+          funcionario_id: string
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          turno: string
+          unidade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alternado?: boolean
+          ativo?: boolean
+          created_at?: string
+          dia_semana: number
+          funcionario_id: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          turno?: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alternado?: boolean
+          ativo?: boolean
+          created_at?: string
+          dia_semana?: number
+          funcionario_id?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          turno?: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horarios_trabalho_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horarios_trabalho_unidade_id_fkey"
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"

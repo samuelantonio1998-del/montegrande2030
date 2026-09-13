@@ -13,6 +13,9 @@ export const PERMISSOES = {
   precarioVer: 'gestao.precario.ver',
   ementaVer: 'cozinha.ementa.ver',
   ementaDefinir: 'cozinha.ementa.definir',
+  planoVer: 'cozinha.plano.ver',
+  planoGerir: 'cozinha.plano.gerir',
+
   producaoRegistar: 'cozinha.producao.registar',
   tarefasDefinir: 'cozinha.tarefas.definir',
   tarefasExecutar: 'cozinha.tarefas.executar',

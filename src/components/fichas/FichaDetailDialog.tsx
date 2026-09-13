@@ -380,6 +380,16 @@ export function FichaDetailDialog({
           </DialogHeader>
         )}
 
+        <Tabs defaultValue="ficha">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ficha">Ficha</TabsTrigger>
+            <TabsTrigger value="passos">Passos</TabsTrigger>
+          </TabsList>
+          <TabsContent value="passos" className="pt-3">
+            <FichaPassosPanel fichaId={ficha.id} kg={porcoes} />
+          </TabsContent>
+          <TabsContent value="ficha" className="space-y-4 pt-3">
+
         {/* Edit header fields */}
         {editing && (
           <div className="grid grid-cols-2 gap-3">

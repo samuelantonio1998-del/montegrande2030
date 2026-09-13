@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
@@ -666,6 +668,8 @@ export function FichaDetailDialog({
             <span>Tempo de preparação: {tempo} min (M.O.: €{laborCost.toFixed(2)})</span>
           </div>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Save/Cancel/Delete buttons */}
         {editing ? (

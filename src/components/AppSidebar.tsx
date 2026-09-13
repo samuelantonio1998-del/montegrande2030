@@ -17,7 +17,9 @@ const navItems: NavItem[] = [
   { to: '/mesas', icon: Grid3X3, label: 'Mesas', permissao: PERMISSOES.mesasVer },
   { to: '/tarefas', icon: ClipboardCheck, label: 'Tarefas', permissao: PERMISSOES.tarefasVer },
   { to: '/inventario', icon: Package, label: 'Inventário', permissao: PERMISSOES.inventarioVer },
+  { to: '/plano-do-dia', icon: CalendarPlus, label: 'Plano do Dia', permissao: PERMISSOES.planoVer },
   { to: '/ementa', icon: UtensilsCrossed, label: 'Ementa / Produção', permissao: PERMISSOES.ementaVer },
+
   { to: '/fichas-tecnicas', icon: ChefHat, label: 'Fichas Técnicas', permissao: PERMISSOES.fichasVer },
   { to: '/desperdicio', icon: Trash2, label: 'Desperdício', permissao: PERMISSOES.desperdicioVer },
   { to: '/previsao', icon: TrendingUp, label: 'Previsão', permissao: PERMISSOES.previsaoVer },

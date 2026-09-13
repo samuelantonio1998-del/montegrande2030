@@ -342,6 +342,60 @@ export type Database = {
           },
         ]
       }
+      equipamentos: {
+        Row: {
+          ativo: boolean
+          capacidade: string | null
+          created_at: string
+          id: string
+          nome: string
+          notas: string | null
+          tipo: string | null
+          unidade_id: string | null
+          updated_at: string
+          zona_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          capacidade?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          notas?: string | null
+          tipo?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+          zona_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          capacidade?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          notas?: string | null
+          tipo?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+          zona_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipamentos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipamentos_zona_id_fkey"
+            columns: ["zona_id"]
+            isOneToOne: false
+            referencedRelation: "zonas_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escala_alternancia: {
         Row: {
           created_at: string
@@ -599,6 +653,92 @@ export type Database = {
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ficha_passos: {
+        Row: {
+          adiantavel: boolean
+          created_at: string
+          depende_de: string | null
+          descricao: string
+          duracao_fixa_min: number
+          duracao_por_kg_min: number
+          equipamento_id: string | null
+          estimado: boolean
+          ficha_id: string
+          id: string
+          notas: string | null
+          operacao: string | null
+          ordem: number
+          tipo_passo: string
+          updated_at: string
+          zona_id: string | null
+        }
+        Insert: {
+          adiantavel?: boolean
+          created_at?: string
+          depende_de?: string | null
+          descricao: string
+          duracao_fixa_min?: number
+          duracao_por_kg_min?: number
+          equipamento_id?: string | null
+          estimado?: boolean
+          ficha_id: string
+          id?: string
+          notas?: string | null
+          operacao?: string | null
+          ordem: number
+          tipo_passo?: string
+          updated_at?: string
+          zona_id?: string | null
+        }
+        Update: {
+          adiantavel?: boolean
+          created_at?: string
+          depende_de?: string | null
+          descricao?: string
+          duracao_fixa_min?: number
+          duracao_por_kg_min?: number
+          equipamento_id?: string | null
+          estimado?: boolean
+          ficha_id?: string
+          id?: string
+          notas?: string | null
+          operacao?: string | null
+          ordem?: number
+          tipo_passo?: string
+          updated_at?: string
+          zona_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_passos_depende_de_fkey"
+            columns: ["depende_de"]
+            isOneToOne: false
+            referencedRelation: "ficha_passos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_passos_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_passos_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ficha_passos_zona_id_fkey"
+            columns: ["zona_id"]
+            isOneToOne: false
+            referencedRelation: "zonas_producao"
             referencedColumns: ["id"]
           },
         ]
@@ -1743,6 +1883,41 @@ export type Database = {
           total?: number
         }
         Relationships: []
+      }
+      zonas_producao: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          unidade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zonas_producao_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
@@ -380,6 +382,16 @@ export function FichaDetailDialog({
           </DialogHeader>
         )}
 
+        <Tabs defaultValue="ficha">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ficha">Ficha</TabsTrigger>
+            <TabsTrigger value="passos">Passos</TabsTrigger>
+          </TabsList>
+          <TabsContent value="passos" className="pt-3">
+            <FichaPassosPanel fichaId={ficha.id} kg={porcoes} />
+          </TabsContent>
+          <TabsContent value="ficha" className="space-y-4 pt-3">
+
         {/* Edit header fields */}
         {editing && (
           <div className="grid grid-cols-2 gap-3">
@@ -656,6 +668,8 @@ export function FichaDetailDialog({
             <span>Tempo de preparação: {tempo} min (M.O.: €{laborCost.toFixed(2)})</span>
           </div>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Save/Cancel/Delete buttons */}
         {editing ? (

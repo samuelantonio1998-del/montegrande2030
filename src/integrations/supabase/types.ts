@@ -1202,6 +1202,157 @@ export type Database = {
         }
         Relationships: []
       }
+      plano_dia: {
+        Row: {
+          abertura: string | null
+          avisos: Json
+          created_at: string
+          data: string
+          estado: string
+          gerado_por: string | null
+          id: string
+          resumo: Json
+          unidade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          abertura?: string | null
+          avisos?: Json
+          created_at?: string
+          data: string
+          estado?: string
+          gerado_por?: string | null
+          id?: string
+          resumo?: Json
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          abertura?: string | null
+          avisos?: Json
+          created_at?: string
+          data?: string
+          estado?: string
+          gerado_por?: string | null
+          id?: string
+          resumo?: Json
+          unidade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_dia_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_tarefas: {
+        Row: {
+          adiantavel: boolean
+          concluida: boolean
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          descricao: string
+          duracao_min: number
+          equipamento_id: string | null
+          fichas: Json
+          fim_min: number | null
+          funcionario_id: string | null
+          id: string
+          inicio_min: number | null
+          kg: number
+          notas: string | null
+          operacao: string | null
+          ordem: number
+          plano_id: string
+          tipo_passo: string
+          updated_at: string
+          vespera: boolean
+          zona_id: string | null
+        }
+        Insert: {
+          adiantavel?: boolean
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          descricao: string
+          duracao_min?: number
+          equipamento_id?: string | null
+          fichas?: Json
+          fim_min?: number | null
+          funcionario_id?: string | null
+          id?: string
+          inicio_min?: number | null
+          kg?: number
+          notas?: string | null
+          operacao?: string | null
+          ordem?: number
+          plano_id: string
+          tipo_passo?: string
+          updated_at?: string
+          vespera?: boolean
+          zona_id?: string | null
+        }
+        Update: {
+          adiantavel?: boolean
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          descricao?: string
+          duracao_min?: number
+          equipamento_id?: string | null
+          fichas?: Json
+          fim_min?: number | null
+          funcionario_id?: string | null
+          id?: string
+          inicio_min?: number | null
+          kg?: number
+          notas?: string | null
+          operacao?: string | null
+          ordem?: number
+          plano_id?: string
+          tipo_passo?: string
+          updated_at?: string
+          vespera?: boolean
+          zona_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_tarefas_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_tarefas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_tarefas_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "plano_dia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_tarefas_zona_id_fkey"
+            columns: ["zona_id"]
+            isOneToOne: false
+            referencedRelation: "zonas_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       precario_bebidas: {
         Row: {
           ativo: boolean

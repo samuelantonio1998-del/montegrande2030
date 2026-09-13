@@ -126,6 +126,7 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
 
   // 3) Agrupamento: mesma operação + zona + equipamento (+ tipo)
   const grupos = new Map<string, TarefaPlano>();
+  const fixaPorGrupo = new Map<string, number>();
   for (const f of fontes) {
     const p = f.passo;
     const chave = [
@@ -135,15 +136,17 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
       p.tipo_passo,
     ].join('|');
     const porKg = Number(p.duracao_por_kg_min || 0) * f.kg;
+    const fixa = Number(p.duracao_fixa_min || 0);
     const existente = grupos.get(chave);
     if (existente) {
       existente.kg += f.kg;
       existente.duracao_min += porKg;
-      existente.duracao_fixaAplicada = Math.max(existente.duracao_fixaAplicada, Number(p.duracao_fixa_min || 0));
       existente.ordem = Math.max(existente.ordem, p.ordem);
       existente.adiantavel = existente.adiantavel && p.adiantavel;
       existente.fichas.push({ ficha_id: f.ficha_id, nome: f.nome, kg: f.kg });
+      fixaPorGrupo.set(chave, Math.max(fixaPorGrupo.get(chave) ?? 0, fixa));
     } else {
+      fixaPorGrupo.set(chave, fixa);
       grupos.set(chave, {
         chave,
         ordem: p.ordem,
@@ -161,24 +164,23 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
         fim_min: null,
         funcionario_id: null,
         vespera: false,
-        duracao_fixaAplicada: Number(p.duracao_fixa_min || 0),
-      } as TarefaPlano & { duracao_fixaAplicada: number });
+      });
     }
   }
 
   const tarefas: TarefaPlano[] = [];
   for (const g of grupos.values()) {
-    const comFixa = g as TarefaPlano & { duracao_fixaAplicada: number };
-    let duracao = Math.round(comFixa.duracao_fixaAplicada + g.duracao_min);
+    // A duração fixa conta UMA SÓ VEZ por tarefa agrupada; só a parte por kg é somada
+    let duracao = Math.max(1, Math.round((fixaPorGrupo.get(g.chave) ?? 0) + g.duracao_min));
     let ciclos: number | null = null;
-    // 4) Capacidade do abatedor
+    // 4) Capacidade do abatedor: 10 tabuleiros × 5 kg por ciclo de 98 min
     if (abatedorId && g.equipamento_id === abatedorId) {
       ciclos = Math.max(1, Math.ceil(g.kg / ABATEDOR_KG_CICLO));
       duracao = ciclos * ABATEDOR_CICLO_MIN;
     }
-    delete (comFixa as Partial<typeof comFixa>).duracao_fixaAplicada;
     tarefas.push({ ...g, duracao_min: duracao, ciclos });
   }
+
 
   // 5) Agendamento para trás
   const ocupPessoa = new Map<string, Intervalo[]>(pessoas.map(p => [p.id, []]));

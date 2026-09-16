@@ -208,6 +208,10 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
         fim_min: null,
         funcionario_id: null,
         vespera: false,
+        origem: 'producao',
+        tarefa_id: null,
+        notas: null,
+
       });
     }
   }

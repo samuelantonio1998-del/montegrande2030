@@ -511,6 +511,13 @@ export default function Ementa() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RotuloPrintDialog
+        fichaId={rotuloTarget?.id ?? null}
+        nomeFicha={rotuloTarget?.nome ?? ''}
+        open={!!rotuloTarget}
+        onOpenChange={o => { if (!o) setRotuloTarget(null); }}
+      />
     </div>
   );
 }

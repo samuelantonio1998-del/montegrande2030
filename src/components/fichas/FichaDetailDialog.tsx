@@ -337,9 +337,14 @@ export function FichaDetailDialog({
                   <p className="text-xs text-muted-foreground">Ficha técnica</p>
                   <h2 className="text-base font-display text-foreground truncate">{ficha.nome}</h2>
                 </div>
-                <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowRotuloPrint(true)}>
+                    <Printer className="h-3.5 w-3.5" /> Imprimir rótulo
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogHeader>

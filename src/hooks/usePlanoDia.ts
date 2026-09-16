@@ -89,7 +89,7 @@ export function useDadosPlano(dataISO: string) {
         .in('data', [dataISO, PERMANENT_DATE]);
       if (unidadeId) qEmenta = qEmenta.eq('unidade_id', unidadeId);
 
-      const [ementaRes, zonasRes, equipRes, horariosRes, excRes, escalaRes, funcRes, servicoRes] =
+      const [ementaRes, zonasRes, equipRes, horariosRes, excRes, escalaRes, funcRes, servicoRes, tarefasRes, execRes] =
         await Promise.all([
           qEmenta,
           supabase.from('zonas_producao').select('id, nome').eq('ativo', true),

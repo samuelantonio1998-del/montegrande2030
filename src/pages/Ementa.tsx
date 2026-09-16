@@ -38,6 +38,8 @@ import {
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
+import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
+import { Printer } from 'lucide-react';
 
 const ZONES = [
   { key: 'entradas', label: 'Entradas', icon: Salad },
@@ -68,6 +70,7 @@ export default function Ementa() {
   const removerHoje = useRemoverSoHoje();
   const removerSempre = useRemoveEmentaSempre();
   const [confirmSempre, setConfirmSempre] = useState<{ id: string; nome: string } | null>(null);
+  const [rotuloTarget, setRotuloTarget] = useState<{ id: string; nome: string } | null>(null);
   const { registos, addRegisto, recolherRegisto, activeTrays } = useRegistosProducao();
 
   // relógio para o tempo decorrido
@@ -328,6 +331,20 @@ export default function Ementa() {
                         </Button>
                       )}
 
+                      {item.buffet_item?.ficha_tecnica_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="mt-1 h-7 w-full gap-1.5 text-xs"
+                          onClick={() => setRotuloTarget({
+                            id: item.buffet_item!.ficha_tecnica_id!,
+                            nome: item.buffet_item!.nome,
+                          })}
+                        >
+                          <Printer className="h-3.5 w-3.5" /> Imprimir rótulo
+                        </Button>
+                      )}
+
                       {trays.length > 0 && (
                         <div className="mt-2 space-y-1 border-t border-border pt-2">
                           {trays.map(t => (
@@ -494,6 +511,13 @@ export default function Ementa() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RotuloPrintDialog
+        fichaId={rotuloTarget?.id ?? null}
+        nomeFicha={rotuloTarget?.nome ?? ''}
+        open={!!rotuloTarget}
+        onOpenChange={o => { if (!o) setRotuloTarget(null); }}
+      />
     </div>
   );
 }

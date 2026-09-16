@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useFichasTecnicas, useUpdateFichaFoto, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulos } from '@/hooks/useFichaRotulo';
-import { printRotulo } from '@/lib/rotulo-print';
+import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
 import { toast } from '@/hooks/use-toast';
 import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
@@ -65,23 +65,15 @@ export default function FichasTecnicas() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const [printingId, setPrintingId] = useState<string | null>(null);
+  const [printTarget, setPrintTarget] = useState<{ id: string; nome: string } | null>(null);
   const { data: rotulos = {} } = useFichaRotulos();
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const handlePrintRotulo = async (id: string, nome: string, e: React.MouseEvent) => {
+  const handlePrintRotulo = (id: string, nome: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const rotulo = rotulos[id];
-    if (!rotulo) return;
-    setPrintingId(id);
-    try {
-      await printRotulo(rotulo, nome);
-    } catch (err) {
-      toast({ title: 'Erro ao gerar rótulo', description: (err as Error).message, variant: 'destructive' });
-    } finally {
-      setPrintingId(null);
-    }
+    setPrintTarget({ id, nome });
   };
+
 
 
   const triggerPick = (id: string, e: React.MouseEvent) => {
@@ -293,11 +285,7 @@ export default function FichasTecnicas() {
                       aria-label="Imprimir rótulo"
                       title="Imprimir rótulo"
                     >
-                      {printingId === ficha.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Printer className="h-4 w-4" />
-                      )}
+                      <Printer className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -339,6 +327,12 @@ export default function FichasTecnicas() {
       <FichaDetailDialog ficha={selectedFicha} onClose={() => setSelectedFicha(null)} />
       <FichaCreateForm open={showCreate} onClose={() => setShowCreate(false)} />
       <FichaImportDialog open={showImport} onClose={() => setShowImport(false)} />
+      <RotuloPrintDialog
+        fichaId={printTarget?.id ?? null}
+        nomeFicha={printTarget?.nome ?? ''}
+        open={!!printTarget}
+        onOpenChange={o => { if (!o) setPrintTarget(null); }}
+      />
     </div>
   );
 }

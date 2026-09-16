@@ -82,3 +82,69 @@
     font-family: var(--font-display);
   }
 }
+
+/* ===== Rótulo Brother QL-800 — rolo contínuo 62 mm ===== */
+.rotulo-label {
+  width: 56mm;
+  box-sizing: border-box;
+  color: #000;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 7.5pt;
+  line-height: 1.25;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.rotulo-titulo {
+  font-size: 13pt;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 2mm;
+  overflow-wrap: break-word;
+}
+
+.rotulo-seccao {
+  margin: 0 0 1.4mm 0;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.rotulo-preview {
+  padding: 3mm;
+  border: 1px solid #ddd;
+}
+
+.rotulo-print-root { display: none; }
+
+@media print {
+  @page { size: 62mm auto; margin: 3mm; }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body > *:not(.rotulo-print-root) { display: none !important; }
+
+  .rotulo-print-root {
+    display: block !important;
+    width: 56mm;
+  }
+
+  .rotulo-print-root > div + div { break-before: page; page-break-before: always; }
+
+  .rotulo-label,
+  .rotulo-label * {
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

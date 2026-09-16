@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
+import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
+import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
@@ -146,6 +148,7 @@ export function FichaDetailDialog({
   const saveFichaMarca = useSaveFichaMarca();
   const [editMarcas, setEditMarcas] = useState<Record<string, { nome_comercial: string; preco_venda: string }>>({});
   const [editing, setEditing] = useState(false);
+  const [showRotuloPrint, setShowRotuloPrint] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -334,9 +337,14 @@ export function FichaDetailDialog({
                   <p className="text-xs text-muted-foreground">Ficha técnica</p>
                   <h2 className="text-base font-display text-foreground truncate">{ficha.nome}</h2>
                 </div>
-                <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => setEditing(true)}>
-                  <Edit3 className="h-3.5 w-3.5" /> Editar
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowRotuloPrint(true)}>
+                    <Printer className="h-3.5 w-3.5" /> Imprimir rótulo
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(true)}>
+                    <Edit3 className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogHeader>
@@ -752,6 +760,12 @@ export function FichaDetailDialog({
             </AlertDialog>
           </div>
         )}
+        <RotuloPrintDialog
+          fichaId={ficha.id}
+          nomeFicha={ficha.nome}
+          open={showRotuloPrint}
+          onOpenChange={setShowRotuloPrint}
+        />
       </DialogContent>
     </Dialog>
   );

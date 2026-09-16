@@ -230,7 +230,7 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
   }
 
 
-  // 5) Agendamento para trás
+  // 5) Agendamento
   const ocupPessoa = new Map<string, Intervalo[]>(pessoas.map(p => [p.id, []]));
   const ocupEquip = new Map<string, Intervalo[]>();
   const limiteFicha = new Map<string, number>();
@@ -238,6 +238,75 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     if (!ocupEquip.has(id)) ocupEquip.set(id, []);
     return ocupEquip.get(id)!;
   };
+
+  // 5a) PRIMEIRO as tarefas fixas: limpezas, manutenção e segurança alimentar não se adiam.
+  // Ocupam tempo da pessoa antes de qualquer produção ser distribuída.
+  const tarefasDia: TarefaPlano[] = [];
+  const minutosTarefaPessoa = new Map<string, number>(pessoas.map(p => [p.id, 0]));
+  const ordemMomento: Record<MomentoDia, number> = { abertura: 0, durante: 1, fecho: 2 };
+  const fixasOrdenadas = [...tarefasFixas].sort(
+    (a, b) =>
+      ordemMomento[a.momento_do_dia] - ordemMomento[b.momento_do_dia] ||
+      (a.hora_sugerida_min ?? 9999) - (b.hora_sugerida_min ?? 9999),
+  );
+
+  for (const tf of fixasOrdenadas) {
+    const dur = Math.max(1, Math.round(tf.duracao_min));
+    // Quem faz: o responsável definido, se estiver ao trabalho; senão quem tem mais disponibilidade
+    let pessoa = pessoas.find(p => p.id === tf.funcionario_id) ?? null;
+    if (!pessoa && pessoas.length) {
+      pessoa = [...pessoas].sort(
+        (a, b) => (minutosTarefaPessoa.get(a.id) ?? 0) - (minutosTarefaPessoa.get(b.id) ?? 0),
+      )[0];
+    }
+    if (!pessoa) {
+      avisos.push(`A tarefa "${tf.titulo}" não pôde ser atribuída: não há ninguém ao trabalho.`);
+      continue;
+    }
+    const busy = ocupPessoa.get(pessoa.id)!;
+    let inicio: number | null = null;
+    if (tf.momento_do_dia === 'fecho') {
+      const fim = encaixeMaisTarde([busy], pessoa.fim_min, pessoa.inicio_min, dur);
+      inicio = fim === null ? null : fim - dur;
+    } else {
+      const minStart = Math.max(
+        pessoa.inicio_min,
+        tf.hora_sugerida_min ?? (tf.momento_do_dia === 'abertura' ? pessoa.inicio_min : pessoa.inicio_min),
+      );
+      inicio = encaixeMaisCedo(busy, minStart, pessoa.fim_min, dur);
+      if (inicio === null) inicio = encaixeMaisCedo(busy, pessoa.inicio_min, pessoa.fim_min, dur);
+    }
+    if (inicio === null) {
+      // As tarefas têm sempre de caber: entram à mesma, no fim do que já está ocupado
+      inicio = busy.length ? Math.max(...busy.map(b => b[1])) : pessoa.inicio_min;
+      avisos.push(`A tarefa "${tf.titulo}" ficou fora do horário de ${pessoa.nome}; é preciso ajustar o turno.`);
+    }
+    busy.push([inicio, inicio + dur]);
+    minutosTarefaPessoa.set(pessoa.id, (minutosTarefaPessoa.get(pessoa.id) ?? 0) + dur);
+    tarefasDia.push({
+      chave: `tarefa:${tf.id}`,
+      ordem: -1,
+      descricao: tf.titulo,
+      operacao: null,
+      tipo_passo: 'ativo',
+      zona_id: null,
+      equipamento_id: null,
+      adiantavel: false,
+      kg: 0,
+      duracao_min: dur,
+      ciclos: null,
+      fichas: [],
+      inicio_min: inicio,
+      fim_min: inicio + dur,
+      funcionario_id: pessoa.id,
+      vespera: false,
+      origem: 'tarefa',
+      tarefa_id: tf.id,
+      notas: tf.medida ? 'Duração medida' : 'Duração estimada',
+    });
+  }
+
+
 
   const ordenadas = [...tarefas].sort((a, b) => b.ordem - a.ordem);
   let faltamMinutos = 0;

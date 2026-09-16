@@ -253,7 +253,9 @@ export default function PlanoDia() {
                   ))}
               </div>
             </Card>
-          ))}
+            );
+          })}
+
         </section>
       )}
 

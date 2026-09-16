@@ -38,7 +38,11 @@ export type PlanoTarefa = {
   adiantavel: boolean;
   concluida: boolean;
   notas: string | null;
+  origem: 'producao' | 'tarefa';
+  tarefa_id: string | null;
+  iniciado_em: string | null;
 };
+
 
 export type Plano = {
   id: string;

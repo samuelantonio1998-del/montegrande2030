@@ -211,7 +211,7 @@ export default function PlanoDia() {
                 funcionarios={dados?.funcionarios ?? []}
                 nomeZona={nomeZona} nomeEquip={nomeEquip}
                 onPessoa={id => reatribuir.mutate({ id: t.id, funcionario_id: id })}
-                onConcluir={v => concluir.mutate({ id: t.id, concluida: v })}
+                onConcluir={v => concluir.mutate({ id: t.id, concluida: v, origem: t.origem, tarefa_id: t.tarefa_id })}
               />
             ))}
           </Card>
@@ -240,7 +240,7 @@ export default function PlanoDia() {
                       funcionarios={dados?.funcionarios ?? []}
                       nomeZona={nomeZona} nomeEquip={nomeEquip}
                       onPessoa={id => reatribuir.mutate({ id: t.id, funcionario_id: id })}
-                      onConcluir={v => concluir.mutate({ id: t.id, concluida: v })}
+                      onConcluir={v => concluir.mutate({ id: t.id, concluida: v, origem: t.origem, tarefa_id: t.tarefa_id })}
                     />
                   ))}
               </div>

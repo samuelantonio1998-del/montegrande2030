@@ -260,15 +260,18 @@ export function useDadosPlano(dataISO: string) {
 }
 
 export function calcular(dados: DadosPlano): ResultadoPlano | null {
-  if (!dados.necessidades.length || dados.aberturaMin === null || !dados.pessoas.length) return null;
+  if (dados.aberturaMin === null || !dados.pessoas.length) return null;
+  if (!dados.necessidades.length && !dados.tarefasFixas.length) return null;
   return gerarPlano({
     necessidades: dados.necessidades,
     passosPorFicha: dados.passosPorFicha,
     pessoas: dados.pessoas,
     aberturaMin: dados.aberturaMin,
     abatedorId: dados.abatedorId,
+    tarefasFixas: dados.tarefasFixas,
   });
 }
+
 
 /** Plano já guardado para o dia. */
 export function usePlanoGuardado(dataISO: string) {

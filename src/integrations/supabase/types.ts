@@ -1263,12 +1263,15 @@ export type Database = {
           fim_min: number | null
           funcionario_id: string | null
           id: string
+          iniciado_em: string | null
           inicio_min: number | null
           kg: number
           notas: string | null
           operacao: string | null
           ordem: number
+          origem: string
           plano_id: string
+          tarefa_id: string | null
           tipo_passo: string
           updated_at: string
           vespera: boolean
@@ -1287,12 +1290,15 @@ export type Database = {
           fim_min?: number | null
           funcionario_id?: string | null
           id?: string
+          iniciado_em?: string | null
           inicio_min?: number | null
           kg?: number
           notas?: string | null
           operacao?: string | null
           ordem?: number
+          origem?: string
           plano_id: string
+          tarefa_id?: string | null
           tipo_passo?: string
           updated_at?: string
           vespera?: boolean
@@ -1311,12 +1317,15 @@ export type Database = {
           fim_min?: number | null
           funcionario_id?: string | null
           id?: string
+          iniciado_em?: string | null
           inicio_min?: number | null
           kg?: number
           notas?: string | null
           operacao?: string | null
           ordem?: number
+          origem?: string
           plano_id?: string
+          tarefa_id?: string | null
           tipo_passo?: string
           updated_at?: string
           vespera?: boolean
@@ -1342,6 +1351,13 @@ export type Database = {
             columns: ["plano_id"]
             isOneToOne: false
             referencedRelation: "plano_dia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_tarefas_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
             referencedColumns: ["id"]
           },
           {
@@ -1831,6 +1847,60 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefa_execucoes: {
+        Row: {
+          concluido_em: string | null
+          created_at: string
+          data: string
+          duracao_min: number | null
+          executado_por: string | null
+          funcionario_id: string | null
+          id: string
+          iniciado_em: string
+          tarefa_id: string
+          updated_at: string
+        }
+        Insert: {
+          concluido_em?: string | null
+          created_at?: string
+          data?: string
+          duracao_min?: number | null
+          executado_por?: string | null
+          funcionario_id?: string | null
+          id?: string
+          iniciado_em?: string
+          tarefa_id: string
+          updated_at?: string
+        }
+        Update: {
+          concluido_em?: string | null
+          created_at?: string
+          data?: string
+          duracao_min?: number | null
+          executado_por?: string | null
+          funcionario_id?: string | null
+          id?: string
+          iniciado_em?: string
+          tarefa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_execucoes_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_execucoes_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           categoria: string
@@ -1839,7 +1909,10 @@ export type Database = {
           critica: boolean
           departamento: string
           descricao: string | null
+          duracao_estimada_min: number
+          hora_sugerida: string | null
           id: string
+          momento_do_dia: string
           periodicidade: string
           prioridade: string
           responsavel: string
@@ -1854,7 +1927,10 @@ export type Database = {
           critica?: boolean
           departamento?: string
           descricao?: string | null
+          duracao_estimada_min?: number
+          hora_sugerida?: string | null
           id?: string
+          momento_do_dia?: string
           periodicidade?: string
           prioridade?: string
           responsavel?: string
@@ -1869,7 +1945,10 @@ export type Database = {
           critica?: boolean
           departamento?: string
           descricao?: string | null
+          duracao_estimada_min?: number
+          hora_sugerida?: string | null
           id?: string
+          momento_do_dia?: string
           periodicidade?: string
           prioridade?: string
           responsavel?: string

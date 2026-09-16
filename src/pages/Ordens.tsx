@@ -47,6 +47,10 @@ export default function Ordens() {
       critica: newOrder.priority === 'alta',
       periodicidade: 'unica',
       departamento: 'todos',
+      duracao_estimada_min: 45,
+      momento_do_dia: 'durante',
+      hora_sugerida: null,
+
     });
     setNewOrder({ title: '', description: '', assignee: staffNames[0] || '', priority: 'media' });
     setShowForm(false);

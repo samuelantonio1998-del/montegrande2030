@@ -33,6 +33,19 @@ export type Necessidade = { ficha_id: string; nome: string; kg: number };
 
 export type PessoaTurno = { id: string; nome: string; inicio_min: number; fim_min: number };
 
+export type MomentoDia = 'abertura' | 'durante' | 'fecho';
+
+/** Tarefa fixa (limpeza, manutenção, segurança alimentar). Tem sempre de caber. */
+export type TarefaFixa = {
+  id: string;
+  titulo: string;
+  duracao_min: number;
+  momento_do_dia: MomentoDia;
+  hora_sugerida_min: number | null;
+  funcionario_id: string | null;
+  medida: boolean;
+};
+
 export type TarefaPlano = {
   chave: string;
   ordem: number;
@@ -50,17 +63,31 @@ export type TarefaPlano = {
   fim_min: number | null;
   funcionario_id: string | null;
   vespera: boolean;
+  origem: 'producao' | 'tarefa';
+  tarefa_id: string | null;
+  notas: string | null;
+};
+
+export type OcupacaoPessoa = {
+  funcionario_id: string;
+  nome: string;
+  turno_min: number;
+  tarefas_min: number;
+  producao_min: number;
+  livre_min: number;
 };
 
 export type ResultadoPlano = {
   tarefas: TarefaPlano[];
   avisos: string[];
   faltamMinutos: number;
+  ocupacao: OcupacaoPessoa[];
   resumo: {
     tarefas: number;
     minutosPessoa: number;
     minutosRelogio: number;
     minutosAbatedor: number;
+    minutosTarefas: number;
     tarefasVespera: number;
   };
 };
@@ -71,7 +98,9 @@ export type PlanoInput = {
   pessoas: PessoaTurno[];
   aberturaMin: number;
   abatedorId: string | null;
+  tarefasFixas?: TarefaFixa[];
 };
+
 
 export const minutosParaHora = (m: number | null | undefined) => {
   if (m === null || m === undefined) return '—';
@@ -108,9 +137,24 @@ function encaixeMaisTarde(
   return null;
 }
 
+/** Primeira hora de início ≥ minStart em que o bloco cabe (sem ultrapassar maxEnd). */
+function encaixeMaisCedo(busy: Intervalo[], minStart: number, maxEnd: number, dur: number): number | null {
+  let ini = minStart;
+  for (let guard = 0; guard < 500; guard++) {
+    const fim = ini + dur;
+    if (fim > maxEnd) return null;
+    const conflito = busy.find(([a, b]) => ini < b && a < fim);
+    if (!conflito) return ini;
+    ini = conflito[1];
+  }
+  return null;
+}
+
 export function gerarPlano(input: PlanoInput): ResultadoPlano {
   const { necessidades, passosPorFicha, pessoas, aberturaMin, abatedorId } = input;
+  const tarefasFixas = input.tarefasFixas ?? [];
   const avisos: string[] = [];
+
 
   // 2) Expansão
   type Fonte = { ficha_id: string; nome: string; kg: number; passo: PassoFicha };
@@ -164,6 +208,10 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
         fim_min: null,
         funcionario_id: null,
         vespera: false,
+        origem: 'producao',
+        tarefa_id: null,
+        notas: null,
+
       });
     }
   }
@@ -182,7 +230,7 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
   }
 
 
-  // 5) Agendamento para trás
+  // 5) Agendamento
   const ocupPessoa = new Map<string, Intervalo[]>(pessoas.map(p => [p.id, []]));
   const ocupEquip = new Map<string, Intervalo[]>();
   const limiteFicha = new Map<string, number>();
@@ -190,6 +238,75 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     if (!ocupEquip.has(id)) ocupEquip.set(id, []);
     return ocupEquip.get(id)!;
   };
+
+  // 5a) PRIMEIRO as tarefas fixas: limpezas, manutenção e segurança alimentar não se adiam.
+  // Ocupam tempo da pessoa antes de qualquer produção ser distribuída.
+  const tarefasDia: TarefaPlano[] = [];
+  const minutosTarefaPessoa = new Map<string, number>(pessoas.map(p => [p.id, 0]));
+  const ordemMomento: Record<MomentoDia, number> = { abertura: 0, durante: 1, fecho: 2 };
+  const fixasOrdenadas = [...tarefasFixas].sort(
+    (a, b) =>
+      ordemMomento[a.momento_do_dia] - ordemMomento[b.momento_do_dia] ||
+      (a.hora_sugerida_min ?? 9999) - (b.hora_sugerida_min ?? 9999),
+  );
+
+  for (const tf of fixasOrdenadas) {
+    const dur = Math.max(1, Math.round(tf.duracao_min));
+    // Quem faz: o responsável definido, se estiver ao trabalho; senão quem tem mais disponibilidade
+    let pessoa = pessoas.find(p => p.id === tf.funcionario_id) ?? null;
+    if (!pessoa && pessoas.length) {
+      pessoa = [...pessoas].sort(
+        (a, b) => (minutosTarefaPessoa.get(a.id) ?? 0) - (minutosTarefaPessoa.get(b.id) ?? 0),
+      )[0];
+    }
+    if (!pessoa) {
+      avisos.push(`A tarefa "${tf.titulo}" não pôde ser atribuída: não há ninguém ao trabalho.`);
+      continue;
+    }
+    const busy = ocupPessoa.get(pessoa.id)!;
+    let inicio: number | null = null;
+    if (tf.momento_do_dia === 'fecho') {
+      const fim = encaixeMaisTarde([busy], pessoa.fim_min, pessoa.inicio_min, dur);
+      inicio = fim === null ? null : fim - dur;
+    } else {
+      const minStart = Math.max(
+        pessoa.inicio_min,
+        tf.hora_sugerida_min ?? (tf.momento_do_dia === 'abertura' ? pessoa.inicio_min : pessoa.inicio_min),
+      );
+      inicio = encaixeMaisCedo(busy, minStart, pessoa.fim_min, dur);
+      if (inicio === null) inicio = encaixeMaisCedo(busy, pessoa.inicio_min, pessoa.fim_min, dur);
+    }
+    if (inicio === null) {
+      // As tarefas têm sempre de caber: entram à mesma, no fim do que já está ocupado
+      inicio = busy.length ? Math.max(...busy.map(b => b[1])) : pessoa.inicio_min;
+      avisos.push(`A tarefa "${tf.titulo}" ficou fora do horário de ${pessoa.nome}; é preciso ajustar o turno.`);
+    }
+    busy.push([inicio, inicio + dur]);
+    minutosTarefaPessoa.set(pessoa.id, (minutosTarefaPessoa.get(pessoa.id) ?? 0) + dur);
+    tarefasDia.push({
+      chave: `tarefa:${tf.id}`,
+      ordem: -1,
+      descricao: tf.titulo,
+      operacao: null,
+      tipo_passo: 'ativo',
+      zona_id: null,
+      equipamento_id: null,
+      adiantavel: false,
+      kg: 0,
+      duracao_min: dur,
+      ciclos: null,
+      fichas: [],
+      inicio_min: inicio,
+      fim_min: inicio + dur,
+      funcionario_id: pessoa.id,
+      vespera: false,
+      origem: 'tarefa',
+      tarefa_id: tf.id,
+      notas: tf.medida ? 'Duração medida' : 'Duração estimada',
+    });
+  }
+
+
 
   const ordenadas = [...tarefas].sort((a, b) => b.ordem - a.ordem);
   let faltamMinutos = 0;
@@ -240,21 +357,43 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     }
   }
 
+  const empurrados = tarefas.filter(t => t.vespera);
   if (faltamMinutos > 0) {
     avisos.push(
-      `O trabalho não cabe no tempo disponível: faltam cerca de ${Math.round(faltamMinutos)} minutos. ` +
-      `Já foram agrupadas tarefas iguais, as esperas foram preenchidas com trabalho activo e tudo o que é adiantável foi passado para a véspera. ` +
-      `É preciso reduzir quantidades ou retirar um prato.`,
+      `A produção não cabe no tempo disponível: faltam cerca de ${Math.round(faltamMinutos)} minutos. ` +
+      `As tarefas de limpeza, manutenção e segurança alimentar foram mantidas e o que é adiantável` +
+      (empurrados.length ? ` (${empurrados.length} passo(s)) ` : ' ') +
+      `foi empurrado para a véspera. É preciso reduzir quantidades ou retirar um prato.`,
     );
   }
 
+  const todas = [...tarefasDia, ...tarefas];
+  const minutosTarefas = tarefasDia.reduce((s, t) => s + t.duracao_min, 0);
   const minutosPessoa = tarefas.filter(t => t.tipo_passo === 'ativo').reduce((s, t) => s + t.duracao_min, 0);
   const minutosRelogio = tarefas.reduce((s, t) => s + t.duracao_min, 0);
   const minutosAbatedor = abatedorId
     ? tarefas.filter(t => t.equipamento_id === abatedorId).reduce((s, t) => s + t.duracao_min, 0)
     : 0;
 
-  const ordenadasFinal = [...tarefas].sort((a, b) => {
+  const ocupacao: OcupacaoPessoa[] = pessoas.map(p => {
+    const turno = Math.max(0, p.fim_min - p.inicio_min);
+    const tMin = tarefasDia
+      .filter(t => t.funcionario_id === p.id)
+      .reduce((s, t) => s + t.duracao_min, 0);
+    const pMin = tarefas
+      .filter(t => t.funcionario_id === p.id && !t.vespera)
+      .reduce((s, t) => s + t.duracao_min, 0);
+    return {
+      funcionario_id: p.id,
+      nome: p.nome,
+      turno_min: turno,
+      tarefas_min: Math.round(tMin),
+      producao_min: Math.round(pMin),
+      livre_min: Math.round(Math.max(0, turno - tMin - pMin)),
+    };
+  });
+
+  const ordenadasFinal = [...todas].sort((a, b) => {
     if (a.vespera !== b.vespera) return a.vespera ? -1 : 1;
     return (a.inicio_min ?? 9999) - (b.inicio_min ?? 9999);
   });
@@ -263,15 +402,18 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     tarefas: ordenadasFinal,
     avisos,
     faltamMinutos: Math.round(faltamMinutos),
+    ocupacao,
     resumo: {
-      tarefas: tarefas.length,
+      tarefas: todas.length,
       minutosPessoa: Math.round(minutosPessoa),
       minutosRelogio: Math.round(minutosRelogio),
       minutosAbatedor: Math.round(minutosAbatedor),
-      tarefasVespera: tarefas.filter(t => t.vespera).length,
+      minutosTarefas: Math.round(minutosTarefas),
+      tarefasVespera: empurrados.length,
     },
   };
 }
+
 
 function capitalizar(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);

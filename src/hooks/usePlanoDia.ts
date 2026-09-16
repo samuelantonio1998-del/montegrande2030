@@ -7,12 +7,15 @@ import { inicioSemana, paraISO } from '@/hooks/useHorarios';
 import {
   gerarPlano,
   horaParaMin,
+  type MomentoDia,
   type Necessidade,
   type PassoFicha,
   type PessoaTurno,
   type ResultadoPlano,
+  type TarefaFixa,
   type TipoPasso,
 } from '@/lib/plano-engine';
+
 
 export const PERMANENT_DATE = '9999-12-31';
 
@@ -35,7 +38,11 @@ export type PlanoTarefa = {
   adiantavel: boolean;
   concluida: boolean;
   notas: string | null;
+  origem: 'producao' | 'tarefa';
+  tarefa_id: string | null;
+  iniciado_em: string | null;
 };
+
 
 export type Plano = {
   id: string;
@@ -57,7 +64,9 @@ export type DadosPlano = {
   zonas: { id: string; nome: string }[];
   equipamentos: { id: string; nome: string }[];
   funcionarios: { id: string; nome: string }[];
+  tarefasFixas: TarefaFixa[];
   emFalta: string[];
+
 };
 
 /** Recolhe tudo o que o motor precisa e diz claramente o que falta. */
@@ -80,7 +89,7 @@ export function useDadosPlano(dataISO: string) {
         .in('data', [dataISO, PERMANENT_DATE]);
       if (unidadeId) qEmenta = qEmenta.eq('unidade_id', unidadeId);
 
-      const [ementaRes, zonasRes, equipRes, horariosRes, excRes, escalaRes, funcRes, servicoRes] =
+      const [ementaRes, zonasRes, equipRes, horariosRes, excRes, escalaRes, funcRes, servicoRes, tarefasRes, execRes] =
         await Promise.all([
           qEmenta,
           supabase.from('zonas_producao').select('id, nome').eq('ativo', true),
@@ -90,7 +99,10 @@ export function useDadosPlano(dataISO: string) {
           supabase.from('escala_alternancia').select('*').eq('semana_inicio', semana),
           supabase.from('funcionarios').select('id, nome, unidade_id, role').eq('ativo', true),
           supabase.from('servico_horarios').select('*').eq('ativo', true),
+          supabase.from('tarefas').select('*').eq('concluida', false).in('departamento', ['cozinha', 'todos']),
+          supabase.from('tarefa_execucoes').select('tarefa_id, duracao_min').not('concluido_em', 'is', null),
         ]);
+
 
       if (ementaRes.error) throw ementaRes.error;
 
@@ -193,6 +205,43 @@ export function useDadosPlano(dataISO: string) {
       }));
       const abatedorId = equipamentos.find(e => e.nome.toLowerCase().includes('abatedor'))?.id ?? null;
 
+      // 5) Tarefas do dia (limpeza, manutenção, segurança alimentar) — tempo já ocupado
+      const execucoes = (execRes.data ?? []) as { tarefa_id: string; duracao_min: number | null }[];
+      const porTarefa = new Map<string, number[]>();
+      for (const e of execucoes) {
+        if (e.duracao_min === null || e.duracao_min === undefined) continue;
+        (porTarefa.get(e.tarefa_id) ?? porTarefa.set(e.tarefa_id, []).get(e.tarefa_id)!).push(Number(e.duracao_min));
+      }
+      const normalizar = (s: string) =>
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
+      const tarefasFixas: TarefaFixa[] = ((tarefasRes.data ?? []) as Record<string, unknown>[])
+        .filter(t => !unidadeId || !t.unidade_id || t.unidade_id === unidadeId)
+        .map(t => {
+          const id = t.id as string;
+          const medidas = (porTarefa.get(id) ?? []).slice(-10).sort((a, b) => a - b);
+          const temMedida = medidas.length >= 3;
+          const mediana = temMedida
+            ? medidas.length % 2
+              ? medidas[(medidas.length - 1) / 2]
+              : (medidas[medidas.length / 2 - 1] + medidas[medidas.length / 2]) / 2
+            : 0;
+          const responsavel = String(t.responsavel ?? '').trim();
+          const pessoaResp = responsavel
+            ? pessoas.find(p => normalizar(p.nome) === normalizar(responsavel))
+            : undefined;
+          return {
+            id,
+            titulo: String(t.titulo),
+            duracao_min: Math.max(1, Math.round(temMedida ? mediana : Number(t.duracao_estimada_min || 15))),
+            momento_do_dia: ((t.momento_do_dia as MomentoDia) ?? 'durante'),
+            hora_sugerida_min: t.hora_sugerida ? horaParaMin(String(t.hora_sugerida)) : null,
+            funcionario_id: pessoaResp?.id ?? null,
+            medida: temMedida,
+          };
+        });
+
+
       return {
         necessidades,
         passosPorFicha,
@@ -202,22 +251,27 @@ export function useDadosPlano(dataISO: string) {
         zonas: ((zonasRes.data ?? []) as Record<string, unknown>[]).map(z => ({ id: z.id as string, nome: z.nome as string })),
         equipamentos,
         funcionarios,
+        tarefasFixas,
         emFalta,
+
       };
     },
   });
 }
 
 export function calcular(dados: DadosPlano): ResultadoPlano | null {
-  if (!dados.necessidades.length || dados.aberturaMin === null || !dados.pessoas.length) return null;
+  if (dados.aberturaMin === null || !dados.pessoas.length) return null;
+  if (!dados.necessidades.length && !dados.tarefasFixas.length) return null;
   return gerarPlano({
     necessidades: dados.necessidades,
     passosPorFicha: dados.passosPorFicha,
     pessoas: dados.pessoas,
     aberturaMin: dados.aberturaMin,
     abatedorId: dados.abatedorId,
+    tarefasFixas: dados.tarefasFixas,
   });
 }
+
 
 /** Plano já guardado para o dia. */
 export function usePlanoGuardado(dataISO: string) {
@@ -297,7 +351,10 @@ export function usePlanoMutations(dataISO: string) {
         funcionario_id: t.funcionario_id,
         vespera: t.vespera,
         adiantavel: t.adiantavel,
-        notas: t.ciclos ? `${t.ciclos} ciclo(s) de abatedor` : null,
+        origem: t.origem,
+        tarefa_id: t.tarefa_id,
+        notas: t.ciclos ? `${t.ciclos} ciclo(s) de abatedor` : t.notas,
+
       }));
       if (linhas.length) {
         const { error: e2 } = await supabase.from('plano_tarefas').insert(linhas);
@@ -320,17 +377,55 @@ export function usePlanoMutations(dataISO: string) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** Marca o arranque da tarefa — é assim que a app mede a duração real. */
+  const iniciar = useMutation({
+    mutationFn: async (t: PlanoTarefa) => {
+      const agora = new Date().toISOString();
+      const { error } = await supabase
+        .from('plano_tarefas')
+        .update({ iniciado_em: agora })
+        .eq('id', t.id);
+      if (error) throw error;
+      if (t.origem === 'tarefa' && t.tarefa_id) {
+        const { error: e2 } = await supabase.from('tarefa_execucoes').insert({
+          tarefa_id: t.tarefa_id,
+          funcionario_id: t.funcionario_id,
+          executado_por: user?.name ?? null,
+          iniciado_em: agora,
+        });
+        if (e2) throw e2;
+      }
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const concluir = useMutation({
-    mutationFn: async (args: { id: string; concluida: boolean }) => {
+    mutationFn: async (args: { id: string; concluida: boolean; origem?: string; tarefa_id?: string | null }) => {
+      const agora = new Date().toISOString();
       const { error } = await supabase
         .from('plano_tarefas')
         .update({
           concluida: args.concluida,
-          concluida_em: args.concluida ? new Date().toISOString() : null,
+          concluida_em: args.concluida ? agora : null,
           concluida_por: args.concluida ? (user?.name ?? null) : null,
         })
         .eq('id', args.id);
       if (error) throw error;
+
+      // Fecha a medição real da tarefa, se tiver sido iniciada
+      if (args.concluida && args.origem === 'tarefa' && args.tarefa_id) {
+        const { data: abertas } = await supabase
+          .from('tarefa_execucoes')
+          .select('id')
+          .eq('tarefa_id', args.tarefa_id)
+          .is('concluido_em', null)
+          .order('iniciado_em', { ascending: false })
+          .limit(1);
+        if (abertas?.length) {
+          await supabase.from('tarefa_execucoes').update({ concluido_em: agora }).eq('id', abertas[0].id);
+        }
+      }
     },
     onSuccess: () => invalidar(),
     onError: (e: Error) => toast.error(e.message),
@@ -345,5 +440,6 @@ export function usePlanoMutations(dataISO: string) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  return { guardar, reatribuir, concluir, apagar };
+  return { guardar, reatribuir, iniciar, concluir, apagar };
 }
+

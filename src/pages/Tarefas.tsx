@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Plus, CheckCircle2, Circle, AlertTriangle, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import AIprepTasksDialog from '@/components/tarefas/AIprepTasksDialog';
-import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento } from '@/hooks/useTarefas';
+import { useTarefas, type Tarefa, type TaskPeriodicity, type TarefaDepartamento, type MomentoDoDia } from '@/hooks/useTarefas';
 import { useEmployees } from '@/hooks/useEmployees';
 import { cn } from '@/lib/utils';
 import { useUnidade } from '@/contexts/UnidadeContext';
@@ -46,7 +46,7 @@ const periodicityColors: Record<TaskPeriodicity, string> = {
 
 export default function Tarefas() {
   const { tem } = useMinhasPermissoes();
-  const { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
+  const { tarefas, duracoes, emCurso, loading, addTarefa, iniciarTarefa, completeTarefa, deleteTarefa, resetRecorrentes } = useTarefas();
   const { isConsolidado, nomeUnidade } = useUnidade();
   const { employees } = useEmployees();
   const staffNames = employees.map(e => e.name);
@@ -65,7 +65,11 @@ export default function Tarefas() {
     critica: false,
     periodicidade: 'unica' as TaskPeriodicity,
     departamento: departamentoPermitido,
+    duracao_estimada_min: 15,
+    momento_do_dia: 'durante' as MomentoDoDia,
+    hora_sugerida: '',
   });
+
 
   const myTarefas = tarefas.filter(t => t.departamento === 'todos' || departamentoPermitido === 'todos' || t.departamento === departamentoPermitido);
   const activeTasks = myTarefas.filter(t => !t.concluida);
@@ -95,11 +99,13 @@ export default function Tarefas() {
 
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
-    await addTarefa({ ...newTask, descricao: newTask.descricao || null });
-    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido });
+    
+    await addTarefa({ ...newTask, descricao: newTask.descricao || null, hora_sugerida: newTask.hora_sugerida || null });
+    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido, duracao_estimada_min: 15, momento_do_dia: 'durante', hora_sugerida: '' });
     setShowForm(false);
     toast({ title: 'Tarefa criada' });
   };
+
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar...</div>;
 
@@ -168,12 +174,44 @@ export default function Tarefas() {
                     <SelectItem value="cozinha">Cozinha</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Duração (min)</label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={newTask.duracao_estimada_min}
+                      onChange={e => setNewTask(p => ({ ...p, duracao_estimada_min: Number(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Momento do dia</label>
+                    <Select value={newTask.momento_do_dia} onValueChange={v => setNewTask(p => ({ ...p, momento_do_dia: v as MomentoDoDia }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="abertura">Abertura</SelectItem>
+                        <SelectItem value="durante">Durante</SelectItem>
+                        <SelectItem value="fecho">Fecho</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Hora sugerida</label>
+                    <Input
+                      type="time"
+                      value={newTask.hora_sugerida}
+                      onChange={e => setNewTask(p => ({ ...p, hora_sugerida: e.target.value }))}
+                    />
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="critical" checked={newTask.critica} onChange={e => setNewTask(p => ({ ...p, critica: e.target.checked }))} className="rounded" />
                   <label htmlFor="critical" className="text-sm text-foreground">Tarefa crítica</label>
                 </div>
                 <Button onClick={handleAdd} className="w-full">Criar Tarefa</Button>
               </div>
+
             </DialogContent>
           </Dialog>
         </div>
@@ -193,6 +231,8 @@ export default function Tarefas() {
         <AnimatePresence>
           {filtered.map((task, i) => {
             const pri = priorityConfig[task.prioridade];
+            const dur = duracoes[task.id];
+            const aCorrer = !!emCurso[task.id];
             return (
               <motion.div key={task.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12, height: 0 }} transition={{ delay: i * 0.03 }}
                 onClick={() => handleComplete(task)}
@@ -208,11 +248,29 @@ export default function Tarefas() {
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
                     {task.departamento !== 'todos' && <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', task.departamento === 'sala' ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground')}>{task.departamento === 'sala' ? 'Sala' : 'Cozinha'}</span>}
+                    {dur && (
+                      <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', dur.medida ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground')}>
+                        <Clock className="h-3 w-3" />{dur.minutos} min · {dur.medida ? 'medido' : 'estimado'}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {task.momento_do_dia === 'abertura' ? 'Abertura' : task.momento_do_dia === 'fecho' ? 'Fecho' : 'Durante'}
+                      {task.hora_sugerida ? ` · ${String(task.hora_sugerida).slice(0, 5)}` : ''}
+                    </span>
                   </div>
                 </div>
-                <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); iniciarTarefa(task.id); }}
+                    disabled={aCorrer}
+                    className={cn('rounded-lg px-2 py-1 text-xs font-medium transition-colors', aCorrer ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+                    {aCorrer ? 'A decorrer' : 'Iniciar'}
+                  </button>
+                  <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
               </motion.div>
             );
           })}

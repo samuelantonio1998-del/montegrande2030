@@ -331,6 +331,20 @@ export default function Ementa() {
                         </Button>
                       )}
 
+                      {item.buffet_item?.ficha_tecnica_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="mt-1 h-7 w-full gap-1.5 text-xs"
+                          onClick={() => setRotuloTarget({
+                            id: item.buffet_item!.ficha_tecnica_id!,
+                            nome: item.buffet_item!.nome,
+                          })}
+                        >
+                          <Printer className="h-3.5 w-3.5" /> Imprimir rótulo
+                        </Button>
+                      )}
+
                       {trays.length > 0 && (
                         <div className="mt-2 space-y-1 border-t border-border pt-2">
                           {trays.map(t => (

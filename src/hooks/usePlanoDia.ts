@@ -57,7 +57,9 @@ export type DadosPlano = {
   zonas: { id: string; nome: string }[];
   equipamentos: { id: string; nome: string }[];
   funcionarios: { id: string; nome: string }[];
+  tarefasFixas: TarefaFixa[];
   emFalta: string[];
+
 };
 
 /** Recolhe tudo o que o motor precisa e diz claramente o que falta. */

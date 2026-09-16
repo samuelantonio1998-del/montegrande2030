@@ -46,13 +46,13 @@ export default function PlanoDia() {
   if (modoFuncionario) {
     const minhas = tarefas
       .filter(t => t.funcionario_id === user!.funcionarioId)
-      .sort((a, b) => (a.inicio_min ?? 0) - (b.inicio_min ?? 0));
+      .sort((a, b) => (Number(a.vespera) - Number(b.vespera)) || ((a.inicio_min ?? 0) - (b.inicio_min ?? 0)));
     return (
       <div className="space-y-4 p-4">
-        <h1 className="font-serif text-2xl">As minhas tarefas</h1>
+        <h1 className="font-serif text-2xl">O meu dia</h1>
         <p className="text-sm text-muted-foreground">{dataISO}</p>
         {minhas.length === 0 && (
-          <Card className="p-6 text-center text-muted-foreground">Ainda não tem tarefas atribuídas neste dia.</Card>
+          <Card className="p-6 text-center text-muted-foreground">Ainda não tem nada atribuído neste dia.</Card>
         )}
         {minhas.map(t => (
           <Card key={t.id} className={`p-4 ${t.concluida ? 'opacity-60' : ''}`}>
@@ -60,16 +60,28 @@ export default function PlanoDia() {
               <Checkbox
                 className="mt-1 h-6 w-6"
                 checked={t.concluida}
-                onCheckedChange={v => concluir.mutate({ id: t.id, concluida: !!v })}
+                onCheckedChange={v => concluir.mutate({ id: t.id, concluida: !!v, origem: t.origem, tarefa_id: t.tarefa_id })}
               />
               <div className="flex-1">
-                <p className="text-lg font-medium">{t.descricao}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-lg font-medium">{t.descricao}</p>
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${t.origem === 'tarefa' ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
+                    {t.origem === 'tarefa' ? 'Tarefa' : 'Produção'}
+                  </span>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  {minutosParaHora(t.inicio_min)} – {minutosParaHora(t.fim_min)} · {Number(t.kg).toFixed(1)} kg
+                  {minutosParaHora(t.inicio_min)} – {minutosParaHora(t.fim_min)}
+                  {Number(t.kg) > 0 ? ` · ${Number(t.kg).toFixed(1)} kg` : ''}
                   {nomeEquip(t.equipamento_id) ? ` · ${nomeEquip(t.equipamento_id)}` : ''}
                 </p>
-                <p className="mt-1 text-sm">{t.fichas.map(f => f.nome).join(' · ')}</p>
-                {t.vespera && <Badge variant="secondary" className="mt-2">Véspera</Badge>}
+                {t.fichas.length > 0 && <p className="mt-1 text-sm">{t.fichas.map(f => f.nome).join(' · ')}</p>}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {t.vespera && <Badge variant="secondary">Véspera</Badge>}
+                  {!t.concluida && !t.iniciado_em && (
+                    <Button size="sm" variant="outline" onClick={() => iniciar.mutate(t)}>Iniciar</Button>
+                  )}
+                  {!t.concluida && t.iniciado_em && <Badge variant="outline">A decorrer</Badge>}
+                </div>
               </div>
             </div>
           </Card>
@@ -77,6 +89,7 @@ export default function PlanoDia() {
       </div>
     );
   }
+
 
   const porPessoa = new Map<string, PlanoTarefa[]>();
   for (const t of doDia) {

@@ -285,11 +285,7 @@ export default function FichasTecnicas() {
                       aria-label="Imprimir rótulo"
                       title="Imprimir rótulo"
                     >
-                      {printingId === ficha.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Printer className="h-4 w-4" />
-                      )}
+                      <Printer className="h-4 w-4" />
                     </button>
                   )}
                 </div>

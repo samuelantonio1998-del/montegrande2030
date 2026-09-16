@@ -137,9 +137,24 @@ function encaixeMaisTarde(
   return null;
 }
 
+/** Primeira hora de início ≥ minStart em que o bloco cabe (sem ultrapassar maxEnd). */
+function encaixeMaisCedo(busy: Intervalo[], minStart: number, maxEnd: number, dur: number): number | null {
+  let ini = minStart;
+  for (let guard = 0; guard < 500; guard++) {
+    const fim = ini + dur;
+    if (fim > maxEnd) return null;
+    const conflito = busy.find(([a, b]) => ini < b && a < fim);
+    if (!conflito) return ini;
+    ini = conflito[1];
+  }
+  return null;
+}
+
 export function gerarPlano(input: PlanoInput): ResultadoPlano {
   const { necessidades, passosPorFicha, pessoas, aberturaMin, abatedorId } = input;
+  const tarefasFixas = input.tarefasFixas ?? [];
   const avisos: string[] = [];
+
 
   // 2) Expansão
   type Fonte = { ficha_id: string; nome: string; kg: number; passo: PassoFicha };

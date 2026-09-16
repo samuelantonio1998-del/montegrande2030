@@ -168,12 +168,44 @@ export default function Tarefas() {
                     <SelectItem value="cozinha">Cozinha</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Duração (min)</label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={newTask.duracao_estimada_min}
+                      onChange={e => setNewTask(p => ({ ...p, duracao_estimada_min: Number(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Momento do dia</label>
+                    <Select value={newTask.momento_do_dia} onValueChange={v => setNewTask(p => ({ ...p, momento_do_dia: v as MomentoDoDia }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="abertura">Abertura</SelectItem>
+                        <SelectItem value="durante">Durante</SelectItem>
+                        <SelectItem value="fecho">Fecho</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Hora sugerida</label>
+                    <Input
+                      type="time"
+                      value={newTask.hora_sugerida}
+                      onChange={e => setNewTask(p => ({ ...p, hora_sugerida: e.target.value }))}
+                    />
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="critical" checked={newTask.critica} onChange={e => setNewTask(p => ({ ...p, critica: e.target.checked }))} className="rounded" />
                   <label htmlFor="critical" className="text-sm text-foreground">Tarefa crítica</label>
                 </div>
                 <Button onClick={handleAdd} className="w-full">Criar Tarefa</Button>
               </div>
+
             </DialogContent>
           </Dialog>
         </div>

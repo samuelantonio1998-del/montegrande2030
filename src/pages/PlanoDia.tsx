@@ -223,14 +223,22 @@ export default function PlanoDia() {
           <h2 className="flex items-center gap-2 font-serif text-xl">
             <CalendarClock className="h-5 w-5" /> Linha do tempo por pessoa
           </h2>
-          {[...porPessoa.entries()].map(([pid, lista]) => (
+          {[...porPessoa.entries()].map(([pid, lista]) => {
+            const pessoa = dados?.pessoas.find(p => p.id === pid);
+            const turno = pessoa ? Math.max(0, pessoa.fim_min - pessoa.inicio_min) : 0;
+            const minTarefas = lista.filter(t => t.origem === 'tarefa').reduce((s, t) => s + Number(t.duracao_min), 0);
+            const minProducao = lista.filter(t => t.origem !== 'tarefa').reduce((s, t) => s + Number(t.duracao_min), 0);
+            const livre = Math.max(0, turno - minTarefas - minProducao);
+            return (
             <Card key={pid} className="overflow-hidden">
-              <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-2">
                 <span className="font-medium">{pid === SEM_PESSOA ? 'Por atribuir' : nomePessoa(pid)}</span>
                 <span className="text-xs text-muted-foreground">
-                  {lista.reduce((s, t) => s + Number(t.duracao_min), 0)} min · {lista.length} tarefas
+                  {minTarefas} min em tarefas · {minProducao} min de produção
+                  {turno > 0 ? ` · ${livre} min livres de ${turno}` : ''}
                 </span>
               </div>
+
               <div className="divide-y">
                 {lista
                   .sort((a, b) => (a.inicio_min ?? 0) - (b.inicio_min ?? 0))

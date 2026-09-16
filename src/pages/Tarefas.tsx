@@ -99,7 +99,7 @@ export default function Tarefas() {
 
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
-    await addTarefa({ ...newTask, descricao: newTask.descricao || null });
+    
     await addTarefa({ ...newTask, descricao: newTask.descricao || null, hora_sugerida: newTask.hora_sugerida || null });
     setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido, duracao_estimada_min: 15, momento_do_dia: 'durante', hora_sugerida: '' });
     setShowForm(false);

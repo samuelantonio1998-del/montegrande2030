@@ -183,7 +183,7 @@ export default function PlanoDia() {
           <div className="flex items-center gap-2 font-medium"><Info className="h-4 w-4" /> Pré-visualização</div>
           <p className="mt-1 text-muted-foreground">
             {previsto.resumo.tarefas} tarefas agrupadas · {previsto.resumo.minutosPessoa} min de pessoa ·{' '}
-            {previsto.resumo.minutosRelogio} min de relógio · {previsto.resumo.tarefasVespera} de véspera.
+            {previsto.resumo.minutosRelogio} min de relógio · {previsto.resumo.minutosTarefas} min de limpezas e manutenção · {previsto.resumo.tarefasVespera} passo(s) empurrados para a véspera.
             Carregue em Gerar plano para guardar.
           </p>
         </Card>

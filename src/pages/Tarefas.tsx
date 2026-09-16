@@ -65,7 +65,11 @@ export default function Tarefas() {
     critica: false,
     periodicidade: 'unica' as TaskPeriodicity,
     departamento: departamentoPermitido,
+    duracao_estimada_min: 15,
+    momento_do_dia: 'durante' as MomentoDoDia,
+    hora_sugerida: '',
   });
+
 
   const myTarefas = tarefas.filter(t => t.departamento === 'todos' || departamentoPermitido === 'todos' || t.departamento === departamentoPermitido);
   const activeTasks = myTarefas.filter(t => !t.concluida);

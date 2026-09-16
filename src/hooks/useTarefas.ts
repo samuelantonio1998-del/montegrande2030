@@ -7,6 +7,8 @@ export type TaskPeriodicity = 'unica' | 'diaria' | 'semanal' | 'mensal' | 'trime
 
 export type TarefaDepartamento = 'sala' | 'cozinha' | 'todos';
 
+export type MomentoDoDia = 'abertura' | 'durante' | 'fecho';
+
 export type Tarefa = {
   id: string;
   titulo: string;
@@ -20,7 +22,14 @@ export type Tarefa = {
   departamento: TarefaDepartamento;
   unidade_id: string | null;
   created_at: string;
+  duracao_estimada_min: number;
+  momento_do_dia: MomentoDoDia;
+  hora_sugerida: string | null;
 };
+
+/** Duração em uso: mediana real a partir de 3 execuções, senão a estimativa. */
+export type DuracaoTarefa = { minutos: number; medida: boolean; execucoes: number };
+
 
 export function useTarefas() {
   const { unidadeId, isConsolidado } = useUnidade();

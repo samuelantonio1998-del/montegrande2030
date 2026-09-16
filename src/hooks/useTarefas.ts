@@ -34,7 +34,41 @@ export type DuracaoTarefa = { minutos: number; medida: boolean; execucoes: numbe
 export function useTarefas() {
   const { unidadeId, isConsolidado } = useUnidade();
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [duracoes, setDuracoes] = useState<Record<string, DuracaoTarefa>>({});
+  const [emCurso, setEmCurso] = useState<Record<string, { id: string; iniciado_em: string }>>({});
   const [loading, setLoading] = useState(true);
+
+  const fetchExecucoes = useCallback(async (lista: Tarefa[]) => {
+    const { data } = await supabase
+      .from('tarefa_execucoes')
+      .select('id, tarefa_id, iniciado_em, concluido_em, duracao_min')
+      .order('iniciado_em', { ascending: true });
+    const linhas = (data ?? []) as {
+      id: string; tarefa_id: string; iniciado_em: string; concluido_em: string | null; duracao_min: number | null;
+    }[];
+
+    const porTarefa: Record<string, number[]> = {};
+    const abertas: Record<string, { id: string; iniciado_em: string }> = {};
+    for (const l of linhas) {
+      if (l.concluido_em && l.duracao_min !== null) (porTarefa[l.tarefa_id] ||= []).push(Number(l.duracao_min));
+      else if (!l.concluido_em) abertas[l.tarefa_id] = { id: l.id, iniciado_em: l.iniciado_em };
+    }
+
+    const calc: Record<string, DuracaoTarefa> = {};
+    for (const t of lista) {
+      const vals = (porTarefa[t.id] ?? []).slice(-10).sort((a, b) => a - b);
+      if (vals.length >= 3) {
+        const mediana = vals.length % 2
+          ? vals[(vals.length - 1) / 2]
+          : (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2;
+        calc[t.id] = { minutos: Math.max(1, Math.round(mediana)), medida: true, execucoes: vals.length };
+      } else {
+        calc[t.id] = { minutos: t.duracao_estimada_min ?? 15, medida: false, execucoes: vals.length };
+      }
+    }
+    setDuracoes(calc);
+    setEmCurso(abertas);
+  }, []);
 
   const fetch = useCallback(async () => {
     let query = supabase
@@ -47,15 +81,18 @@ export function useTarefas() {
       console.error('Erro tarefas:', error);
       return;
     }
-    setTarefas(data as unknown as Tarefa[]);
+    const lista = data as unknown as Tarefa[];
+    setTarefas(lista);
     setLoading(false);
-  }, [unidadeId, isConsolidado]);
+    await fetchExecucoes(lista);
+  }, [unidadeId, isConsolidado, fetchExecucoes]);
 
   useEffect(() => {
     fetch();
     const ch = supabase
       .channel('tarefas-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefas' }, () => fetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefa_execucoes' }, () => fetch())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [fetch]);
@@ -70,19 +107,47 @@ export function useTarefas() {
       critica: t.critica,
       periodicidade: t.periodicidade,
       departamento: t.departamento,
+      duracao_estimada_min: t.duracao_estimada_min,
+      momento_do_dia: t.momento_do_dia,
+      hora_sugerida: t.hora_sugerida || null,
       concluida: false,
       unidade_id: unidadeId,
     });
     if (error) toast.error('Erro ao criar tarefa');
   }, [unidadeId]);
 
+  const updateTarefa = useCallback(async (id: string, campos: Partial<Tarefa>) => {
+    const { error } = await supabase.from('tarefas').update(campos).eq('id', id);
+    if (error) toast.error('Erro ao actualizar tarefa');
+    else fetch();
+  }, [fetch]);
+
+  /** Arranque da tarefa: é assim que a duração real fica medida, sem cronómetro. */
+  const iniciarTarefa = useCallback(async (id: string) => {
+    if (emCurso[id]) return;
+    const { error } = await supabase.from('tarefa_execucoes').insert({
+      tarefa_id: id,
+      iniciado_em: new Date().toISOString(),
+    });
+    if (error) toast.error('Não foi possível iniciar a tarefa');
+    else fetch();
+  }, [emCurso, fetch]);
+
   const completeTarefa = useCallback(async (id: string, periodicidade: TaskPeriodicity) => {
+    const aberta = emCurso[id];
+    if (aberta) {
+      await supabase
+        .from('tarefa_execucoes')
+        .update({ concluido_em: new Date().toISOString() })
+        .eq('id', aberta.id);
+    }
     if (periodicidade === 'unica') {
       await supabase.from('tarefas').delete().eq('id', id);
     } else {
       await supabase.from('tarefas').update({ concluida: true }).eq('id', id);
     }
-  }, []);
+    fetch();
+  }, [emCurso, fetch]);
 
   const deleteTarefa = useCallback(async (id: string) => {
     await supabase.from('tarefas').delete().eq('id', id);
@@ -96,5 +161,17 @@ export function useTarefas() {
     if (error) toast.error('Erro ao reiniciar tarefas');
   }, []);
 
-  return { tarefas, loading, addTarefa, completeTarefa, deleteTarefa, resetRecorrentes };
+  return {
+    tarefas,
+    duracoes,
+    emCurso,
+    loading,
+    addTarefa,
+    updateTarefa,
+    iniciarTarefa,
+    completeTarefa,
+    deleteTarefa,
+    resetRecorrentes,
+  };
 }
+

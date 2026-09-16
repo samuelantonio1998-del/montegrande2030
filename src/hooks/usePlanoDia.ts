@@ -351,7 +351,10 @@ export function usePlanoMutations(dataISO: string) {
         funcionario_id: t.funcionario_id,
         vespera: t.vespera,
         adiantavel: t.adiantavel,
-        notas: t.ciclos ? `${t.ciclos} ciclo(s) de abatedor` : null,
+        origem: t.origem,
+        tarefa_id: t.tarefa_id,
+        notas: t.ciclos ? `${t.ciclos} ciclo(s) de abatedor` : t.notas,
+
       }));
       if (linhas.length) {
         const { error: e2 } = await supabase.from('plano_tarefas').insert(linhas);

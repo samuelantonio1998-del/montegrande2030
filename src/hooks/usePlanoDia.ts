@@ -99,7 +99,10 @@ export function useDadosPlano(dataISO: string) {
           supabase.from('escala_alternancia').select('*').eq('semana_inicio', semana),
           supabase.from('funcionarios').select('id, nome, unidade_id, role').eq('ativo', true),
           supabase.from('servico_horarios').select('*').eq('ativo', true),
+          supabase.from('tarefas').select('*').eq('concluida', false).in('departamento', ['cozinha', 'todos']),
+          supabase.from('tarefa_execucoes').select('tarefa_id, duracao_min').not('concluido_em', 'is', null),
         ]);
+
 
       if (ementaRes.error) throw ementaRes.error;
 

@@ -27,7 +27,7 @@ export default function PlanoDia() {
 
   const { data: dados, isLoading } = useDadosPlano(dataISO);
   const { data: guardado } = usePlanoGuardado(dataISO);
-  const { guardar, reatribuir, concluir, apagar } = usePlanoMutations(dataISO);
+  const { guardar, reatribuir, iniciar, concluir, apagar } = usePlanoMutations(dataISO);
 
   const previsto = useMemo(() => (dados ? calcular(dados) : null), [dados]);
 

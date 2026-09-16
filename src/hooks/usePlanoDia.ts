@@ -7,12 +7,15 @@ import { inicioSemana, paraISO } from '@/hooks/useHorarios';
 import {
   gerarPlano,
   horaParaMin,
+  type MomentoDia,
   type Necessidade,
   type PassoFicha,
   type PessoaTurno,
   type ResultadoPlano,
+  type TarefaFixa,
   type TipoPasso,
 } from '@/lib/plano-engine';
+
 
 export const PERMANENT_DATE = '9999-12-31';
 

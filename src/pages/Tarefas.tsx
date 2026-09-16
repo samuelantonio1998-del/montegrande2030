@@ -268,8 +268,9 @@ export default function Tarefas() {
                   </button>
                   <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
                     <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
 
-                </button>
               </motion.div>
             );
           })}

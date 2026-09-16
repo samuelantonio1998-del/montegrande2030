@@ -327,6 +327,12 @@ export default function FichasTecnicas() {
       <FichaDetailDialog ficha={selectedFicha} onClose={() => setSelectedFicha(null)} />
       <FichaCreateForm open={showCreate} onClose={() => setShowCreate(false)} />
       <FichaImportDialog open={showImport} onClose={() => setShowImport(false)} />
+      <RotuloPrintDialog
+        fichaId={printTarget?.id ?? null}
+        nomeFicha={printTarget?.nome ?? ''}
+        open={!!printTarget}
+        onOpenChange={o => { if (!o) setPrintTarget(null); }}
+      />
     </div>
   );
 }

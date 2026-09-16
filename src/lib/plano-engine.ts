@@ -357,21 +357,43 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     }
   }
 
+  const empurrados = tarefas.filter(t => t.vespera);
   if (faltamMinutos > 0) {
     avisos.push(
-      `O trabalho não cabe no tempo disponível: faltam cerca de ${Math.round(faltamMinutos)} minutos. ` +
-      `Já foram agrupadas tarefas iguais, as esperas foram preenchidas com trabalho activo e tudo o que é adiantável foi passado para a véspera. ` +
-      `É preciso reduzir quantidades ou retirar um prato.`,
+      `A produção não cabe no tempo disponível: faltam cerca de ${Math.round(faltamMinutos)} minutos. ` +
+      `As tarefas de limpeza, manutenção e segurança alimentar foram mantidas e o que é adiantável` +
+      (empurrados.length ? ` (${empurrados.length} passo(s)) ` : ' ') +
+      `foi empurrado para a véspera. É preciso reduzir quantidades ou retirar um prato.`,
     );
   }
 
+  const todas = [...tarefasDia, ...tarefas];
+  const minutosTarefas = tarefasDia.reduce((s, t) => s + t.duracao_min, 0);
   const minutosPessoa = tarefas.filter(t => t.tipo_passo === 'ativo').reduce((s, t) => s + t.duracao_min, 0);
   const minutosRelogio = tarefas.reduce((s, t) => s + t.duracao_min, 0);
   const minutosAbatedor = abatedorId
     ? tarefas.filter(t => t.equipamento_id === abatedorId).reduce((s, t) => s + t.duracao_min, 0)
     : 0;
 
-  const ordenadasFinal = [...tarefas].sort((a, b) => {
+  const ocupacao: OcupacaoPessoa[] = pessoas.map(p => {
+    const turno = Math.max(0, p.fim_min - p.inicio_min);
+    const tMin = tarefasDia
+      .filter(t => t.funcionario_id === p.id)
+      .reduce((s, t) => s + t.duracao_min, 0);
+    const pMin = tarefas
+      .filter(t => t.funcionario_id === p.id && !t.vespera)
+      .reduce((s, t) => s + t.duracao_min, 0);
+    return {
+      funcionario_id: p.id,
+      nome: p.nome,
+      turno_min: turno,
+      tarefas_min: Math.round(tMin),
+      producao_min: Math.round(pMin),
+      livre_min: Math.round(Math.max(0, turno - tMin - pMin)),
+    };
+  });
+
+  const ordenadasFinal = [...todas].sort((a, b) => {
     if (a.vespera !== b.vespera) return a.vespera ? -1 : 1;
     return (a.inicio_min ?? 9999) - (b.inicio_min ?? 9999);
   });
@@ -380,15 +402,18 @@ export function gerarPlano(input: PlanoInput): ResultadoPlano {
     tarefas: ordenadasFinal,
     avisos,
     faltamMinutos: Math.round(faltamMinutos),
+    ocupacao,
     resumo: {
-      tarefas: tarefas.length,
+      tarefas: todas.length,
       minutosPessoa: Math.round(minutosPessoa),
       minutosRelogio: Math.round(minutosRelogio),
       minutosAbatedor: Math.round(minutosAbatedor),
-      tarefasVespera: tarefas.filter(t => t.vespera).length,
+      minutosTarefas: Math.round(minutosTarefas),
+      tarefasVespera: empurrados.length,
     },
   };
 }
+
 
 function capitalizar(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);

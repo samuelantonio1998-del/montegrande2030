@@ -231,6 +231,8 @@ export default function Tarefas() {
         <AnimatePresence>
           {filtered.map((task, i) => {
             const pri = priorityConfig[task.prioridade];
+            const dur = duracoes[task.id];
+            const aCorrer = !!emCurso[task.id];
             return (
               <motion.div key={task.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12, height: 0 }} transition={{ delay: i * 0.03 }}
                 onClick={() => handleComplete(task)}
@@ -246,10 +248,27 @@ export default function Tarefas() {
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', periodicityColors[task.periodicidade])}>{periodicityLabels[task.periodicidade]}</span>
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize bg-muted text-muted-foreground')}>{task.categoria === 'manutencao' ? 'Manutenção' : task.categoria}</span>
                     {task.departamento !== 'todos' && <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', task.departamento === 'sala' ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground')}>{task.departamento === 'sala' ? 'Sala' : 'Cozinha'}</span>}
+                    {dur && (
+                      <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', dur.medida ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground')}>
+                        <Clock className="h-3 w-3" />{dur.minutos} min · {dur.medida ? 'medido' : 'estimado'}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {task.momento_do_dia === 'abertura' ? 'Abertura' : task.momento_do_dia === 'fecho' ? 'Fecho' : 'Durante'}
+                      {task.hora_sugerida ? ` · ${String(task.hora_sugerida).slice(0, 5)}` : ''}
+                    </span>
                   </div>
                 </div>
-                <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">
-                  <Trash2 className="h-4 w-4" />
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); iniciarTarefa(task.id); }}
+                    disabled={aCorrer}
+                    className={cn('rounded-lg px-2 py-1 text-xs font-medium transition-colors', aCorrer ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+                    {aCorrer ? 'A decorrer' : 'Iniciar'}
+                  </button>
+                  <button onClick={(e) => handleDelete(task.id, e)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                    <Trash2 className="h-4 w-4" />
+
                 </button>
               </motion.div>
             );

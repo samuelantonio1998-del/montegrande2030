@@ -33,6 +33,19 @@ export type Necessidade = { ficha_id: string; nome: string; kg: number };
 
 export type PessoaTurno = { id: string; nome: string; inicio_min: number; fim_min: number };
 
+export type MomentoDia = 'abertura' | 'durante' | 'fecho';
+
+/** Tarefa fixa (limpeza, manutenção, segurança alimentar). Tem sempre de caber. */
+export type TarefaFixa = {
+  id: string;
+  titulo: string;
+  duracao_min: number;
+  momento_do_dia: MomentoDia;
+  hora_sugerida_min: number | null;
+  funcionario_id: string | null;
+  medida: boolean;
+};
+
 export type TarefaPlano = {
   chave: string;
   ordem: number;
@@ -50,17 +63,31 @@ export type TarefaPlano = {
   fim_min: number | null;
   funcionario_id: string | null;
   vespera: boolean;
+  origem: 'producao' | 'tarefa';
+  tarefa_id: string | null;
+  notas: string | null;
+};
+
+export type OcupacaoPessoa = {
+  funcionario_id: string;
+  nome: string;
+  turno_min: number;
+  tarefas_min: number;
+  producao_min: number;
+  livre_min: number;
 };
 
 export type ResultadoPlano = {
   tarefas: TarefaPlano[];
   avisos: string[];
   faltamMinutos: number;
+  ocupacao: OcupacaoPessoa[];
   resumo: {
     tarefas: number;
     minutosPessoa: number;
     minutosRelogio: number;
     minutosAbatedor: number;
+    minutosTarefas: number;
     tarefasVespera: number;
   };
 };
@@ -71,7 +98,9 @@ export type PlanoInput = {
   pessoas: PessoaTurno[];
   aberturaMin: number;
   abatedorId: string | null;
+  tarefasFixas?: TarefaFixa[];
 };
+
 
 export const minutosParaHora = (m: number | null | undefined) => {
   if (m === null || m === undefined) return '—';

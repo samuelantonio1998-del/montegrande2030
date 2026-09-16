@@ -760,6 +760,12 @@ export function FichaDetailDialog({
             </AlertDialog>
           </div>
         )}
+        <RotuloPrintDialog
+          fichaId={ficha.id}
+          nomeFicha={ficha.nome}
+          open={showRotuloPrint}
+          onOpenChange={setShowRotuloPrint}
+        />
       </DialogContent>
     </Dialog>
   );

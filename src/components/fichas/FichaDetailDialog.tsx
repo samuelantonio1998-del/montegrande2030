@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
+import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
+import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProdutos, useUpdateFicha, useDeleteFicha, useLaborCostPerHour, type FichaComIngredientes } from '@/hooks/useFichasTecnicas';
 import { useFichaRotulo, useSaveFichaRotulo, emptyRotulo, type RotuloInput } from '@/hooks/useFichaRotulo';
@@ -146,6 +148,7 @@ export function FichaDetailDialog({
   const saveFichaMarca = useSaveFichaMarca();
   const [editMarcas, setEditMarcas] = useState<Record<string, { nome_comercial: string; preco_venda: string }>>({});
   const [editing, setEditing] = useState(false);
+  const [showRotuloPrint, setShowRotuloPrint] = useState(false);
   const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);

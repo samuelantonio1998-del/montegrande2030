@@ -100,10 +100,12 @@ export default function Tarefas() {
   const handleAdd = async () => {
     if (!newTask.titulo.trim()) return;
     await addTarefa({ ...newTask, descricao: newTask.descricao || null });
-    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido });
+    await addTarefa({ ...newTask, descricao: newTask.descricao || null, hora_sugerida: newTask.hora_sugerida || null });
+    setNewTask({ titulo: '', descricao: '', categoria: 'outro', responsavel: staffNames[0] || '', prioridade: 'media', critica: false, periodicidade: 'unica', departamento: departamentoPermitido, duracao_estimada_min: 15, momento_do_dia: 'durante', hora_sugerida: '' });
     setShowForm(false);
     toast({ title: 'Tarefa criada' });
   };
+
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">A carregar...</div>;
 

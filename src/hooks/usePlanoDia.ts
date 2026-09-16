@@ -205,6 +205,43 @@ export function useDadosPlano(dataISO: string) {
       }));
       const abatedorId = equipamentos.find(e => e.nome.toLowerCase().includes('abatedor'))?.id ?? null;
 
+      // 5) Tarefas do dia (limpeza, manutenção, segurança alimentar) — tempo já ocupado
+      const execucoes = (execRes.data ?? []) as { tarefa_id: string; duracao_min: number | null }[];
+      const porTarefa = new Map<string, number[]>();
+      for (const e of execucoes) {
+        if (e.duracao_min === null || e.duracao_min === undefined) continue;
+        (porTarefa.get(e.tarefa_id) ?? porTarefa.set(e.tarefa_id, []).get(e.tarefa_id)!).push(Number(e.duracao_min));
+      }
+      const normalizar = (s: string) =>
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
+      const tarefasFixas: TarefaFixa[] = ((tarefasRes.data ?? []) as Record<string, unknown>[])
+        .filter(t => !unidadeId || !t.unidade_id || t.unidade_id === unidadeId)
+        .map(t => {
+          const id = t.id as string;
+          const medidas = (porTarefa.get(id) ?? []).slice(-10).sort((a, b) => a - b);
+          const temMedida = medidas.length >= 3;
+          const mediana = temMedida
+            ? medidas.length % 2
+              ? medidas[(medidas.length - 1) / 2]
+              : (medidas[medidas.length / 2 - 1] + medidas[medidas.length / 2]) / 2
+            : 0;
+          const responsavel = String(t.responsavel ?? '').trim();
+          const pessoaResp = responsavel
+            ? pessoas.find(p => normalizar(p.nome) === normalizar(responsavel))
+            : undefined;
+          return {
+            id,
+            titulo: String(t.titulo),
+            duracao_min: Math.max(1, Math.round(temMedida ? mediana : Number(t.duracao_estimada_min || 15))),
+            momento_do_dia: ((t.momento_do_dia as MomentoDia) ?? 'durante'),
+            hora_sugerida_min: t.hora_sugerida ? horaParaMin(String(t.hora_sugerida)) : null,
+            funcionario_id: pessoaResp?.id ?? null,
+            medida: temMedida,
+          };
+        });
+
+
       return {
         necessidades,
         passosPorFicha,

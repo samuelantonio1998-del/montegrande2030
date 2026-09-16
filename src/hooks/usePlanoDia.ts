@@ -377,17 +377,55 @@ export function usePlanoMutations(dataISO: string) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** Marca o arranque da tarefa — é assim que a app mede a duração real. */
+  const iniciar = useMutation({
+    mutationFn: async (t: PlanoTarefa) => {
+      const agora = new Date().toISOString();
+      const { error } = await supabase
+        .from('plano_tarefas')
+        .update({ iniciado_em: agora })
+        .eq('id', t.id);
+      if (error) throw error;
+      if (t.origem === 'tarefa' && t.tarefa_id) {
+        const { error: e2 } = await supabase.from('tarefa_execucoes').insert({
+          tarefa_id: t.tarefa_id,
+          funcionario_id: t.funcionario_id,
+          executado_por: user?.name ?? null,
+          iniciado_em: agora,
+        });
+        if (e2) throw e2;
+      }
+    },
+    onSuccess: () => invalidar(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const concluir = useMutation({
-    mutationFn: async (args: { id: string; concluida: boolean }) => {
+    mutationFn: async (args: { id: string; concluida: boolean; origem?: string; tarefa_id?: string | null }) => {
+      const agora = new Date().toISOString();
       const { error } = await supabase
         .from('plano_tarefas')
         .update({
           concluida: args.concluida,
-          concluida_em: args.concluida ? new Date().toISOString() : null,
+          concluida_em: args.concluida ? agora : null,
           concluida_por: args.concluida ? (user?.name ?? null) : null,
         })
         .eq('id', args.id);
       if (error) throw error;
+
+      // Fecha a medição real da tarefa, se tiver sido iniciada
+      if (args.concluida && args.origem === 'tarefa' && args.tarefa_id) {
+        const { data: abertas } = await supabase
+          .from('tarefa_execucoes')
+          .select('id')
+          .eq('tarefa_id', args.tarefa_id)
+          .is('concluido_em', null)
+          .order('iniciado_em', { ascending: false })
+          .limit(1);
+        if (abertas?.length) {
+          await supabase.from('tarefa_execucoes').update({ concluido_em: agora }).eq('id', abertas[0].id);
+        }
+      }
     },
     onSuccess: () => invalidar(),
     onError: (e: Error) => toast.error(e.message),
@@ -402,5 +440,6 @@ export function usePlanoMutations(dataISO: string) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  return { guardar, reatribuir, concluir, apagar };
+  return { guardar, reatribuir, iniciar, concluir, apagar };
 }
+

@@ -251,7 +251,9 @@ export function useDadosPlano(dataISO: string) {
         zonas: ((zonasRes.data ?? []) as Record<string, unknown>[]).map(z => ({ id: z.id as string, nome: z.nome as string })),
         equipamentos,
         funcionarios,
+        tarefasFixas,
         emFalta,
+
       };
     },
   });

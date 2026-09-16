@@ -38,6 +38,8 @@ import {
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
+import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
+import { Printer } from 'lucide-react';
 
 const ZONES = [
   { key: 'entradas', label: 'Entradas', icon: Salad },
@@ -68,6 +70,7 @@ export default function Ementa() {
   const removerHoje = useRemoverSoHoje();
   const removerSempre = useRemoveEmentaSempre();
   const [confirmSempre, setConfirmSempre] = useState<{ id: string; nome: string } | null>(null);
+  const [rotuloTarget, setRotuloTarget] = useState<{ id: string; nome: string } | null>(null);
   const { registos, addRegisto, recolherRegisto, activeTrays } = useRegistosProducao();
 
   // relógio para o tempo decorrido

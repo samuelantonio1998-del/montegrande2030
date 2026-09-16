@@ -329,7 +329,11 @@ function LinhaTarefa({
           <Badge variant={t.tipo_passo === 'espera' ? 'secondary' : 'outline'}>
             {t.tipo_passo === 'espera' ? 'Espera' : 'Activo'}
           </Badge>
+          <span className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${t.origem === 'tarefa' ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
+            {t.origem === 'tarefa' ? 'Tarefa' : 'Produção'}
+          </span>
           {t.fichas.length > 1 && <Badge variant="secondary">Agrupada · {t.fichas.length} pratos</Badge>}
+
           {t.concluida && <CheckCircle2 className="h-4 w-4 text-primary" />}
         </div>
         <p className="text-xs text-muted-foreground">

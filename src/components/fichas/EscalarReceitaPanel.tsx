@@ -186,15 +186,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
               <tr key={l.produto_id} className="border-t border-border">
                 <td className="px-3 py-2 text-foreground">{l.nome}</td>
                 <td className="px-3 py-2 text-right">
-                  <span className="font-semibold text-foreground">{formatQtd(l.arredondado, l.unidade)}</span>
-                  {l.arredondadoParaCima && (
-                    <span className="ml-1 align-middle text-[10px] text-muted-foreground" title="Arredondado para cima (não se usa meia unidade)">↑</span>
-                  )}
-                  {l.foiArredondado && (
-                    <span className="ml-1 text-[10px] text-muted-foreground">
-                      (exacto {formatQtd(l.exato, l.unidade)})
-                    </span>
-                  )}
+                  <span className="font-semibold text-foreground">{formatQtd(l.quantidade, l.unidade)}</span>
                 </td>
                 <td className="px-3 py-2 text-right text-muted-foreground">€{l.custo.toFixed(2)}</td>
               </tr>

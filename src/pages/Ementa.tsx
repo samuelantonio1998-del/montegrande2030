@@ -106,6 +106,20 @@ export default function Ementa() {
     return map;
   }, [ementaItems]);
 
+  /** pratos da ementa de hoje que têm ficha técnica (para rótulos em lote) */
+  const pratosComFicha = useMemo(() => {
+    const vistos = new Set<string>();
+    const out: { fichaId: string; nome: string }[] = [];
+    ementaItems.forEach(e => {
+      const id = e.buffet_item?.ficha_tecnica_id;
+      if (id && !vistos.has(id)) {
+        vistos.add(id);
+        out.push({ fichaId: id, nome: e.buffet_item?.nome || '' });
+      }
+    });
+    return out;
+  }, [ementaItems]);
+
   /** tabuleiros activos deste canal, agrupados por prato */
   const traysPorPrato = useMemo(() => {
     const map = new Map<string, RegistoProducao[]>();

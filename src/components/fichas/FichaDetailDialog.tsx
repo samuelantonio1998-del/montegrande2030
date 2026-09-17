@@ -736,6 +736,7 @@ export function FichaDetailDialog({
                 setEditing(false);
                 setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));
                 setEditPorcoes(ficha.porcoes);
+                setEditPesoPorcao((ficha as any).peso_porcao_g != null ? String((ficha as any).peso_porcao_g) : '');
                 setEditPreco(ficha.preco_venda);
                 setEditTempo(ficha.tempo_preparacao ?? 0);
                 setEditNome(ficha.nome);

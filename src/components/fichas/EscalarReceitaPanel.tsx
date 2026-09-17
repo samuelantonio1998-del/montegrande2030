@@ -78,7 +78,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
     const linhasHtml = linhas.map(l => `
       <tr>
         <td>${l.nome}</td>
-        <td class="r"><strong>${formatQtd(l.arredondado, l.unidade)}</strong>${l.foiArredondado ? `<span class="ex"> (exacto ${formatQtd(l.exato, l.unidade)})</span>` : ''}</td>
+        <td class="r"><strong>${formatQtd(l.quantidade, l.unidade)}</strong></td>
       </tr>`).join('');
     win.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8">
       <title>${ficha.nome} — lista escalada</title>

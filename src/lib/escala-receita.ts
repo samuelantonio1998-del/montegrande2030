@@ -1,25 +1,15 @@
 /**
  * Escalar receitas das fichas técnicas.
  * Base de cálculo: porções ou peso total (kg), convertidas entre si pelo peso da porção.
+ * Sem qualquer arredondamento: as quantidades escaladas são os valores exactos.
  */
 
 export type BaseCalculo = 'porcoes' | 'kg';
 
-/** Unidades que se PESAM (arredondamento prático) vs. as que se CONTAM (arredondar para cima) */
+/** Unidades que se PESAM (kg, g, l, ml…) vs. as que se CONTAM (unidade, dente, ovo…) */
 export function isPesada(unidade: string | null | undefined): boolean {
   const u = (unidade ?? '').trim().toLowerCase();
   return ['kg', 'g', 'l', 'ml', 'lt', 'litro', 'gr'].includes(u);
-}
-
-/**
- * Arredondamento prático para ingredientes pesados (valor em kg):
- * - abaixo de 1 kg → múltiplos de 10 g
- * - a partir de 1 kg → múltiplos de 50 g
- */
-export function arredondarPesado(kg: number): number {
-  if (!Number.isFinite(kg) || kg <= 0) return 0;
-  const passo = kg < 1 ? 0.01 : 0.05;
-  return Math.round(kg / passo) * passo;
 }
 
 export type IngredienteEscalado = {
@@ -27,14 +17,8 @@ export type IngredienteEscalado = {
   nome: string;
   unidade: string;
   quantidadeBase: number;
-  /** valor exacto (sem arredondar) */
-  exato: number;
-  /** valor prático a usar na bancada */
-  arredondado: number;
-  /** true quando o arredondado difere do exacto */
-  foiArredondado: boolean;
-  /** true quando é contado à unidade e foi arredondado para cima */
-  arredondadoParaCima: boolean;
+  /** valor exacto resultante da multiplicação */
+  quantidade: number;
   custo: number;
 };
 
@@ -43,32 +27,25 @@ export function escalarIngredientes(
   fator: number
 ): IngredienteEscalado[] {
   return ingredientes.map(ing => {
-    const exato = ing.quantidade * fator;
-    const pesada = isPesada(ing.unidade);
-    const arredondado = pesada ? arredondarPesado(exato) : Math.ceil(exato - 1e-9);
-    const diff = Math.abs(arredondado - exato) > (pesada ? 0.0005 : 1e-6);
+    const quantidade = ing.quantidade * fator;
     return {
       produto_id: ing.produto_id,
       nome: ing.nome,
       unidade: ing.unidade,
       quantidadeBase: ing.quantidade,
-      exato,
-      arredondado,
-      foiArredondado: diff,
-      arredondadoParaCima: !pesada && diff,
-      custo: arredondado * (ing.custo_medio ?? 0),
+      quantidade,
+      custo: quantidade * (ing.custo_medio ?? 0),
     };
   });
 }
 
-/** Formata uma quantidade na unidade do produto (kg com 3 casas, unidades inteiras) */
+/** Formata uma quantidade na unidade do produto, sem perder precisão (3 casas nos kg) */
 export function formatQtd(valor: number, unidade: string): string {
-  if (isPesada(unidade)) {
-    const u = (unidade ?? '').trim().toLowerCase();
-    if (u === 'kg' && valor < 1) return `${Math.round(valor * 1000)} g`;
-    return `${valor.toFixed(u === 'kg' ? 3 : 2).replace(/0+$/, '').replace(/[.,]$/, '')} ${unidade}`;
-  }
-  return `${valor % 1 === 0 ? valor : valor.toFixed(2)} ${unidade}`;
+  if (!Number.isFinite(valor)) return `0 ${unidade}`;
+  const u = (unidade ?? '').trim().toLowerCase();
+  const casas = isPesada(u) ? 3 : 2;
+  const txt = valor.toFixed(casas).replace(/\.?0+$/, '');
+  return `${txt || '0'} ${unidade}`;
 }
 
 /** Converte a quantidade introduzida para o factor de multiplicação da receita base */

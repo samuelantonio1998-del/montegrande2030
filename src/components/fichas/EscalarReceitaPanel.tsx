@@ -78,7 +78,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
     const linhasHtml = linhas.map(l => `
       <tr>
         <td>${l.nome}</td>
-        <td class="r"><strong>${formatQtd(l.arredondado, l.unidade)}</strong>${l.foiArredondado ? `<span class="ex"> (exacto ${formatQtd(l.exato, l.unidade)})</span>` : ''}</td>
+        <td class="r"><strong>${formatQtd(l.quantidade, l.unidade)}</strong></td>
       </tr>`).join('');
     win.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8">
       <title>${ficha.nome} — lista escalada</title>
@@ -186,15 +186,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
               <tr key={l.produto_id} className="border-t border-border">
                 <td className="px-3 py-2 text-foreground">{l.nome}</td>
                 <td className="px-3 py-2 text-right">
-                  <span className="font-semibold text-foreground">{formatQtd(l.arredondado, l.unidade)}</span>
-                  {l.arredondadoParaCima && (
-                    <span className="ml-1 align-middle text-[10px] text-muted-foreground" title="Arredondado para cima (não se usa meia unidade)">↑</span>
-                  )}
-                  {l.foiArredondado && (
-                    <span className="ml-1 text-[10px] text-muted-foreground">
-                      (exacto {formatQtd(l.exato, l.unidade)})
-                    </span>
-                  )}
+                  <span className="font-semibold text-foreground">{formatQtd(l.quantidade, l.unidade)}</span>
                 </td>
                 <td className="px-3 py-2 text-right text-muted-foreground">€{l.custo.toFixed(2)}</td>
               </tr>
@@ -213,7 +205,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Pesados arredondados a 10 g (abaixo de 1 kg) e a 50 g (acima). Contados à unidade sempre para cima (↑).
+        Quantidades exactas, sem arredondamento (até 3 casas decimais nos pesos).
       </p>
 
       <Button variant="outline" size="sm" className="gap-1.5" onClick={imprimir} disabled={linhas.length === 0}>

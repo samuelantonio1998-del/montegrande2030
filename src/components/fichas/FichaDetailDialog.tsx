@@ -395,10 +395,14 @@ export function FichaDetailDialog({
         )}
 
         <Tabs defaultValue="ficha">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ficha">Ficha</TabsTrigger>
+            <TabsTrigger value="escalar">Escalar</TabsTrigger>
             <TabsTrigger value="passos">Passos</TabsTrigger>
           </TabsList>
+          <TabsContent value="escalar" className="pt-3">
+            <EscalarReceitaPanel ficha={ficha} semTitulo />
+          </TabsContent>
           <TabsContent value="passos" className="pt-3">
             <FichaPassosPanel fichaId={ficha.id} kg={porcoes} />
           </TabsContent>
@@ -421,6 +425,20 @@ export function FichaDetailDialog({
                 onChange={e => setEditPorcoes(parseFloat(e.target.value) || 1)}
                 className="mt-1"
               />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Peso da porção (g)</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="1"
+                min="0"
+                placeholder="ex: 400"
+                value={editPesoPorcao}
+                onChange={e => setEditPesoPorcao(e.target.value)}
+                className="mt-1"
+              />
+              <p className="mt-0.5 text-[10px] text-muted-foreground">Usado para escalar entre porções e kg</p>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Preço Venda Kg (€)</label>

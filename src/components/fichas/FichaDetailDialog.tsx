@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
+import { EscalarReceitaPanel } from '@/components/fichas/EscalarReceitaPanel';
 import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
 import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -157,6 +158,7 @@ export function FichaDetailDialog({
   // Edit state
   const [editNome, setEditNome] = useState('');
   const [editPorcoes, setEditPorcoes] = useState(1);
+  const [editPesoPorcao, setEditPesoPorcao] = useState('');
   const [editPreco, setEditPreco] = useState(0);
   const [editTempo, setEditTempo] = useState(0);
   const [editNotas, setEditNotas] = useState('');
@@ -195,6 +197,7 @@ export function FichaDetailDialog({
     if (ficha) {
       setEditNome(ficha.nome);
       setEditPorcoes(ficha.porcoes);
+      setEditPesoPorcao((ficha as any).peso_porcao_g != null ? String((ficha as any).peso_porcao_g) : '');
       setEditPreco(ficha.preco_venda);
       setEditTempo(ficha.tempo_preparacao ?? 0);
       setEditNotas((ficha as any).notas_preparacao ?? '');
@@ -259,6 +262,7 @@ export function FichaDetailDialog({
       nome: editNome,
       categoria: ficha.categoria,
       porcoes: editPorcoes,
+      peso_porcao_g: editPesoPorcao.trim() === '' ? null : parseFloat(editPesoPorcao.replace(',', '.')),
       preco_venda: editPreco,
       tempo_preparacao: editTempo,
       foto_url: fotoUrl,
@@ -391,10 +395,14 @@ export function FichaDetailDialog({
         )}
 
         <Tabs defaultValue="ficha">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ficha">Ficha</TabsTrigger>
+            <TabsTrigger value="escalar">Escalar</TabsTrigger>
             <TabsTrigger value="passos">Passos</TabsTrigger>
           </TabsList>
+          <TabsContent value="escalar" className="pt-3">
+            <EscalarReceitaPanel ficha={ficha} semTitulo />
+          </TabsContent>
           <TabsContent value="passos" className="pt-3">
             <FichaPassosPanel fichaId={ficha.id} kg={porcoes} />
           </TabsContent>
@@ -417,6 +425,20 @@ export function FichaDetailDialog({
                 onChange={e => setEditPorcoes(parseFloat(e.target.value) || 1)}
                 className="mt-1"
               />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Peso da porção (g)</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="1"
+                min="0"
+                placeholder="ex: 400"
+                value={editPesoPorcao}
+                onChange={e => setEditPesoPorcao(e.target.value)}
+                className="mt-1"
+              />
+              <p className="mt-0.5 text-[10px] text-muted-foreground">Usado para escalar entre porções e kg</p>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Preço Venda Kg (€)</label>
@@ -714,6 +736,7 @@ export function FichaDetailDialog({
                 setEditing(false);
                 setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));
                 setEditPorcoes(ficha.porcoes);
+                setEditPesoPorcao((ficha as any).peso_porcao_g != null ? String((ficha as any).peso_porcao_g) : '');
                 setEditPreco(ficha.preco_venda);
                 setEditTempo(ficha.tempo_preparacao ?? 0);
                 setEditNome(ficha.nome);

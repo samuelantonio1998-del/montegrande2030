@@ -7,6 +7,7 @@ export type FichaTecnicaDB = {
   nome: string;
   categoria: string;
   porcoes: number;
+  peso_porcao_g: number | null;
   preco_venda: number;
   tempo_preparacao: number | null;
   foto_url: string | null;
@@ -169,6 +170,7 @@ export function useUpdateFicha() {
       nome: string;
       categoria: string;
       porcoes: number;
+      peso_porcao_g?: number | null;
       preco_venda: number;
       tempo_preparacao: number;
       foto_url?: string | null;
@@ -181,6 +183,7 @@ export function useUpdateFicha() {
           nome: data.nome,
           categoria: data.categoria,
           porcoes: data.porcoes,
+          peso_porcao_g: data.peso_porcao_g ?? null,
           preco_venda: data.preco_venda,
           tempo_preparacao: data.tempo_preparacao,
           foto_url: data.foto_url || null,

@@ -38,6 +38,7 @@ import {
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
+import { EscalarReceitaPanel } from '@/components/fichas/EscalarReceitaPanel';
 import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
 import { Printer } from 'lucide-react';
 
@@ -121,6 +122,7 @@ export default function Ementa() {
   const [sendTarget, setSendTarget] = useState<{ id: string; nome: string; ficha: string | null; recipiente: RecipientSize; previsto: number } | null>(null);
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [pesoKg, setPesoKg] = useState('');
+  const [mostrarIngredientes, setMostrarIngredientes] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
   const [decisaoRegistoId, setDecisaoRegistoId] = useState<string | null>(null);
   const [leftoverKg, setLeftoverKg] = useState('');
@@ -374,7 +376,7 @@ export default function Ementa() {
 
       {/* Enviar / registar produção */}
       <Dialog open={!!sendTarget} onOpenChange={o => { if (!o) setSendTarget(null); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{canal === 'buffet' ? 'Enviar tabuleiro' : `Registar ${canalLabels[canal]}`}</DialogTitle>
             <DialogDescription>{sendTarget?.nome}</DialogDescription>
@@ -401,6 +403,30 @@ export default function Ementa() {
                 <Label>Peso (kg)</Label>
                 <Input type="number" inputMode="decimal" step="0.1" min="0.1" placeholder="Ex: 2.5"
                   value={pesoKg} onChange={e => setPesoKg(e.target.value)} />
+              </div>
+            )}
+            {sendTarget?.ficha && (
+              <div className="rounded-lg border border-border p-3">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-foreground"
+                  onClick={() => setMostrarIngredientes(v => !v)}
+                >
+                  {mostrarIngredientes ? '− ' : '+ '}Quantidades de ingredientes
+                </button>
+                {mostrarIngredientes && (
+                  <div className="mt-3">
+                    <EscalarReceitaPanel
+                      fichaId={sendTarget.ficha}
+                      kgInicial={
+                        canal === 'buffet' && newRecipient !== 'unitario'
+                          ? recipientCapacity[newRecipient].capacityKg
+                          : parseFloat((pesoKg || '').replace(',', '.')) || null
+                      }
+                      semTitulo
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

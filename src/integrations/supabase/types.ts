@@ -802,6 +802,7 @@ export type Database = {
           id: string
           nome: string
           notas_preparacao: string | null
+          peso_porcao_g: number | null
           porcoes: number
           preco_venda: number
           tempo_preparacao: number | null
@@ -815,6 +816,7 @@ export type Database = {
           id?: string
           nome: string
           notas_preparacao?: string | null
+          peso_porcao_g?: number | null
           porcoes?: number
           preco_venda?: number
           tempo_preparacao?: number | null
@@ -828,6 +830,7 @@ export type Database = {
           id?: string
           nome?: string
           notas_preparacao?: string | null
+          peso_porcao_g?: number | null
           porcoes?: number
           preco_venda?: number
           tempo_preparacao?: number | null

@@ -38,6 +38,7 @@ import {
   PERMANENT_DATE,
 } from '@/hooks/useEmentaDiaria';
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
+import { EscalarReceitaPanel } from '@/components/fichas/EscalarReceitaPanel';
 import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
 import { Printer } from 'lucide-react';
 
@@ -121,6 +122,7 @@ export default function Ementa() {
   const [sendTarget, setSendTarget] = useState<{ id: string; nome: string; ficha: string | null; recipiente: RecipientSize; previsto: number } | null>(null);
   const [newRecipient, setNewRecipient] = useState<RecipientSize>('tabuleiro_grande');
   const [pesoKg, setPesoKg] = useState('');
+  const [mostrarIngredientes, setMostrarIngredientes] = useState(false);
   const [checkoutTarget, setCheckoutTarget] = useState<RegistoProducao | null>(null);
   const [decisaoRegistoId, setDecisaoRegistoId] = useState<string | null>(null);
   const [leftoverKg, setLeftoverKg] = useState('');

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FichaPassosPanel } from '@/components/fichas/FichaPassosPanel';
+import { EscalarReceitaPanel } from '@/components/fichas/EscalarReceitaPanel';
 import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
 import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -157,6 +158,7 @@ export function FichaDetailDialog({
   // Edit state
   const [editNome, setEditNome] = useState('');
   const [editPorcoes, setEditPorcoes] = useState(1);
+  const [editPesoPorcao, setEditPesoPorcao] = useState('');
   const [editPreco, setEditPreco] = useState(0);
   const [editTempo, setEditTempo] = useState(0);
   const [editNotas, setEditNotas] = useState('');
@@ -195,6 +197,7 @@ export function FichaDetailDialog({
     if (ficha) {
       setEditNome(ficha.nome);
       setEditPorcoes(ficha.porcoes);
+      setEditPesoPorcao((ficha as any).peso_porcao_g != null ? String((ficha as any).peso_porcao_g) : '');
       setEditPreco(ficha.preco_venda);
       setEditTempo(ficha.tempo_preparacao ?? 0);
       setEditNotas((ficha as any).notas_preparacao ?? '');
@@ -259,6 +262,7 @@ export function FichaDetailDialog({
       nome: editNome,
       categoria: ficha.categoria,
       porcoes: editPorcoes,
+      peso_porcao_g: editPesoPorcao.trim() === '' ? null : parseFloat(editPesoPorcao.replace(',', '.')),
       preco_venda: editPreco,
       tempo_preparacao: editTempo,
       foto_url: fotoUrl,

@@ -205,7 +205,7 @@ export function EscalarReceitaPanel({ ficha: fichaProp, fichaId, kgInicial, semT
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Pesados arredondados a 10 g (abaixo de 1 kg) e a 50 g (acima). Contados à unidade sempre para cima (↑).
+        Quantidades exactas, sem arredondamento (até 3 casas decimais nos pesos).
       </p>
 
       <Button variant="outline" size="sm" className="gap-1.5" onClick={imprimir} disabled={linhas.length === 0}>

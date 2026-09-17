@@ -40,6 +40,7 @@ import {
 import EmentaSetupDialog from '@/components/cozinha/EmentaSetupDialog';
 import { EscalarReceitaPanel } from '@/components/fichas/EscalarReceitaPanel';
 import { RotuloPrintDialog } from '@/components/fichas/RotuloPrintDialog';
+import { RotulosEmentaDialog } from '@/components/fichas/RotulosEmentaDialog';
 import { Printer } from 'lucide-react';
 
 const ZONES = [
@@ -72,6 +73,7 @@ export default function Ementa() {
   const removerSempre = useRemoveEmentaSempre();
   const [confirmSempre, setConfirmSempre] = useState<{ id: string; nome: string } | null>(null);
   const [rotuloTarget, setRotuloTarget] = useState<{ id: string; nome: string } | null>(null);
+  const [showRotulosEmenta, setShowRotulosEmenta] = useState(false);
   const { registos, addRegisto, recolherRegisto, activeTrays } = useRegistosProducao();
 
   // relógio para o tempo decorrido
@@ -230,6 +232,11 @@ export default function Ementa() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <MarcaSwitcher />
+          {pratosComFicha.length > 0 && (
+            <Button variant="outline" className="gap-2" onClick={() => setShowRotulosEmenta(true)}>
+              <Printer className="h-4 w-4" /> Rótulos da ementa
+            </Button>
+          )}
           <Permitido chave={PERMISSOES.ementaDefinir}>
             <Button className="gap-2" onClick={() => setShowSetup(true)}>
               <CalendarPlus className="h-4 w-4" /> Definir Ementa
@@ -543,6 +550,12 @@ export default function Ementa() {
         nomeFicha={rotuloTarget?.nome ?? ''}
         open={!!rotuloTarget}
         onOpenChange={o => { if (!o) setRotuloTarget(null); }}
+      />
+
+      <RotulosEmentaDialog
+        pratos={pratosComFicha}
+        open={showRotulosEmenta}
+        onOpenChange={setShowRotulosEmenta}
       />
     </div>
   );

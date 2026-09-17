@@ -376,7 +376,7 @@ export default function Ementa() {
 
       {/* Enviar / registar produção */}
       <Dialog open={!!sendTarget} onOpenChange={o => { if (!o) setSendTarget(null); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{canal === 'buffet' ? 'Enviar tabuleiro' : `Registar ${canalLabels[canal]}`}</DialogTitle>
             <DialogDescription>{sendTarget?.nome}</DialogDescription>

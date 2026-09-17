@@ -403,6 +403,30 @@ export default function Ementa() {
                   value={pesoKg} onChange={e => setPesoKg(e.target.value)} />
               </div>
             )}
+            {sendTarget?.ficha && (
+              <div className="rounded-lg border border-border p-3">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-foreground"
+                  onClick={() => setMostrarIngredientes(v => !v)}
+                >
+                  {mostrarIngredientes ? '− ' : '+ '}Quantidades de ingredientes
+                </button>
+                {mostrarIngredientes && (
+                  <div className="mt-3">
+                    <EscalarReceitaPanel
+                      fichaId={sendTarget.ficha}
+                      kgInicial={
+                        canal === 'buffet' && newRecipient !== 'unitario'
+                          ? recipientCapacity[newRecipient].capacityKg
+                          : parseFloat((pesoKg || '').replace(',', '.')) || null
+                      }
+                      semTitulo
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSendTarget(null)}>Cancelar</Button>

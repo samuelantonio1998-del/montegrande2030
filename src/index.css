@@ -117,34 +117,3 @@
   border: 1px solid #ddd;
 }
 
-.rotulo-print-root { display: none; }
-
-@media print {
-  @page { size: 62mm auto; margin: 3mm; }
-
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-
-  body > *:not(.rotulo-print-root) { display: none !important; }
-
-  .rotulo-print-root {
-    display: block !important;
-    width: 56mm;
-  }
-
-  .rotulo-print-root > div + div { break-before: page; page-break-before: always; }
-
-  .rotulo-label,
-  .rotulo-label * {
-    color: #000 !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}

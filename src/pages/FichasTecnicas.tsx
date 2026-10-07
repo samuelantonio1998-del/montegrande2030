@@ -14,6 +14,7 @@ import { FichaDetailDialog } from '@/components/fichas/FichaDetailDialog';
 import { FichaCreateForm } from '@/components/fichas/FichaCreateForm';
 import { FichaImportDialog } from '@/components/fichas/FichaImportDialog';
 import { CartaMarcaPanel } from '@/components/fichas/CartaMarcaPanel';
+import { FichaCardImage } from '@/components/fichas/FichaCardImage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissao } from '@/hooks/usePermissao';
 import { PERMISSOES } from '@/lib/permissoes';
@@ -217,8 +218,8 @@ export default function FichasTecnicas() {
                 className="cursor-pointer rounded-xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
               >
                 {ficha.foto_url ? (
-                  <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl relative group">
-                    <img src={`${ficha.foto_url}?v=${new Date(ficha.updated_at).getTime()}`} alt={ficha.nome} className="w-full h-full object-cover" />
+                  <div className="-mx-5 -mt-5 mb-3 aspect-[16/9] overflow-hidden rounded-t-xl relative group bg-muted">
+                    <FichaCardImage src={ficha.foto_url} alt={ficha.nome} version={new Date(ficha.updated_at).getTime()} />
                     {uploadingId === ficha.id && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <Loader2 className="h-6 w-6 animate-spin text-white" />

@@ -88,8 +88,13 @@ function montarLinhas(doc: jsPDF, dados: RotuloDados, size: number) {
     }
   });
 
-  const altura = MARGEM_TOPO_MM + MARGEM_BASE_MM + linhas.reduce((a, l) => a + l.altura, 0);
-  return { linhas, altura };
+  // Corte óptico do topo: cada linha reserva 0,92 em acima da linha de base, mas os
+  // glifos só sobem ~0,72 em (cap height). Subimos o conteúdo por essa folga (~0,2 em)
+  // para o topo do texto ficar encostado à margem superior, sem espaço branco extra.
+  const primeira = linhas.find(l => l.tokens.length);
+  const corteTopo = primeira ? primeira.size * PT_PARA_MM * 0.2 : 0;
+  const altura = MARGEM_TOPO_MM + MARGEM_BASE_MM + linhas.reduce((a, l) => a + l.altura, 0) - corteTopo;
+  return { linhas, altura, corteTopo };
 }
 
 /** Calcula o layout final, reduzindo a letra se necessário para caber numa etiqueta. */
@@ -107,9 +112,9 @@ function calcularPagina(doc: jsPDF, dados: RotuloDados, opts: RotuloOpcoes) {
   return { ...r, size };
 }
 
-function desenhar(doc: jsPDF, linhas: Linha[]) {
+function desenhar(doc: jsPDF, linhas: Linha[], corteTopo = 0) {
   doc.setTextColor(0, 0, 0);
-  let y = MARGEM_TOPO_MM;
+  let y = MARGEM_TOPO_MM - corteTopo;
   for (const linha of linhas) {
     if (linha.tokens.length) {
       const baseline = y + linha.size * PT_PARA_MM * 0.92;

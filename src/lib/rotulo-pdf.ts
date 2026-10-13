@@ -22,6 +22,9 @@ export type RotuloOpcoes = {
 // a conversão jsPDF→pt→mm arredonda 62 para 62,1 mm, o que faz a Brother QL falhar/desalinhar.
 const LARGURA_MM = 61.9;
 const MARGEM_MM = 3;
+// Margens verticais mínimas para não desperdiçar rolo: ~2 mm no topo e na base.
+const MARGEM_TOPO_MM = 2;
+const MARGEM_BASE_MM = 2;
 const CONTEUDO_MM = LARGURA_MM - MARGEM_MM * 2;
 const PT_PARA_MM = 0.352778;
 
@@ -85,7 +88,7 @@ function montarLinhas(doc: jsPDF, dados: RotuloDados, size: number) {
     }
   });
 
-  const altura = MARGEM_MM * 2 + linhas.reduce((a, l) => a + l.altura, 0);
+  const altura = MARGEM_TOPO_MM + MARGEM_BASE_MM + linhas.reduce((a, l) => a + l.altura, 0);
   return { linhas, altura };
 }
 
@@ -106,7 +109,7 @@ function calcularPagina(doc: jsPDF, dados: RotuloDados, opts: RotuloOpcoes) {
 
 function desenhar(doc: jsPDF, linhas: Linha[]) {
   doc.setTextColor(0, 0, 0);
-  let y = MARGEM_MM;
+  let y = MARGEM_TOPO_MM;
   for (const linha of linhas) {
     if (linha.tokens.length) {
       const baseline = y + linha.size * PT_PARA_MM * 0.92;
@@ -143,12 +146,15 @@ export function gerarRotulosPdf(rotulos: RotuloDados[], opts: RotuloOpcoes = {})
   lista.forEach((dados, idx) => {
     const { linhas, altura } = calcularPagina(doc, dados, opts);
     const alturaPagina = Math.max(altura, 20);
+    // jsPDF troca largura/altura quando a orientação não corresponde ao formato;
+    // escolhemos a orientação que mantém a largura física exacta de 61,9 mm.
+    const orientacao = alturaPagina >= LARGURA_MM ? 'portrait' : 'landscape';
     if (idx === 0) {
       // substitui a primeira página pela altura correcta
       doc.deletePage(1);
-      doc.addPage([LARGURA_MM, alturaPagina], 'portrait');
+      doc.addPage([LARGURA_MM, alturaPagina], orientacao);
     } else {
-      doc.addPage([LARGURA_MM, alturaPagina], 'portrait');
+      doc.addPage([LARGURA_MM, alturaPagina], orientacao);
     }
     desenhar(doc, linhas);
   });

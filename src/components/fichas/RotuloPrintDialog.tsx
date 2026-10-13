@@ -126,7 +126,7 @@ export function RotuloPrintDialog({
         <DialogHeader>
           <DialogTitle>Rótulo em PDF</DialogTitle>
           <DialogDescription>
-            Página de 62 mm de largura, margens de 3 mm e altura conforme o conteúdo. Imprima o PDF pelo
+            Página de 61,9 mm de largura (rolo de 62 mm), margens de 3 mm e altura conforme o conteúdo. Imprima o PDF pelo
             Brother QL-800 com o rolo contínuo de 62 mm.
           </DialogDescription>
         </DialogHeader>

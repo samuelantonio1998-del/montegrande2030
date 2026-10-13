@@ -149,7 +149,7 @@ export function gerarRotulosPdf(rotulos: RotuloDados[], opts: RotuloOpcoes = {})
   const doc = new jsPDF({ unit: 'mm', format: [LARGURA_MM, 100], compress: true });
 
   lista.forEach((dados, idx) => {
-    const { linhas, altura } = calcularPagina(doc, dados, opts);
+    const { linhas, altura, corteTopo } = calcularPagina(doc, dados, opts);
     const alturaPagina = Math.max(altura, 20);
     // jsPDF troca largura/altura quando a orientação não corresponde ao formato;
     // escolhemos a orientação que mantém a largura física exacta de 61,9 mm.
@@ -161,7 +161,7 @@ export function gerarRotulosPdf(rotulos: RotuloDados[], opts: RotuloOpcoes = {})
     } else {
       doc.addPage([LARGURA_MM, alturaPagina], orientacao);
     }
-    desenhar(doc, linhas);
+    desenhar(doc, linhas, corteTopo);
   });
 
   return doc;

@@ -88,7 +88,7 @@ function montarLinhas(doc: jsPDF, dados: RotuloDados, size: number) {
     }
   });
 
-  const altura = MARGEM_MM * 2 + linhas.reduce((a, l) => a + l.altura, 0);
+  const altura = MARGEM_TOPO_MM + MARGEM_BASE_MM + linhas.reduce((a, l) => a + l.altura, 0);
   return { linhas, altura };
 }
 
@@ -109,7 +109,7 @@ function calcularPagina(doc: jsPDF, dados: RotuloDados, opts: RotuloOpcoes) {
 
 function desenhar(doc: jsPDF, linhas: Linha[]) {
   doc.setTextColor(0, 0, 0);
-  let y = MARGEM_MM;
+  let y = MARGEM_TOPO_MM;
   for (const linha of linhas) {
     if (linha.tokens.length) {
       const baseline = y + linha.size * PT_PARA_MM * 0.92;

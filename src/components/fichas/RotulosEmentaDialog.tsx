@@ -95,7 +95,7 @@ export function RotulosEmentaDialog({
         <DialogHeader>
           <DialogTitle>Rótulos da ementa em PDF</DialogTitle>
           <DialogDescription>
-            Um PDF único com uma página de 62 mm por rótulo, pronto a imprimir no Brother QL-800.
+            Um PDF único com uma página de 61,9 mm (rolo de 62 mm) por rótulo, pronto a imprimir no Brother QL-800.
           </DialogDescription>
         </DialogHeader>
 

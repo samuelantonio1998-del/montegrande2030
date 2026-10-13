@@ -18,7 +18,9 @@ export type RotuloOpcoes = {
   copias?: number;
 };
 
-const LARGURA_MM = 62;
+// Largura fixa da página em mm (nunca derivada de píxeis). 61,9 mm em vez de 62 mm:
+// a conversão jsPDF→pt→mm arredonda 62 para 62,1 mm, o que faz a Brother QL falhar/desalinhar.
+const LARGURA_MM = 61.9;
 const MARGEM_MM = 3;
 const CONTEUDO_MM = LARGURA_MM - MARGEM_MM * 2;
 const PT_PARA_MM = 0.352778;

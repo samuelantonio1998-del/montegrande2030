@@ -11,6 +11,7 @@ import { useActivityLog } from '@/hooks/useActivityLog';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { detectarEmbalagem } from '@/lib/embalagem';
 
 type Produto = {
   id: string;
@@ -19,6 +20,7 @@ type Produto = {
   stock_atual: number;
   stock_minimo: number | null;
   stock_maximo: number | null;
+  custo_medio?: number;
 };
 
 type Props = {
@@ -30,7 +32,7 @@ type Props = {
   onSaved: () => void;
 };
 
-const BASE_UNITS = ['kg', 'un'];
+const BASE_UNITS = ['kg', 'L', 'un'];
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -56,6 +58,15 @@ export function ChangeUnitDialog({ produto, open, onOpenChange, unidadesExistent
     if (produto?.unidade) set.add(produto.unidade);
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt'));
   }, [unidadesExistentes, produto]);
+
+  useEffect(() => {
+    if (!produto || !novaUnidade || novaUnidade === produto.unidade) return;
+    const emb = detectarEmbalagem(produto.nome);
+    if (emb && emb.unidade.toLowerCase() === novaUnidade.toLowerCase().replace('lt', 'l')) {
+      setModo('converter');
+      setFator(String(emb.fator).replace('.', ','));
+    }
+  }, [novaUnidade, produto]);
 
   if (!produto) return null;
 
@@ -90,10 +101,23 @@ export function ChangeUnitDialog({ produto, open, onOpenChange, unidadesExistent
         update.stock_atual = preview.stock;
         update.stock_minimo = preview.min;
         update.stock_maximo = preview.max;
+        if (typeof produto.custo_medio === 'number') {
+          update.custo_medio = Math.round((produto.custo_medio / f) * 10000) / 10000;
+        }
       }
 
       const { error } = await supabase.from('produtos').update(update as never).eq('id', produto.id);
       if (error) throw error;
+
+      // Ajusta as fichas técnicas para manter o custo (quantidade × fator)
+      if (modo === 'converter') {
+        const { data: ings } = await supabase.from('ficha_ingredientes').select('id, quantidade').eq('produto_id', produto.id);
+        for (const ing of ings ?? []) {
+          await supabase.from('ficha_ingredientes')
+            .update({ quantidade: Number(ing.quantidade) * f, unidade: novaUnidade })
+            .eq('id', ing.id);
+        }
+      }
 
       await log(
         'Alteração de unidade',

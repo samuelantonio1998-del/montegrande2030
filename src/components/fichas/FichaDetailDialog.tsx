@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatQtd } from '@/lib/escala-receita';
 import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle, ImageIcon, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

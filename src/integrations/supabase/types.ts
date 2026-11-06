@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_conversao_unidades: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          registo_id: string
+          tabela: string
+        }
+        Insert: {
+          created_at?: string
+          dados: Json
+          id?: string
+          registo_id: string
+          tabela: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          registo_id?: string
+          tabela?: string
+        }
+        Relationships: []
+      }
       backup_saladas_fichas: {
         Row: {
           ativo: boolean | null

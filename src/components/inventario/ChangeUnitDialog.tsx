@@ -109,15 +109,10 @@ export function ChangeUnitDialog({ produto, open, onOpenChange, unidadesExistent
       const { error } = await supabase.from('produtos').update(update as never).eq('id', produto.id);
       if (error) throw error;
 
-      // Ajusta as fichas técnicas para manter o custo (quantidade × fator)
-      if (modo === 'converter') {
-        const { data: ings } = await supabase.from('ficha_ingredientes').select('id, quantidade').eq('produto_id', produto.id);
-        for (const ing of ings ?? []) {
-          await supabase.from('ficha_ingredientes')
-            .update({ quantidade: Number(ing.quantidade) * f, unidade: novaUnidade })
-            .eq('id', ing.id);
-        }
-      }
+      // Fichas técnicas: as quantidades já estão em unidade física (kg/L) — só actualiza a etiqueta
+      await supabase.from('ficha_ingredientes')
+        .update({ unidade: novaUnidade })
+        .eq('produto_id', produto.id);
 
       await log(
         'Alteração de unidade',

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatQtd } from '@/lib/escala-receita';
 import { ChefHat, Clock, Edit3, Save, X, Plus, Trash2, TrendingUp, TrendingDown, Minus, FileText, AlertTriangle, ImageIcon, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -556,7 +557,7 @@ export function FichaDetailDialog({
                             <span className="text-xs text-muted-foreground w-6">{ing.unidade}</span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">{ing.quantidade} {ing.unidade}</span>
+                          <span className="text-muted-foreground">{formatQtd(ing.quantidade, ing.unidade)}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">

@@ -556,7 +556,7 @@ export function FichaDetailDialog({
                             <span className="text-xs text-muted-foreground w-6">{ing.unidade}</span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">{ing.quantidade} {ing.unidade}</span>
+                          <span className="text-muted-foreground">{formatQtd(ing.quantidade, ing.unidade)}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">

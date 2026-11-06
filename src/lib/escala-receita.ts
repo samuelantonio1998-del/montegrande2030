@@ -43,6 +43,10 @@ export function escalarIngredientes(
 export function formatQtd(valor: number, unidade: string): string {
   if (!Number.isFinite(valor)) return `0 ${unidade}`;
   const u = (unidade ?? '').trim().toLowerCase();
+  const num = (v: number, casas: number) =>
+    (v.toFixed(casas).replace(/\.?0+$/, '') || '0').replace('.', ',');
+  if (u === 'kg') return Math.abs(valor) < 1 ? `${num(valor * 1000, 1)} g` : `${num(valor, 3)} kg`;
+  if (['l', 'lt', 'litro'].includes(u)) return Math.abs(valor) < 1 ? `${num(valor * 1000, 1)} ml` : `${num(valor, 3)} L`;
   const casas = isPesada(u) ? 3 : 2;
   const txt = valor.toFixed(casas).replace(/\.?0+$/, '');
   return `${txt || '0'} ${unidade}`;

@@ -16,6 +16,7 @@ import { useActivityLog } from '@/hooks/useActivityLog';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { QuickOrderDialog } from '@/components/fornecedores/QuickOrderDialog';
 import { ChangeUnitDialog } from '@/components/inventario/ChangeUnitDialog';
+import { converterLinhaParaBase, detectarEmbalagem, isUnidadeBase } from '@/lib/embalagem';
 
 type Produto = {
   id: string;
@@ -420,11 +421,18 @@ export default function Inventario() {
       }
     }
 
-    for (const item of selected) {
+    for (const rawItem of selected) {
+      let item = rawItem;
       const fornecedorId = item.fornecedor ? supplierCache[item.fornecedor.trim().toLowerCase()] || null : null;
+      // Converte embalagens (ex.: saco 5KG) para a unidade do produto (kg/L)
+      const aplicarConversao = (prod: { nome: string; unidade: string }) => {
+        const c = converterLinhaParaBase(prod, item);
+        if (c) item = { ...item, quantidade: c.quantidade, custo_unitario: c.custo_unitario };
+      };
 
       if (item.produto_id) {
         const produto = produtos.find(p => p.id === item.produto_id);
+        if (produto) aplicarConversao(produto);
         if (produto) {
           const effectiveCost = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
           const newStock = parseFloat((produto.stock_atual + item.quantidade).toFixed(2));
@@ -477,6 +485,16 @@ export default function Inventario() {
           }
         }
 
+        let novaUnidade = item.unidade;
+        if (existingProd) {
+          aplicarConversao(existingProd);
+        } else if (!isUnidadeBase(item.unidade)) {
+          const emb = detectarEmbalagem(item.nome);
+          if (emb) {
+            novaUnidade = emb.unidade;
+            item = { ...item, quantidade: item.quantidade * emb.fator, custo_unitario: item.custo_unitario / emb.fator };
+          }
+        }
         const effectiveCost2 = item.quantidade > 0 ? (item.custo_unitario * item.quantidade - item.desconto) / item.quantidade : item.custo_unitario;
         if (existingProd) {
           const newStock = parseFloat((existingProd.stock_atual + item.quantidade).toFixed(2));
@@ -493,7 +511,7 @@ export default function Inventario() {
           });
         } else {
           const { data: newProd } = await supabase.from('produtos').insert({
-            nome: item.nome, unidade: item.unidade, stock_atual: item.quantidade,
+            nome: item.nome, unidade: novaUnidade, stock_atual: item.quantidade,
             custo_medio: effectiveCost2, sku: item.sku,
             fornecedor_id: fornecedorId,
           }).select().single();

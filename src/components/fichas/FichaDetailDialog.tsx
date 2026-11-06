@@ -313,11 +313,11 @@ export function FichaDetailDialog({
 
   return (
     <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="flex w-[calc(100%-2rem)] max-w-3xl max-h-[90dvh] flex-col overflow-y-auto overflow-x-hidden p-4 sm:p-6 [&>*]:min-w-0">
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         {/* Photo header — VIEW MODE: compact thumbnail + title (consistent with edit mode) */}
         {!editing && (
-          <DialogHeader>
+          <DialogHeader className="pr-6 text-left">
             <DialogTitle className="sr-only">{ficha.nome}</DialogTitle>
             <div className="flex gap-3 items-start">
               <div
@@ -336,12 +336,12 @@ export function FichaDetailDialog({
                   <ChefHat className="h-7 w-7 text-muted-foreground" />
                 )}
               </div>
-              <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 flex flex-col items-start gap-3">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Ficha técnica</p>
-                  <h2 className="text-base font-display text-foreground truncate">{ficha.nome}</h2>
+                  <h2 className="text-base font-display text-foreground break-words">{ficha.nome}</h2>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowRotuloPrint(true)}>
                     <Printer className="h-3.5 w-3.5" /> Imprimir rótulo
                   </Button>
@@ -356,7 +356,7 @@ export function FichaDetailDialog({
 
         {/* Photo header — EDIT MODE: compact thumbnail, no overlap */}
         {editing && (
-          <DialogHeader>
+          <DialogHeader className="pr-6 text-left">
             <DialogTitle className="sr-only">Editar {ficha.nome}</DialogTitle>
             <div className="flex gap-3 items-start">
               <button
@@ -387,14 +387,14 @@ export function FichaDetailDialog({
               </button>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">A editar ficha técnica</p>
-                <h2 className="text-base font-display text-foreground truncate">{editNome || ficha.nome}</h2>
+                <h2 className="text-base font-display text-foreground break-words">{editNome || ficha.nome}</h2>
                 <p className="text-[10px] text-muted-foreground mt-1">Clique na imagem para alterar a foto</p>
               </div>
             </div>
           </DialogHeader>
         )}
 
-        <Tabs defaultValue="ficha">
+        <Tabs defaultValue="ficha" className="w-full min-w-0">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ficha">Ficha</TabsTrigger>
             <TabsTrigger value="escalar">Escalar</TabsTrigger>
@@ -465,7 +465,7 @@ export function FichaDetailDialog({
         )}
 
         {/* Summary stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <p className="text-xs text-muted-foreground">Custo Total</p>
             <p className="text-lg font-bold text-foreground">€{totalCost.toFixed(2)}</p>
@@ -507,7 +507,7 @@ export function FichaDetailDialog({
             )}
           </div>
 
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="max-w-full rounded-lg border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50">
@@ -539,7 +539,7 @@ export function FichaDetailDialog({
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className="text-foreground">{p?.nome ?? '—'}</span>
+                          <span className="text-foreground break-words">{p?.nome ?? '—'}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -703,7 +703,7 @@ export function FichaDetailDialog({
 
         {/* Save/Cancel/Delete buttons */}
         {editing ? (
-          <div className="flex justify-between gap-2 pt-2">
+          <div className="flex flex-wrap justify-between gap-2 pt-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5">
@@ -731,7 +731,7 @@ export function FichaDetailDialog({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => {
                 setEditing(false);
                 setEditIngredientes(ficha.ingredientes.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, unidade: i.unidade })));

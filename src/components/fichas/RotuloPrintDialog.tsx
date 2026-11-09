@@ -122,8 +122,8 @@ export function RotuloPrintDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] w-[calc(100%-2rem)] max-w-lg flex-col overflow-hidden p-4 supports-[height:100dvh]:max-h-[90dvh] sm:p-6">
+        <DialogHeader className="shrink-0 pr-6 text-left">
           <DialogTitle>Rótulo em PDF</DialogTitle>
           <DialogDescription>
             Página de 61,9 mm de largura (rolo de 62 mm), margens de 3 mm e altura conforme o conteúdo. Imprima o PDF pelo
@@ -131,6 +131,7 @@ export function RotuloPrintDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="min-h-0 flex-auto overflow-y-auto overscroll-contain pr-1">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">A carregar rótulo…</p>
         ) : !rotulo ? (
@@ -212,8 +213,9 @@ export function RotuloPrintDialog({
             </div>
           </div>
         )}
+        </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="shrink-0 gap-2 border-t border-border pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
           <Button variant="outline" className="gap-2" disabled={!temConteudo} onClick={() => gerar('descarregar')}>
             <FileDown className="h-4 w-4" /> Descarregar

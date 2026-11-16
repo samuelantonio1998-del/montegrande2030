@@ -405,7 +405,7 @@ export function FichaDetailDialog({
             <EscalarReceitaPanel ficha={ficha} semTitulo />
           </TabsContent>
           <TabsContent value="passos" className="pt-3">
-            <FichaPassosPanel fichaId={ficha.id} kg={porcoes} />
+            <FichaPassosPanel fichaId={ficha.id} kg={ficha.peso_porcao_g ? (porcoes * ficha.peso_porcao_g) / 1000 : porcoes} />
           </TabsContent>
           <TabsContent value="ficha" className="space-y-4 pt-3">
 
@@ -417,7 +417,7 @@ export function FichaDetailDialog({
               <Input value={editNome} onChange={e => setEditNome(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Rendimento (kg)</label>
+              <label className="text-xs text-muted-foreground">Doses / Pratos da receita</label>
               <Input
                 type="number"
                 step="0.1"
@@ -590,7 +590,7 @@ export function FichaDetailDialog({
                 )}
                 <tr className="border-t-2 border-border bg-muted/30">
                   <td colSpan={3} className="px-3 py-2 font-semibold text-foreground">
-                    Total ({porcoes} kg)
+                    Total ({porcoes} {porcoes === 1 ? "dose" : "doses"})
                   </td>
                   <td className="px-3 py-2 text-right font-bold text-foreground">€{totalCost.toFixed(2)}</td>
                   {editing && <td></td>}

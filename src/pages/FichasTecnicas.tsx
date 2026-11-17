@@ -201,7 +201,9 @@ export default function FichasTecnicas() {
         <AnimatePresence mode="popLayout">
           {filtered.map((ficha, i) => {
             const cost = calcCost(ficha, laborCostPerHour);
-            const costPerPortion = ficha.porcoes > 0 ? cost / ficha.porcoes : 0;
+            const peso = (ficha as any).peso_porcao_g as number | null | undefined;
+            const rendKg = peso && peso > 0 ? (ficha.porcoes * peso) / 1000 : ficha.porcoes;
+            const costPerPortion = rendKg > 0 ? cost / rendKg : 0;
             const margin = ficha.preco_venda > 0
               ? ((ficha.preco_venda - costPerPortion) / ficha.preco_venda) * 100
               : 0;

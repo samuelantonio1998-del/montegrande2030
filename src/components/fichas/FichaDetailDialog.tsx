@@ -252,7 +252,9 @@ export function FichaDetailDialog({
   const totalCost = ingredientCost + laborCost;
   const porcoes = editing ? editPorcoes : ficha.porcoes;
   const precoVenda = editing ? editPreco : ficha.preco_venda;
-  const costPerPortion = porcoes > 0 ? totalCost / porcoes : 0;
+  const pesoPorcaoAtual = editing ? (editPesoPorcao.trim() === '' ? null : parseFloat(editPesoPorcao.replace(',', '.'))) : ficha.peso_porcao_g;
+  const rendimentoKg = pesoPorcaoAtual && pesoPorcaoAtual > 0 ? (porcoes * pesoPorcaoAtual) / 1000 : porcoes;
+  const costPerPortion = rendimentoKg > 0 ? totalCost / rendimentoKg : 0;
   const margin = precoVenda > 0 ? ((precoVenda - costPerPortion) / precoVenda) * 100 : 0;
   const racio = precoVenda > 0 ? (costPerPortion / precoVenda) * 100 : 0;
 

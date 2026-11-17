@@ -315,7 +315,7 @@ export function FichaDetailDialog({
   const notasPreparacao = editing ? editNotas : ((ficha as any).notas_preparacao ?? '');
 
   return (
-    <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); onClose(); } }}>
+    <Dialog open={!!ficha} onOpenChange={open => { if (!open) { setEditing(false); setShowRotuloPrint(false); onClose(); } }}>
       <DialogContent className="flex w-[calc(100%-2rem)] max-w-3xl max-h-[90dvh] flex-col overflow-y-auto overflow-x-hidden p-4 sm:p-6 [&>*]:min-w-0">
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         {/* Photo header — VIEW MODE: compact thumbnail + title (consistent with edit mode) */}
@@ -786,12 +786,15 @@ export function FichaDetailDialog({
             </AlertDialog>
           </div>
         )}
-        <RotuloPrintDialog
-          fichaId={ficha.id}
-          nomeFicha={ficha.nome}
-          open={showRotuloPrint}
-          onOpenChange={setShowRotuloPrint}
-        />
+        {showRotuloPrint && (
+          <RotuloPrintDialog
+            key={ficha.id}
+            fichaId={ficha.id}
+            nomeFicha={ficha.nome}
+            open
+            onOpenChange={setShowRotuloPrint}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -559,12 +559,15 @@ export default function Ementa() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <RotuloPrintDialog
-        fichaId={rotuloTarget?.id ?? null}
-        nomeFicha={rotuloTarget?.nome ?? ''}
-        open={!!rotuloTarget}
-        onOpenChange={o => { if (!o) setRotuloTarget(null); }}
-      />
+      {rotuloTarget && (
+        <RotuloPrintDialog
+          key={rotuloTarget.id}
+          fichaId={rotuloTarget.id}
+          nomeFicha={rotuloTarget.nome}
+          open
+          onOpenChange={o => { if (!o) setRotuloTarget(null); }}
+        />
+      )}
 
       <RotulosEmentaDialog
         pratos={pratosComFicha}

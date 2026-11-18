@@ -117,3 +117,13 @@
   border: 1px solid #ddd;
 }
 
+
+/* ===== Impressão directa do rótulo (window.print) ===== */
+#rotulo-print { display: none; }
+@media print {
+  @page { size: 62mm auto; margin: 3mm; }
+  body * { visibility: hidden; }
+  #rotulo-print, #rotulo-print * { visibility: visible; }
+  #rotulo-print { display: block; position: absolute; top: 0; left: 0; width: 62mm; }
+  #rotulo-print .rotulo-label { width: 56mm; }
+}

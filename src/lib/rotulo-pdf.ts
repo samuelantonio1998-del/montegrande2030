@@ -202,3 +202,9 @@ function descarregarBlob(blob: Blob, nomeFicheiro: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Tamanho de letra final (pt) após a redução automática para caber numa etiqueta. */
+export function calcularTamanhoLetra(dados: RotuloDados, opts: RotuloOpcoes = {}): number {
+  const doc = new jsPDF({ unit: 'mm', format: [LARGURA_MM, 100] });
+  return calcularPagina(doc, dados, opts).size;
+}

@@ -121,9 +121,24 @@
 /* ===== Impressão directa do rótulo (window.print) ===== */
 #rotulo-print { display: none; }
 @media print {
-  @page { size: 62mm auto; margin: 3mm; }
-  body * { visibility: hidden; }
-  #rotulo-print, #rotulo-print * { visibility: visible; }
-  #rotulo-print { display: block; position: absolute; top: 0; left: 0; width: 62mm; }
-  #rotulo-print .rotulo-label { width: 56mm; }
+  @page { size: 62mm auto; margin: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(#rotulo-print) { display: none !important; }
+  #rotulo-print {
+    display: block !important;
+    position: static !important;
+    width: 62mm !important;
+    max-width: 62mm !important;
+    box-sizing: border-box;
+    padding: 3mm;
+    color: #000 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  #rotulo-print * { box-sizing: border-box; max-width: 100%; color: #000 !important; }
+  #rotulo-print .rotulo-label { width: 100%; }
+  #rotulo-print .rotulo-titulo, #rotulo-print .rotulo-seccao {
+    margin: 0 0 1mm 0; white-space: normal; overflow-wrap: anywhere; word-break: break-word;
+  }
+  #rotulo-print .rotulo-titulo { font-weight: 700; text-transform: uppercase; }
 }

@@ -11,6 +11,10 @@ import { useFichaMarcas } from '@/hooks/useFichaMarca';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import {
   calcularTamanhoLetra,
+  gerarRotulosPdf,
+  abrirPdf,
+  nomeFicheiroRotulo,
+  isSafariWebKit,
   type RotuloSeccao,
 } from '@/lib/rotulo-pdf';
 
@@ -93,7 +97,14 @@ export function RotuloPrintDialog({
 
   const imprimir = () => {
     const seccoes = construirSeccoes(rotulo, todas, { dataProducao, validade, lote });
-    const size = calcularTamanhoLetra({ titulo, seccoes }, { tamanhoLetra: 7.5, ajustarParaCaber: true, alturaMaxima: 150 });
+    const opts = { tamanhoLetra: 7.5, ajustarParaCaber: true, alturaMaxima: 150 };
+    if (isSafariWebKit()) {
+      // Safari ignora @page size: usar PDF de 61,9 mm (tamanho embutido, respeitado pelo AirPrint).
+      const doc = gerarRotulosPdf([{ titulo, seccoes }], opts);
+      abrirPdf(doc, nomeFicheiroRotulo(titulo));
+      return;
+    }
+    const size = calcularTamanhoLetra({ titulo, seccoes }, opts);
     flushSync(() => setAImprimir({ titulo, seccoes, size }));
     window.print();
   };

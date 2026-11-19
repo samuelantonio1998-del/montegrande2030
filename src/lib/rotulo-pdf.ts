@@ -208,3 +208,12 @@ export function calcularTamanhoLetra(dados: RotuloDados, opts: RotuloOpcoes = {}
   const doc = new jsPDF({ unit: 'mm', format: [LARGURA_MM, 100] });
   return calcularPagina(doc, dados, opts).size;
 }
+
+/** Safari/WebKit (iOS — todos os browsers usam WebKit — e Safari no macOS) ignora @page size. */
+export function isSafariWebKit(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (iOS) return true;
+  return /Safari/.test(ua) && /AppleWebKit/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android|FxiOS|Firefox/.test(ua);
+}

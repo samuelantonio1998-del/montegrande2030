@@ -1796,6 +1796,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rotulo_config: {
+        Row: {
+          id: number
+          lote_atual: string
+          lote_data: string | null
+        }
+        Insert: {
+          id?: number
+          lote_atual?: string
+          lote_data?: string | null
+        }
+        Update: {
+          id?: number
+          lote_atual?: string
+          lote_data?: string | null
+        }
+        Relationships: []
+      }
       servico_horarios: {
         Row: {
           ativo: boolean

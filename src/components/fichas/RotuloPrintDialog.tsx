@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { format, addDays, addMonths, addYears, parse, isValid } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import { useFichaRotulo, type FichaRotulo } from '@/hooks/useFichaRotulo';
 import { useFichaMarcas } from '@/hooks/useFichaMarca';
 import { useUnidade } from '@/contexts/UnidadeContext';
@@ -61,6 +63,18 @@ export function construirSeccoes(
     .filter(s => !!s.valor);
 }
 
+const FMT = 'dd/MM/yyyy';
+const hojeStr = () => format(new Date(), FMT);
+const hojeIso = () => format(new Date(), 'yyyy-MM-dd');
+
+/** Incrementa a parte numérica final preservando prefixo e zeros à esquerda ("L007" -> "L008"). */
+export function proximoLote(atual: string): string {
+  const m = (atual || '').match(/^(.*?)(\d+)$/);
+  if (!m) return atual ? `${atual}1` : '1';
+  const n = String(Number(m[2]) + 1).padStart(m[2].length, '0');
+  return m[1] + n;
+}
+
 export function RotuloPrintDialog({
   fichaId,
   nomeFicha,
@@ -79,6 +93,8 @@ export function RotuloPrintDialog({
   const [dataProducao, setDataProducao] = useState('');
   const [validade, setValidade] = useState('');
   const [lote, setLote] = useState('');
+  const [loteSugerido, setLoteSugerido] = useState('');
+  const [loteHoje, setLoteHoje] = useState(false);
   const [aImprimir, setAImprimir] = useState<{ titulo: string; seccoes: RotuloSeccao[]; size: number } | null>(null);
 
   const nomeComercial = useMemo(() => {
@@ -90,12 +106,44 @@ export function RotuloPrintDialog({
   const todas = useMemo(() => new Set(SECCOES_ORDEM.map(s => s.key)), []);
 
   useEffect(() => {
+    if (!open) return;
+    setDataProducao(hojeStr());
+    setValidade('');
+    let cancel = false;
+    supabase.from('rotulo_config').select('lote_atual, lote_data').eq('id', 1).maybeSingle().then(({ data }) => {
+      if (cancel) return;
+      const atual = data?.lote_atual ?? '';
+      const mesmoDia = data?.lote_data === hojeIso();
+      const sug = mesmoDia ? atual : proximoLote(atual);
+      setLoteHoje(mesmoDia);
+      setLoteSugerido(sug);
+      setLote(sug);
+    });
+    return () => { cancel = true; };
+  }, [open]);
+
+  const definirValidade = (fn: (d: Date) => Date) => {
+    const base = parse(dataProducao, FMT, new Date());
+    const d = isValid(base) ? base : new Date();
+    setValidade(format(fn(d), FMT));
+  };
+
+  const gravarLote = async () => {
+    const v = lote.trim();
+    if (!v) return;
+    if (loteHoje && v === loteSugerido) return;
+    await supabase.from('rotulo_config').update({ lote_atual: v, lote_data: hojeIso() }).eq('id', 1);
+    setLoteHoje(true); setLoteSugerido(v);
+  };
+
+  useEffect(() => {
     const limpar = () => setAImprimir(null);
     window.addEventListener('afterprint', limpar);
     return () => window.removeEventListener('afterprint', limpar);
   }, []);
 
   const imprimir = () => {
+    void gravarLote();
     const seccoes = construirSeccoes(rotulo, todas, { dataProducao, validade, lote });
     const opts = { tamanhoLetra: 7.5, ajustarParaCaber: true, alturaMaxima: 150 };
     if (isSafariWebKit()) {
@@ -125,11 +173,25 @@ export function RotuloPrintDialog({
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Data de produção</Label>
-                <Input className="mt-1" value={dataProducao} onChange={e => setDataProducao(e.target.value)} placeholder="opcional" />
+                <div className="mt-1 flex gap-2">
+                  <Input value={dataProducao} onChange={e => setDataProducao(e.target.value)} placeholder="dd/mm/aaaa" />
+                  <Button type="button" variant="outline" size="sm" onClick={() => setDataProducao(hojeStr())}>Hoje</Button>
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Validade</Label>
-                <Input className="mt-1" value={validade} onChange={e => setValidade(e.target.value)} placeholder="opcional" />
+                <Input className="mt-1" value={validade} onChange={e => setValidade(e.target.value)} placeholder="dd/mm/aaaa" />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {([
+                    ['Hoje', (d: Date) => d],
+                    ['+3 dias', (d: Date) => addDays(d, 3)],
+                    ['+3 meses', (d: Date) => addMonths(d, 3)],
+                    ['+6 meses', (d: Date) => addMonths(d, 6)],
+                    ['+1 ano', (d: Date) => addYears(d, 1)],
+                  ] as const).map(([l, fn]) => (
+                    <Button key={l} type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => definirValidade(fn)}>{l}</Button>
+                  ))}
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Lote</Label>

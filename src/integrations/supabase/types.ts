@@ -1798,16 +1798,19 @@ export type Database = {
       }
       rotulo_config: {
         Row: {
+          atalhos_validade: Json
           id: number
           lote_atual: string
           lote_data: string | null
         }
         Insert: {
+          atalhos_validade?: Json
           id?: number
           lote_atual?: string
           lote_data?: string | null
         }
         Update: {
+          atalhos_validade?: Json
           id?: number
           lote_atual?: string
           lote_data?: string | null

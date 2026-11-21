@@ -1,0 +1,1 @@
+ALTER TABLE public.rotulo_config ADD COLUMN IF NOT EXISTS atalhos_validade jsonb NOT NULL DEFAULT '[{"n":0,"u":"d"},{"n":3,"u":"d"},{"n":3,"u":"m"},{"n":6,"u":"m"},{"n":1,"u":"a"}]'::jsonb;
